@@ -1,0 +1,16 @@
+﻿<Page
+    x:Class="CPlusPlus_TestApp.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:UltimateMakerKit_TestApp"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <TextBlock HorizontalAlignment="Stretch" Margin="0,0,0,150" Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch"/>
+        <Button x:ConnectionId='1'                          Content="On" HorizontalAlignment="Left" Margin="50,0,0,50" Name="OnButton" VerticalAlignment="Bottom"/>
+        <Button x:ConnectionId='2'                           Content="Off" HorizontalAlignment="Right" Margin="0,0,50,50" Name="OffButton" VerticalAlignment="Bottom"/>
+    </Grid>
+</Page>
+
