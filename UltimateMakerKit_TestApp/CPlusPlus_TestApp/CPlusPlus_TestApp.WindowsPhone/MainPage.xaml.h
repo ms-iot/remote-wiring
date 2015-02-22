@@ -7,6 +7,8 @@
 
 #include "MainPage.g.h"
 
+using namespace Platform;
+using namespace Windows::UI::Xaml;
 using namespace Wiring;
 
 namespace CPlusPlus_TestApp
@@ -20,12 +22,13 @@ namespace CPlusPlus_TestApp
 		MainPage();
 
     protected:
-        void Clicked_OffButton(Object ^sender, Windows::UI::Xaml::RoutedEventArgs ^e);
-        void Clicked_OnButton(Object ^sender, Windows::UI::Xaml::RoutedEventArgs ^e);
         virtual void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
-        void OutputText(Platform::String^ textString);
 
     private:
         RemoteWiring ^_arduino_uno;
-	};
+
+        void Clicked_OffButton(Object ^sender, RoutedEventArgs ^e);
+        void Clicked_OnButton(Object ^sender, RoutedEventArgs ^e);
+        void OutputText(Platform::String^ textString);
+    };
 }

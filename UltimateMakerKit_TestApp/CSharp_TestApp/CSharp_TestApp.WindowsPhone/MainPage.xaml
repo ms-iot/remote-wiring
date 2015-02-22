@@ -9,6 +9,8 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-
+        <TextBlock HorizontalAlignment="Stretch" Margin="0,0,0,150" Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch"/>
+        <Button Click="Clicked_OnButton" Content="On" HorizontalAlignment="Left" Margin="50,0,0,50" Name="OnButton" VerticalAlignment="Bottom"/>
+        <Button Click="Clicked_OffButton" Content="Off" HorizontalAlignment="Right" Margin="0,0,50,50" Name="OffButton" VerticalAlignment="Bottom"/>
     </Grid>
 </Page>

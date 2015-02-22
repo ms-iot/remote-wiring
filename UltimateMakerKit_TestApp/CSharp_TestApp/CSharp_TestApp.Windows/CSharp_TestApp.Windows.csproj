@@ -129,6 +129,28 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup>
+    <SDKReference Include="Microsoft.VCLibs, Version=12.0">
+      <Name>Microsoft Visual C++ 2013 Runtime Package for Windows</Name>
+    </SDKReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Wiring">
+      <HintPath>..\..\..\x64\Debug\RemoteWiring.Windows\Wiring.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+      <Implementation>RemoteWiring.Windows.dll</Implementation>
+    </Reference>
+    <Reference Include="Wiring.Firmata">
+      <HintPath>..\..\..\x64\Debug\Firmata.Windows\Wiring.Firmata.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+      <Implementation>Firmata.Windows.dll</Implementation>
+    </Reference>
+    <Reference Include="Wiring.Serial">
+      <HintPath>..\..\..\x64\Debug\Serial.Windows\Wiring.Serial.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+      <Implementation>Serial.Windows.dll</Implementation>
+    </Reference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
     <VisualStudioVersion>12.0</VisualStudioVersion>
   </PropertyGroup>

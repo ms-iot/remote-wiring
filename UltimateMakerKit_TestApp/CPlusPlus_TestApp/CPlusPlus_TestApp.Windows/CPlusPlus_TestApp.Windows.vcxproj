@@ -160,17 +160,17 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Wiring">
-      <HintPath>..\..\..\remotewiring\x64\Debug\RemoteWiring.Windows\Wiring.winmd</HintPath>
+      <HintPath>..\..\..\x64\Debug\RemoteWiring.Windows\Wiring.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>RemoteWiring.Windows.dll</Implementation>
     </Reference>
     <Reference Include="Wiring.Firmata">
-      <HintPath>..\..\..\remotewiring\x64\Debug\Firmata.Windows\Wiring.Firmata.winmd</HintPath>
+      <HintPath>..\..\..\x64\Debug\Firmata.Windows\Wiring.Firmata.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>Firmata.Windows.dll</Implementation>
     </Reference>
     <Reference Include="Wiring.Serial">
-      <HintPath>..\..\..\remotewiring\x64\Debug\Serial.Windows\Wiring.Serial.winmd</HintPath>
+      <HintPath>..\..\..\x64\Debug\Serial.Windows\Wiring.Serial.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>Serial.Windows.dll</Implementation>
     </Reference>

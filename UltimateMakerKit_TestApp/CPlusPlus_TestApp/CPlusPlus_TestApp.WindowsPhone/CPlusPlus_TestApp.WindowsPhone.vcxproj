@@ -121,17 +121,17 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Wiring">
-      <HintPath>..\..\..\remotewiring\ARM\Debug\RemoteWiring.WindowsPhone\Wiring.winmd</HintPath>
+      <HintPath>..\..\..\ARM\Debug\RemoteWiring.WindowsPhone\Wiring.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>RemoteWiring.WindowsPhone.dll</Implementation>
     </Reference>
     <Reference Include="Wiring.Firmata">
-      <HintPath>..\..\..\remotewiring\ARM\Debug\Firmata.WindowsPhone\Wiring.Firmata.winmd</HintPath>
+      <HintPath>..\..\..\ARM\Debug\Firmata.WindowsPhone\Wiring.Firmata.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>Firmata.WindowsPhone.dll</Implementation>
     </Reference>
     <Reference Include="Wiring.Serial">
-      <HintPath>..\..\..\remotewiring\ARM\Debug\Serial.WindowsPhone\Wiring.Serial.winmd</HintPath>
+      <HintPath>..\..\..\ARM\Debug\Serial.WindowsPhone\Wiring.Serial.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
       <Implementation>Serial.WindowsPhone.dll</Implementation>
     </Reference>
