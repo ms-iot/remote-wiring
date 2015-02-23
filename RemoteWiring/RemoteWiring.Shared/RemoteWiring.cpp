@@ -5,12 +5,12 @@
 using namespace Wiring;
 
 RemoteWiring::RemoteWiring(
-    Serial::ISerial ^serial_,
-    uint32_t baud_
+    Serial::BluetoothSerial ^bt_serial_
 ) :
     _firmata(ref new Firmata::UAPFirmataClient)
 {
-    _firmata->begin(serial_, baud_);
+    _firmata->begin(bt_serial_);
+
     //TODO: Initialize from Firmata
     for ( int i = 0; i < sizeof(_digital_port); ++i ) { _digital_port[i] = 0; }
 }

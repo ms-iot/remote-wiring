@@ -13,10 +13,16 @@ UAPFirmataClient::UAPFirmataClient() {}
 
 void
 UAPFirmataClient::begin(
-    ISerial ^s_,
     uint32_t speed_
 ) {
-    return ::RawFirmata.begin(s_, speed_);
+    return ::RawFirmata.begin(speed_);
+}
+
+void
+UAPFirmataClient::begin(
+    ISerial ^s_
+) {
+    return ::RawFirmata.begin(s_);
 }
 
 void

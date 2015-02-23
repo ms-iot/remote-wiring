@@ -105,7 +105,8 @@ class FirmataClass
   public:
     FirmataClass();
     /* Arduino constructors */
-    void begin(Wiring::Serial::ISerial ^s = ref new Wiring::Serial::BluetoothSerial, long speed = 57600);
+    void begin(long speed = 57600);
+    void begin(Wiring::Serial::ISerial ^s = ref new Wiring::Serial::BluetoothSerial);
     /* querying functions */
     void printVersion(void);
     void printFirmwareVersion(void);
