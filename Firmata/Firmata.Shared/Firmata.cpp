@@ -56,10 +56,17 @@ FirmataClass::FirmataClass()
 //******************************************************************************
 
 // begin method - set and initialize serial connection
-void FirmataClass::begin(Wiring::Serial::ISerial ^s, long speed)
+void FirmataClass::begin(long speed)
+{
+    FirmataStream = ref new Wiring::Serial::BluetoothSerial;
+    FirmataStream->begin(speed, 0);
+    //printVersion();
+    //printFirmwareVersion();
+}
+
+void FirmataClass::begin(Wiring::Serial::ISerial ^s)
 {
     FirmataStream = s;
-    FirmataStream->begin(speed, 0);
     //printVersion();
     //printFirmwareVersion();
 }

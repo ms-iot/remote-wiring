@@ -86,8 +86,13 @@ public ref class UAPFirmataClient sealed
 
     void
     begin(
-        Serial::ISerial ^s,
         uint32_t speed
+    );
+
+    [Windows::Foundation::Metadata::DefaultOverload]
+    void
+    begin(
+        Serial::ISerial ^s
     );
 
     void
