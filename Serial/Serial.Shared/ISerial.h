@@ -21,6 +21,12 @@ public interface struct ISerial
     ) = 0;
 
     virtual
+    void
+    end(
+        void
+    ) = 0;
+
+    virtual
     uint16_t
     read(
         void
