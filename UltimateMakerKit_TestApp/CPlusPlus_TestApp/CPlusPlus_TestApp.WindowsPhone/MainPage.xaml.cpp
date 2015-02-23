@@ -26,7 +26,8 @@ MainPage::MainPage()
 	InitializeComponent();
 
     OutputText("Attempt to connect.");
-    _arduino_uno = ref new RemoteWiring(ref new Serial::BluetoothSerial, 57600);
+    _bt_serial = ref new Serial::BluetoothSerial;
+    _arduino_uno = ref new RemoteWiring(_bt_serial);
     OutputText("Acquiring connection...");
 }
 
@@ -35,7 +36,7 @@ MainPage::MainPage()
 /// </summary>
 /// <param name="e">Event data that describes how this page was reached.  The Parameter
 /// property is typically used to configure the page.</param>
-void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
+void MainPage::OnNavigatedTo(NavigationEventArgs ^e)
 {
 	(void) e;	// Unused parameter
 
@@ -46,6 +47,16 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
 	// Windows::Phone::UI::Input::HardwareButtons.BackPressed event.
 	// If you are using the NavigationHelper provided by some templates,
 	// this event is handled for you.
+    OutputText("Attempt to connect.");
+    _bt_serial->begin(57600, 0);
+    OutputText("Acquiring connection...");
+}
+
+void MainPage::OnNavigatedFrom(NavigationEventArgs ^e)
+{
+    OutputText("Dropping connection...");
+    _bt_serial->end();
+    OutputText("Disconnected.");
 }
 
 void MainPage::Clicked_OffButton(Object ^sender, RoutedEventArgs^ e)

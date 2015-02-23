@@ -24,9 +24,21 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	InitializeComponent();
+    _bt_serial = ref new Serial::BluetoothSerial;
+    _arduino_uno = ref new RemoteWiring(_bt_serial);
+}
 
+void MainPage::OnNavigatedFrom(NavigationEventArgs ^e)
+{
+    OutputText("Dropping connection...");
+    _bt_serial->end();
+    OutputText("Disconnected.");
+}
+
+void MainPage::OnNavigatedTo(NavigationEventArgs ^e)
+{
     OutputText("Attempt to connect.");
-    _arduino_uno = ref new RemoteWiring(ref new Serial::BluetoothSerial, 57600);
+    _bt_serial->begin(57600, 0);
     OutputText("Acquiring connection...");
 }
 

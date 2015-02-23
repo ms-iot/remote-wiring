@@ -24,16 +24,33 @@ namespace CSharp_TestApp
     /// </summary>
     public sealed partial class MainPage : Page
     {
-
+        BluetoothSerial _bt_serial;
         RemoteWiring _arduino_uno;
 
         public MainPage()
         {
             this.InitializeComponent();
 
+            _bt_serial = new BluetoothSerial();
+            _arduino_uno = new RemoteWiring(_bt_serial);
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
             OutputText("Attempt to connect.");
-            _arduino_uno = new RemoteWiring(new BluetoothSerial(), 57600);
+            _bt_serial.begin(57600, 0);
             OutputText("Acquiring connection...");
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+
+            OutputText("Dropping connection...");
+            _bt_serial.end();
+            OutputText("Disconnected.");
         }
 
         private void Clicked_OffButton(object sender, RoutedEventArgs e)

@@ -9,6 +9,7 @@
 
 using namespace Platform;
 using namespace Windows::UI::Xaml;
+using namespace Windows::UI::Xaml::Navigation;
 using namespace Wiring;
 
 namespace CPlusPlus_TestApp
@@ -20,11 +21,17 @@ namespace CPlusPlus_TestApp
 	{
 	public:
 		MainPage();
+
+    protected:
+        virtual void OnNavigatedFrom(NavigationEventArgs ^e) override;
+        virtual void OnNavigatedTo(NavigationEventArgs ^e) override;
+
     private:
         RemoteWiring ^_arduino_uno;
+        Serial::BluetoothSerial ^_bt_serial;
 
-        void Clicked_OffButton(Object ^sender, RoutedEventArgs^ e);
-        void Clicked_OnButton(Object ^sender, RoutedEventArgs^ e);
+        void Clicked_OffButton(Object ^sender, RoutedEventArgs ^e);
+        void Clicked_OnButton(Object ^sender, RoutedEventArgs ^e);
         void OutputText(Platform::String^ textString);
     };
 }

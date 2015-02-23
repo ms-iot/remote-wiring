@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Wiring;
+using Wiring.Firmata;
 using Wiring.Serial;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -24,7 +25,7 @@ namespace CSharp_TestApp
     /// </summary>
     public sealed partial class MainPage : Page
     {
-
+        BluetoothSerial _bt_serial;
         RemoteWiring _arduino_uno;
 
         public MainPage()
@@ -32,10 +33,8 @@ namespace CSharp_TestApp
             this.InitializeComponent();
 
             this.NavigationCacheMode = NavigationCacheMode.Required;
-
-            OutputText("Attempt to connect.");
-            _arduino_uno = new RemoteWiring(new BluetoothSerial(), 57600);
-            OutputText("Acquiring connection...");
+            _bt_serial = new BluetoothSerial();
+            _arduino_uno = new RemoteWiring(_bt_serial);
         }
 
         /// <summary>
@@ -52,6 +51,18 @@ namespace CSharp_TestApp
             // Windows.Phone.UI.Input.HardwareButtons.BackPressed event.
             // If you are using the NavigationHelper provided by some templates,
             // this event is handled for you.
+            OutputText("Attempt to connect.");
+            _bt_serial.begin(57600, 0);
+            OutputText("Acquiring connection...");
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+
+            OutputText("Dropping connection...");
+            _bt_serial.end();
+            OutputText("Disconnected.");
         }
 
         private void Clicked_OffButton(object sender, RoutedEventArgs e)
