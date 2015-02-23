@@ -26,6 +26,12 @@ public:
     );
 
     virtual
+    void
+    end(
+        void
+    );
+
+    virtual
     uint16_t
     read (
         void
@@ -36,6 +42,26 @@ public:
     write (
         uint8_t c_
     );
+
+    bool
+    connectionReady(
+        void
+    );
+
+    Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+    listAvailableDevicesAsync(
+        void
+    );
+
+private:
+    Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
+    Windows::Storage::Streams::DataReader ^_rx;
+    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId ^_service_id;
+    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceProvider ^_service_provider;
+    Windows::Networking::Sockets::StreamSocket ^_stream_socket;
+    Windows::Storage::Streams::DataWriter ^_tx;
+
+    LONG volatile _connection_ready;
 };
 
 }
