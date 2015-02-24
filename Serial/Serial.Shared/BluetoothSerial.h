@@ -53,6 +53,11 @@ public:
         void
     );
 
+    Windows::Storage::Streams::DataReaderLoadOperation ^
+    loadAsync(
+        unsigned int count_
+    );
+
 private:
     Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
     Windows::Storage::Streams::DataReader ^_rx;
