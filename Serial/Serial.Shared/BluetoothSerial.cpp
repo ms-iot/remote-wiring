@@ -127,6 +127,7 @@ BluetoothSerial::begin(
             .then([this](void){
                 _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
                 _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
+                _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::ReadAhead;
 
                 // Set connection ready flag
                 InterlockedOr(&_connection_ready, true);
@@ -170,6 +171,13 @@ void
 
     // Identify all paired devices satisfying query
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
+}
+
+Windows::Storage::Streams::DataReaderLoadOperation ^
+BluetoothSerial::loadAsync(
+    unsigned int count_
+) {
+    return _rx->LoadAsync(count_);
 }
 
 uint16_t
