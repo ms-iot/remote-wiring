@@ -43,6 +43,11 @@ public:
         uint8_t c_
     );
 
+    void
+    beginAsync (
+        void
+    );
+
     bool
     connectionReady(
         void
@@ -67,6 +72,12 @@ private:
     Windows::Storage::Streams::DataWriter ^_tx;
 
     LONG volatile _connection_ready;
+    bool _synchronous_mode;
+
+    void
+    begin (
+        bool synchronous_mode_
+    );
 };
 
 }

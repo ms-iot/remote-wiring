@@ -104,6 +104,14 @@ BluetoothSerial::begin(
     // Discard incoming parameters inherited from ISerial interface.
     UNREFERENCED_PARAMETER(baud_);
     UNREFERENCED_PARAMETER(config_);
+    begin(true);
+}
+
+void
+BluetoothSerial::begin(
+    bool synchronous_mode_
+) {
+    _synchronous_mode = synchronous_mode_;
 
     // Ensure known good state
     end();
@@ -124,10 +132,14 @@ BluetoothSerial::begin(
                 _device_service->ConnectionHostName,
                 _device_service->ConnectionServiceName,
                 Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
-            .then([this](void){
+            .then([this](){
                 _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
+                if ( _synchronous_mode ) {
+                    _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::ReadAhead;
+                    _rx->LoadAsync(1);
+                }
+
                 _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
-                _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::ReadAhead;
 
                 // Set connection ready flag
                 InterlockedOr(&_connection_ready, true);
@@ -136,6 +148,13 @@ BluetoothSerial::begin(
     });
 
     return;
+}
+
+void
+BluetoothSerial::beginAsync(
+    void
+) {
+    begin(false);
 }
 
 bool
@@ -177,6 +196,7 @@ Windows::Storage::Streams::DataReaderLoadOperation ^
 BluetoothSerial::loadAsync(
     unsigned int count_
 ) {
+    //TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
     return _rx->LoadAsync(count_);
 }
 
@@ -189,6 +209,7 @@ BluetoothSerial::read(
     if ( available() ) {
          c = _rx->ReadByte();
     }
+    if ( _synchronous_mode ) { _rx->LoadAsync(1); }
 
     return c;
 }
