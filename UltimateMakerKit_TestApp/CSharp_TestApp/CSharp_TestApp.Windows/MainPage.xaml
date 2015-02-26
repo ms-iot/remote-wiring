@@ -8,20 +8,101 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <TextBlock HorizontalAlignment="Stretch" Margin="0,0,0,500" Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch"/>
-        <Button Click="Clicked_OnButton" Content="On" HorizontalAlignment="Left" Margin="50,0,0,50" Name="OnButton" VerticalAlignment="Bottom"/>
-        <Button Click="Clicked_OffButton" Content="Off" HorizontalAlignment="Right" Margin="0,0,50,50" Name="OffButton" VerticalAlignment="Bottom"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,400" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,325" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,250" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,175" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,100" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <Slider HorizontalAlignment="Center" Margin="50,0,0,25" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,325,0,0" TextWrapping="Wrap" Text="Pin 3" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,400,0,0" TextWrapping="Wrap" Text="Pin 5" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,475,0,0" TextWrapping="Wrap" Text="Pin 6" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,550,0,0" TextWrapping="Wrap" Text="Pin 9" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,625,0,0" TextWrapping="Wrap" Text="Pin 10" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="560,695,0,0" TextWrapping="Wrap" Text="Pin 11" VerticalAlignment="Top"/>
+        <GridView HorizontalAlignment="Left" Margin="385,150,0,0" VerticalAlignment="Top"/>
+        <Canvas HorizontalAlignment="Left" Height="683" Margin="362,42,0,0" VerticalAlignment="Top" Width="611">
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Canvas.Left="297" Canvas.Top="160"/>
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="550" VerticalAlignment="Top" Width="405" Canvas.Left="86" Canvas.Top="10">
+                <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Margin="-1,223,0,0"/>
+            </Border>
+            <ToggleSwitch x:Name="Pin0_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin0_ToggleSwitch_Toggled" FontFamily="Global User Interface" FontSize="12" Canvas.Left="85" Canvas.Top="11"/>
+            <ToggleSwitch x:Name="Pin1_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin1_ToggleSwitch_Toggled" FontSize="12" FontFamily="Global User Interface" Canvas.Left="85" Canvas.Top="78"/>
+            <ToggleSwitch x:Name="Pin2_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin2_ToggleSwitch_Toggled" FontSize="12" Canvas.Left="85" Canvas.Top="148" FontFamily="Global User Interface"/>
+            <ToggleSwitch x:Name="Pin3_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin3_ToggleSwitch_Toggled" FontSize="12" Canvas.Left="85" Canvas.Top="222" FontFamily="Global User Interface"/>
+            <ToggleSwitch x:Name="Pin4_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin4_ToggleSwitch_Toggled" FontSize="12" Canvas.Left="85" Canvas.Top="317" FontFamily="Global User Interface"/>
+            <ToggleSwitch x:Name="Pin5_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin5_ToggleSwitch_Toggled" FontSize="12" Canvas.Left="85" Canvas.Top="383" FontFamily="Global User Interface"/>
+            <ToggleSwitch x:Name="Pin6_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin6_ToggleSwitch_Toggled" FontSize="12" Canvas.Left="85" Canvas.Top="480" FontFamily="Global User Interface"/>
+            <TextBlock TextWrapping="Wrap" Text="Pin 0" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="27"/>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="93">
+        		<Run Text="Pin 1"/>
+        		<LineBreak/>
+        		<Run/>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="164">
+        		<Run Text="Pin 2"/>
+        		<LineBreak/>
+        		<Run/>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="252">
+        		<Run Text="Pin 3"/>
+        		<LineBreak/>
+        		<Run/>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="333">
+            	<Run Text="Pin 4"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <Slider x:Name="Pin3_Slider" HorizontalAlignment="Left" VerticalAlignment="Bottom" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin3_Slider_ValueChanged" FontFamily="Global User Interface" Width="167" Canvas.Left="91" Canvas.Top="268" Foreground="#FF1EA0B4" Background="#29FFFFFF"/>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="510">
+            	<Run Text="Pin 6"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="59" FontSize="18" HorizontalAlignment="Left" Canvas.Left="27" Canvas.Top="413">
+            	<Run Text="Pin 5"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <Slider x:Name="Pin5_Slider" HorizontalAlignment="Left" VerticalAlignment="Bottom" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin5_Slider_ValueChanged" Width="167" Canvas.Left="91" Canvas.Top="431" Foreground="#FF1EA0B4" Background="#29FFFFFF"/>
+            <Slider x:Name="Pin6_Slider" HorizontalAlignment="Left" VerticalAlignment="Bottom" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin6_Slider_ValueChanged" Width="167" Canvas.Left="91" Canvas.Top="523" Foreground="#FF1EA0B4" Background="#29FFFFFF"/>
+            <ToggleSwitch x:Name="Pin7_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin7_ToggleSwitch_Toggled" Width="129" FontSize="12" Canvas.Left="307" Canvas.Top="10" FontFamily="Global User Interface"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Pin 7" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="27"/>
+            <ToggleSwitch x:Name="Pin8_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin8_ToggleSwitch_Toggled" Width="129" FontSize="12" FontFamily="Global User Interface" Canvas.Left="307" Canvas.Top="78"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="93">
+            	<Run Text="Pin 8"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <ToggleSwitch x:Name="Pin9_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin9_ToggleSwitch_Toggled" Width="129" FontSize="12" Canvas.Left="307" Canvas.Top="148"/>
+            <Slider x:Name="Pin9_Slider" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="167" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin9_Slider_ValueChanged" Canvas.Left="313" Canvas.Top="194" Foreground="#FF1EA0B4" Background="#29FFFFFF" BorderBrush="Transparent"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="178">
+            	<Run Text="Pin 9"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <ToggleSwitch x:Name="Pin10_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin10_ToggleSwitch_Toggled" Width="129" FontSize="12" FontFamily="Global User Interface" Canvas.Left="307" Canvas.Top="234"/>
+            <Slider x:Name="Pin10_Slider" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="167" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin10_Slider_ValueChanged" Canvas.Left="314" Canvas.Top="282" Foreground="#FF1EA0B4" Background="#29FFFFFF"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="267">
+            	<Run Text="Pin 10"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <ToggleSwitch x:Name="Pin11_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin11_ToggleSwitch_Toggled" Width="129" FontSize="12" Canvas.Left="308" Canvas.Top="317"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="347">
+            	<Run Text="Pin 11"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <Slider x:Name="Pin11_Slider" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="167" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255" ValueChanged="Pin11_Slider_ValueChanged" FontFamily="Global User Interface" Canvas.Left="314" Canvas.Top="365" Foreground="#FF1EA0B4" Background="#29FFFFFF"/>
+            <ToggleSwitch x:Name="Pin12_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin12_ToggleSwitch_Toggled" Width="129" FontSize="12" Canvas.Left="307" Canvas.Top="409"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="424">
+            	<Run Text="Pin 12"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <ToggleSwitch x:Name="Pin13_ToggleSwitch" Header="" HorizontalAlignment="Left" VerticalAlignment="Top" Toggled="Pin13_ToggleSwitch_Toggled" Width="129" FontSize="12" Canvas.Left="307" Canvas.Top="482"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" SelectionChanged="TextBlock_SelectionChanged" Height="31" Width="50" FontSize="18" Canvas.Left="509" Canvas.Top="498">
+            	<Run Text="Pin 13"/>
+            	<LineBreak/>
+            	<Run/>
+            </TextBlock>
+            <TextBlock HorizontalAlignment="Stretch" x:Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch" SelectionChanged="OutputBlock_SelectionChanged" Height="29" Canvas.Left="86" Canvas.Top="562" Width="394" FontSize="14"/>
+            <Image HorizontalAlignment="Left" Height="88" VerticalAlignment="Top" Width="83" Source="Assets/Arduino_Logo_svg.png" Canvas.Left="86" Canvas.Top="596"/>
+            <TextBlock Canvas.Left="194" TextWrapping="Wrap" Text="Bluetooth library test app" Canvas.Top="621" SelectionChanged="TextBlock_SelectionChanged_1" FontSize="22" Width="297"/>
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Canvas.Left="86" Canvas.Top="491"/>
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Canvas.Left="86" Canvas.Top="396"/>
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Canvas.Left="297" Canvas.Top="245"/>
+            <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="69" VerticalAlignment="Top" Width="194" Canvas.Left="297" Canvas.Top="328"/>
+        </Canvas>
     </Grid>
 </Page>
