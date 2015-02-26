@@ -8,8 +8,20 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <TextBlock HorizontalAlignment="Stretch" Margin="0,0,0,150" Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch"/>
+        <TextBlock HorizontalAlignment="Stretch" Margin="0,0,0,500" Name="OutputBlock" TextWrapping="Wrap" Text="Output" VerticalAlignment="Stretch"/>
         <Button Click="Clicked_OnButton" Content="On" HorizontalAlignment="Left" Margin="50,0,0,50" Name="OnButton" VerticalAlignment="Bottom"/>
         <Button Click="Clicked_OffButton" Content="Off" HorizontalAlignment="Right" Margin="0,0,50,50" Name="OffButton" VerticalAlignment="Bottom"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,400" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,325" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,250" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,175" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,100" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <Slider HorizontalAlignment="Center" Margin="50,0,0,25" VerticalAlignment="Bottom" Width="200" Maximum="255" SmallChange="32" StepFrequency="32" TickFrequency="32" Value="255"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,325,0,0" TextWrapping="Wrap" Text="Pin 3" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,400,0,0" TextWrapping="Wrap" Text="Pin 5" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,475,0,0" TextWrapping="Wrap" Text="Pin 6" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,550,0,0" TextWrapping="Wrap" Text="Pin 9" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,625,0,0" TextWrapping="Wrap" Text="Pin 10" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="560,695,0,0" TextWrapping="Wrap" Text="Pin 11" VerticalAlignment="Top"/>
     </Grid>
 </Page>
