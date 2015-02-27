@@ -57,7 +57,7 @@ byte value_
     if ( value_ ) {
         _digital_port[port] |= port_mask;
     } else {
-        _digital_port[port] &= !port_mask;
+        _digital_port[port] &= ~port_mask;
     }
 
     _firmata->sendDigitalPort(port, static_cast<uint16_t>(_digital_port[port]));

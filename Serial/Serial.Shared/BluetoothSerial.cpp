@@ -209,7 +209,9 @@ BluetoothSerial::read(
     if ( available() ) {
          c = _rx->ReadByte();
     }
-    if ( _synchronous_mode ) { _rx->LoadAsync(1); }
+
+    // Prefetch buffer
+    if ( _synchronous_mode && !_rx->UnconsumedBufferLength ) { _rx->LoadAsync(1); }
 
     return c;
 }
