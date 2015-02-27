@@ -47,6 +47,7 @@ public ref class RemoteWiring sealed {
   private:
     Firmata::UAPFirmataClient ^_firmata;
     byte _digital_port[16];
+    byte _pin_mode[128];
 };
 
 }
