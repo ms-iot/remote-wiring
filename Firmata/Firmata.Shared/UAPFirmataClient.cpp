@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "UAPFirmataClient.h"
 
+#include "Firmata.h"
+
 using namespace Wiring::Serial;
 using namespace Wiring::Firmata;
 
