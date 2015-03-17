@@ -9,7 +9,7 @@ public ref class RemoteWiring sealed {
   public:
     [Windows::Foundation::Metadata::DefaultOverload]
     RemoteWiring(
-        Serial::BluetoothSerial ^bt_serial_
+        Serial::ISerial ^serial_connection_
     );
 
     RemoteWiring(
