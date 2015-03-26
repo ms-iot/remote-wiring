@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+using namespace Platform;
+
 #ifdef IGNORE
 #undef IGNORE
 #endif
@@ -35,22 +37,22 @@ public ref class CallbackEventArgs sealed {
 public ref class StringCallbackEventArgs sealed {
   public:
     StringCallbackEventArgs(
-        IBuffer ^string_
+        String ^string_
     ) :
       _string(string_)
     {}
 
-    inline IBuffer ^ getString(void) { return _string; }
+    inline String ^ getString(void) { return _string; }
 
   private:
-    IBuffer ^_string;
+    String ^_string;
 };
 
 public ref class SysexCallbackEventArgs sealed {
   public:
     SysexCallbackEventArgs(
         byte command_,
-        IBuffer ^sysex_string_
+        String ^sysex_string_
     ) :
     _command(command_),
     _sysex_string(sysex_string_)
@@ -58,11 +60,11 @@ public ref class SysexCallbackEventArgs sealed {
 
     inline byte getCommand(void) { return _command; }
 
-    inline IBuffer ^ getSysexString(void) { return _sysex_string; }
+    inline String ^ getSysexString(void) { return _sysex_string; }
 
   private:
     byte _command;
-    IBuffer ^_sysex_string;
+    String ^_sysex_string;
 };
 
 public ref class SystemResetCallbackEventArgs sealed {
@@ -160,7 +162,7 @@ public ref class UAPFirmataClient sealed
 
     void
     setFirmwareNameAndVersion(
-        IBuffer ^name,
+        String ^name,
         byte major,
         byte minor
     );
@@ -189,20 +191,20 @@ public ref class UAPFirmataClient sealed
 
     void
     sendString(
-        IBuffer ^string
+        String ^string
     );
 
     void
     sendString(
         byte command,
-        IBuffer ^string
+        String ^string
     );
 
     void
     sendSysex(
         byte command,
         byte bytec,
-        IBuffer ^bytev
+        String ^bytev
     );
 
     void

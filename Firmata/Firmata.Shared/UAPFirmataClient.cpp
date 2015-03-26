@@ -43,7 +43,7 @@ UAPFirmataClient::printFirmwareVersion(
 
 void
 UAPFirmataClient::setFirmwareNameAndVersion(
-    IBuffer ^name_,
+    String ^name_,
     byte major_,
     byte minor_
 ) {
@@ -84,7 +84,7 @@ UAPFirmataClient::sendDigitalPort(
 
 void
 UAPFirmataClient::sendString(
-    IBuffer ^string_
+    String ^string_
 ) {
     std::wstring stringW = string_->ToString()->Begin();
     std::string stringA(stringW.begin(), stringW.end());
@@ -94,7 +94,7 @@ UAPFirmataClient::sendString(
 void
 UAPFirmataClient::sendString(
     byte command_,
-    IBuffer ^string_
+    String ^string_
 ) {
     std::wstring stringW = string_->ToString()->Begin();
     std::string stringA(stringW.begin(), stringW.end());
@@ -105,7 +105,7 @@ void
 UAPFirmataClient::sendSysex(
     byte command_,
     byte bytec_,
-    IBuffer ^bytev_
+    String ^bytev_
 ) {
     std::wstring bytevW = bytev_->ToString()->Begin();
     std::string bytevA(bytevW.begin(), bytevW.end());
