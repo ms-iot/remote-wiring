@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include "TwoWire.h"
 
 namespace Wiring
 {
@@ -99,12 +100,29 @@ namespace Wiring
 			byte pin_
 			);
 
+		///<summary>
+		//singleton pattern returns a current instance of TwoWire for I2C communication
+		///</summary>
+		inline I2C::TwoWire ^
+			getI2c(
+			)
+		{
+			if( _twoWire == nullptr )
+			{
+				_twoWire = ref new I2C::TwoWire( _firmata );
+			}
+			return _twoWire;
+		}
+
 
 	private:
 		//constant members
 		static const int MAX_PORTS = 16;
 		static const int MAX_PINS = 128;
 		static const int ANALOG_PINS = 6;
+
+		//singleton reference for I2C
+		Wiring::I2C::TwoWire ^_twoWire;
 
 		//a reference to the UAP firmata interface
 		Firmata::UAPFirmataClient ^_firmata;

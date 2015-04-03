@@ -25,6 +25,7 @@ UAPFirmataClient::UAPFirmataClient(
 {
 	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::digitalInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::analogInvoke, this, _1, _2 ) ) );
+	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UAPFirmataClient::sysexInvoke, this, _1, _2, _3 ) ) );
 }
 
 
@@ -173,4 +174,84 @@ UAPFirmataClient::write(
 	)
 {
     return ::RawFirmata.write(c_);
+}
+
+
+void
+UAPFirmataClient::enableI2c(
+	uint16_t i2cReadDelayMicros_
+	)
+{
+	::RawFirmata.startSysex();
+	::RawFirmata.write( static_cast<uint8_t>( I2C_CONFIG ) );
+	::RawFirmata.sendValueAsTwo7bitBytes( i2cReadDelayMicros_ );
+	::RawFirmata.endSysex();
+}
+
+
+void
+UAPFirmataClient::writeI2c(
+	uint8_t address_,
+	Platform::String ^message_
+	)
+{
+	std::wstring wstr( message_->Begin() );
+	std::string str( wstr.begin(), wstr.end() );
+	const size_t len = message_->Length();
+
+	sendI2cSysex( address_, 0, 0xFF, len, str.c_str() );
+}
+
+
+void
+UAPFirmataClient::readI2c(
+	uint8_t address_,
+	size_t numBytes_,
+	uint8_t reg_,
+	bool continuous_
+	)
+{
+	//if you want to do continuous reads, you must provide a register to prompt for new data
+	if( continuous_ && ( reg_ == 0xFF ) ) return;
+	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, 1, (const char*)&numBytes_ );
+}
+
+
+void
+UAPFirmataClient::stopI2c(
+	uint8_t address_
+	)
+{
+	sendI2cSysex( address_, 0x18, 0xFF, 0, nullptr );
+}
+
+
+//******************************************************************************
+//* Private Methods
+//******************************************************************************
+
+void
+UAPFirmataClient::sendI2cSysex(
+	const uint8_t address_,
+	const uint8_t rw_mask_,
+	const uint8_t reg_,
+	const size_t len,
+	const char * data
+	)
+{
+	::RawFirmata.startSysex();
+	::RawFirmata.write( static_cast<uint8_t>( I2C_REQUEST ) );
+	::RawFirmata.write( address_ );
+	::RawFirmata.write( rw_mask_ );
+
+	if( reg_ != 0xFF )
+	{
+		::RawFirmata.sendValueAsTwo7bitBytes( reg_ );
+	}
+
+	for( size_t i = 0; i < len; i++ )
+	{
+		::RawFirmata.sendValueAsTwo7bitBytes( data[i] );
+	}
+	::RawFirmata.endSysex();
 }

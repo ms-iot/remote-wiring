@@ -70,7 +70,27 @@ public:
 private:
 	uint8_t _command;
 	String ^_sysex_string;
+};
 
+public ref class I2cCallbackEventArgs sealed
+{
+public:
+	I2cCallbackEventArgs(
+		uint8_t address_,
+		String ^response_
+		) :
+		_address( address_ ),
+		_response( response_ )
+	{
+	}
+
+	inline uint8_t getAddress( void ) { return _address; }
+
+	inline String ^ getResponseString( void ) { return _response; }
+
+private:
+	uint8_t _address;
+	String ^_response;
 };
 
 public ref class SystemResetCallbackEventArgs sealed {
@@ -120,6 +140,7 @@ public delegate void CallbackFunction( UAPFirmataClient ^caller, CallbackEventAr
 public delegate void StringCallbackFunction(UAPFirmataClient ^caller, StringCallbackEventArgs ^argv);
 public delegate void SysexCallbackFunction(UAPFirmataClient ^caller, SysexCallbackEventArgs ^argv);
 public delegate void SystemResetCallbackFunction( UAPFirmataClient ^caller, SystemResetCallbackEventArgs ^argv );
+public delegate void I2cReplyCallbackFunction( UAPFirmataClient ^caller, I2cCallbackEventArgs ^argv );
 
 public ref class UAPFirmataClient sealed
 {
@@ -128,6 +149,7 @@ public:
 	event CallbackFunction^ AnalogCallbackEvent;
 	event StringCallbackFunction^ StringCallbackEvent;
 	event SysexCallbackFunction^ SysexCallbackEvent;
+	event I2cReplyCallbackFunction^ I2cCallbackEvent;
 	event SystemResetCallbackFunction^ SystemResetCallbackEvent;
 
 	UAPFirmataClient();
@@ -210,6 +232,29 @@ public:
 		uint8_t c
 	);
 
+	void
+	enableI2c(
+		uint16_t i2cReadDelayMicros_
+	);
+
+	void
+	writeI2c(
+		uint8_t address_,
+		String ^message_
+	);
+
+	void
+	readI2c(
+		uint8_t address_,
+		size_t numBytes_,
+		uint8_t reg_,
+		bool continuous_
+	);
+
+	void
+	stopI2c(
+		uint8_t address_
+	);
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
 	static inline
@@ -233,8 +278,50 @@ public:
 		caller->AnalogCallbackEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
 	}
 
+	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	static inline
+	void
+	sysexInvoke(
+		UAPFirmataClient ^caller,
+		uint8_t command_,
+		uint8_t argc_,
+		uint8_t *argv_
+	) {
+		/*
+		 * we need to convert to wchar string, but the data will be replied as 2 7-bit bytes for every actual byte. So we're going to reuse the same memory
+		 * space, since we can combine the two bytes back together and zero out the MSB. additionally, cannot use std string conversion functions here because some bytes may be 0.
+		 */
+
+		//should never happen, but we'll correct for it just in case
+		if( argc_ % 2 == 1 ) --argc_;
+
+		uint8_t i;
+		for( i = 0; i < argc_; i += 2 )
+		{
+			argv_[i] = argv_[i] | ( argv_[i + 1] << 7 );
+			argv_[i + 1] = 0;
+		}
+
+		if( command_ == static_cast<uint8_t>( Wiring::Firmata::SysexCommand::I2C_REPLY ) )
+		{
+			//if we're receiving an I2C reply we should remove the first 2 characters (4 bytes) from the string, which are the reply address and the register.
+			caller->I2cCallbackEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
+		}
+		else
+		{
+			caller->SysexCallbackEvent( caller, ref new SysexCallbackEventArgs( command_, ref new String( (const wchar_t *)argv_, argc_ / 2 ) ) );
+		}
+	}
 
   private:
+	void
+	sendI2cSysex(
+		const uint8_t address_,
+		const uint8_t rw_mask_,
+		const uint8_t reg_,
+		const size_t len,
+		const char * data
+	);
 };
 
 }
