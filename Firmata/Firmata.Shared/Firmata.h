@@ -92,61 +92,180 @@
 #define TOTAL_PIN_MODES         11
 
 extern "C" {
-  // callback function types
-  typedef void (*callbackFunction)(byte, int);
-  typedef void (*systemResetCallbackFunction)(void);
-  typedef void (*stringCallbackFunction)(char *);
-  typedef void (*sysexCallbackFunction)(byte command, byte argc, byte *argv);
+  typedef std::function<void( byte, int )> callbackFunction;
+  typedef std::function<void( void )> systemResetCallbackFunction;
+  typedef std::function<void( char * )> stringCallbackFunction;
+  typedef std::function<void( byte command, byte argc, byte *argv )> sysexCallbackFunction;
 }
 
-// TODO make it a subclass of a generic Serial/Stream base class
+
 class FirmataClass
 {
   public:
     FirmataClass();
-    /* Arduino constructors */
-    void begin(long speed = 57600);
-    void begin(Wiring::Serial::ISerial ^s = ref new Wiring::Serial::BluetoothSerial);
-    /* querying functions */
-    void printVersion(void);
-    void printFirmwareVersion(void);
-    void setFirmwareNameAndVersion(const char *name, byte major, byte minor);
-    /* serial receive handling */
-    int available(void);
-    void processInput(void);
-    /* serial send handling */
-    void sendAnalog(byte pin, int value);
-    void sendDigitalPort(byte portNumber, int portData);
-    void sendString(const char *string);
-    void sendString(byte command, const char *string);
-    void sendSysex(byte command, byte bytec, byte *bytev);
-    void write(byte c);
-    /* attach & detach callback functions to messages */
-    void attach(byte command, callbackFunction newFunction);
-    void attach(byte command, systemResetCallbackFunction newFunction);
-    void attach(byte command, stringCallbackFunction newFunction);
-    void attach(byte command, sysexCallbackFunction newFunction);
-    void detach(byte command);
 
-    /* utility methods */
-    void sendValueAsTwo7bitBytes(int value);
-    void startSysex(void);
-    void endSysex(void);
+
+    void
+	begin(
+		long speed = 57600
+	);
+
+
+	void
+	begin(
+		Wiring::Serial::ISerial ^s
+	);
+
+	void
+	finish(
+		void
+	);
+
+
+    void
+	printVersion(
+		void
+	);
+
+
+    void
+	printFirmwareVersion(
+		void
+	);
+
+
+    void
+	setFirmwareNameAndVersion(
+		const char *name,
+		byte major,
+		byte minor
+	);
+
+
+    int
+	available(
+		void
+	);
+
+
+    void
+	processInput(
+		void
+	);
+
+
+    void
+	sendAnalog(
+		byte pin,
+		int value
+	);
+
+
+    void
+	sendDigitalPort(
+		byte portNumber,
+		int portData
+	);
+
+
+    void
+	sendString(
+		const char *string
+	);
+
+
+    void
+	sendString(
+		byte command,
+		const char *string
+	);
+
+
+    void
+	sendSysex(
+		byte command,
+		byte bytec,
+		byte *bytev
+	);
+
+
+    void
+	write(
+		byte c
+	);
+
+
+    //attach & detach callback functions to messages
+    void
+	attach(
+		byte command,
+		callbackFunction newFunction
+	);
+
+
+    void
+	attach(
+		byte command,
+		systemResetCallbackFunction newFunction
+	);
+
+
+    void
+	attach(
+		byte command,
+		stringCallbackFunction newFunction
+	);
+
+
+    void
+	attach(
+		byte command,
+		sysexCallbackFunction newFunction
+	);
+
+
+    void
+	detach(
+		byte command
+	);
+
+
+    // utility methods
+    void
+	sendValueAsTwo7bitBytes(
+		int value
+	);
+
+
+    void
+	startSysex(
+		void
+	);
+
+
+    void
+	endSysex(
+		void
+	);
 
   private:
     Wiring::Serial::ISerial ^FirmataStream;
-    /* firmware name and version */
+
+    // firmware name and version
     byte firmwareVersionCount;
     byte *firmwareVersionVector;
-    /* input message handling */
+
+    // input message handling
     byte waitForData; // this flag says the next serial input will be data
     byte executeMultiByteCommand; // execute this after getting multi-byte data
     byte multiByteChannel; // channel data for multiByteCommands
     byte storedInputData[MAX_DATA_BYTES]; // multi-byte data
-    /* sysex */
+
+    // sysex
     bool parsingSysex;
     int sysexBytesRead;
-    /* callback functions */
+
+    // callback functions
     callbackFunction currentAnalogCallback;
     callbackFunction currentDigitalCallback;
     callbackFunction currentReportAnalogCallback;
