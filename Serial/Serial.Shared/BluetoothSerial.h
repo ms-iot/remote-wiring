@@ -7,12 +7,14 @@
 namespace Wiring {
 namespace Serial {
 	public delegate void ConnectionEstablishedCallback();
+	public delegate void ConnectionFailedCallback();
 	public delegate void ConnectionLostCallback();
 
 public ref class BluetoothSerial sealed : public ISerial
 {
 public:
 	event ConnectionEstablishedCallback^ ConnectionEstablished;
+	event ConnectionFailedCallback^ ConnectionFailed;
 	event ConnectionLostCallback^ ConnectionLost;
 
     BluetoothSerial();

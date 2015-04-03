@@ -163,7 +163,7 @@ BluetoothSerial::read(
     }
 
     // Prefetch buffer
-	if( connectionReady() && 
+	if ( connectionReady() &&
 		_synchronous_mode &&
 		!_rx->UnconsumedBufferLength &&
 		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
@@ -217,44 +217,51 @@ bool synchronous_mode_
 	// Ensure known good state
 	end();
 
-	// Identify all paired serial devices
-	Concurrency::create_task( listAvailableDevicesAsync() )
-		.then( [this]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices_ )
+	try
 	{
-		// Ensure at least one device satisfies query
-		if( !devices_->Size ) { return; }
-
-		Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( devices_->GetAt( 0 )->Id ) )
-			.then( [this]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
+		// Identify all paired serial devices
+		Concurrency::create_task(listAvailableDevicesAsync())
+			.then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^devices_)
 		{
-			_device_service = device_service_;
-			_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
+			// Ensure at least one device satisfies query
+			if (!devices_->Size) { return; }
 
-			// Connect the socket
-			Concurrency::create_task( _stream_socket->ConnectAsync(
-				_device_service->ConnectionHostName,
-				_device_service->ConnectionServiceName,
-				Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
-				.then( [this]()
+			Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(devices_->GetAt(0)->Id))
+				.then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_)
 			{
-				_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
-				if( _synchronous_mode )
+				_device_service = device_service_;
+				_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
+
+				// Connect the socket
+				Concurrency::create_task(_stream_socket->ConnectAsync(
+					_device_service->ConnectionHostName,
+					_device_service->ConnectionServiceName,
+					Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
+					.then([this]()
 				{
-					//partial mode will allow for better async reads
-					_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-					currentLoadOperation = _rx->LoadAsync( 100 );
-					currentWriteOperation = nullptr;
-				}
+					_rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
+					if (_synchronous_mode)
+					{
+						//partial mode will allow for better async reads
+						_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
+						currentLoadOperation = _rx->LoadAsync(100);
+						currentWriteOperation = nullptr;
+					}
 
-				_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
+					_tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
 
-				// Set connection ready flag
-				InterlockedOr( &_connection_ready, true );
+					// Set connection ready flag
+					InterlockedOr(&_connection_ready, true);
 
-				ConnectionEstablished();
-			} );
-		} );
-	} );
+					ConnectionEstablished();
+				});
+			});
+		});
+	}
+	catch( Platform::Exception ^e )
+	{
+		ConnectionFailed();
+	}
 
 	return;
 }
