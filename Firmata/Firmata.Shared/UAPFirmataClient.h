@@ -15,23 +15,26 @@ namespace Firmata {
 
 ref class UAPFirmataClient;
 
-public ref class CallbackEventArgs sealed {
-  public:
-    CallbackEventArgs(
-        byte status_,
-        uint16_t value_
-    ) :
-        _status(status_),
-        _value(value_)
-    {}
 
-    inline byte getStatus(void) { return _status; }
-    
-    inline uint16_t getValue(void) { return _value; }
+public ref class CallbackEventArgs sealed
+{
+public:
+	CallbackEventArgs(
+		uint8_t port_,
+		uint16_t value_
+	) :
+		_port( port_ ),
+		_value( value_ )
+	{
+	}
 
-  private:
-    byte _status;
-    uint16_t _value;
+	inline uint8_t getPort( void ) { return _port; }
+
+	inline uint16_t getValue( void ) { return _value; }
+
+private:
+	uint8_t _port;
+	uint16_t _value;
 };
 
 public ref class StringCallbackEventArgs sealed {
@@ -48,23 +51,26 @@ public ref class StringCallbackEventArgs sealed {
     String ^_string;
 };
 
-public ref class SysexCallbackEventArgs sealed {
-  public:
-    SysexCallbackEventArgs(
-        byte command_,
-        String ^sysex_string_
-    ) :
-    _command(command_),
-    _sysex_string(sysex_string_)
-    {}
+public ref class SysexCallbackEventArgs sealed
+{
+public:
+	SysexCallbackEventArgs(
+		uint8_t command_,
+		String ^sysex_string_
+		) :
+		_command( command_ ),
+		_sysex_string( sysex_string_ )
+	{
+	}
 
-    inline byte getCommand(void) { return _command; }
+	inline uint8_t getCommand( void ) { return _command; }
 
-    inline String ^ getSysexString(void) { return _sysex_string; }
+	inline String ^ getSysexString( void ) { return _sysex_string; }
 
-  private:
-    byte _command;
-    String ^_sysex_string;
+private:
+	uint8_t _command;
+	String ^_sysex_string;
+
 };
 
 public ref class SystemResetCallbackEventArgs sealed {
@@ -73,7 +79,7 @@ public ref class SystemResetCallbackEventArgs sealed {
   private:
 };
 
-public enum class FirmataCommand {
+public enum class Command {
     ANALOG_MESSAGE = 0xE0,
     DIGITAL_MESSAGE = 0x90,
     REPORT_ANALOG_PIN = 0xC0,
@@ -85,7 +91,7 @@ public enum class FirmataCommand {
     SYSTEM_RESET = 0xFF,
 };
 
-public enum class FirmataSysexCommand {
+public enum class SysexCommand {
     ENCODER_DATA = 0x61,
     SERVO_CONFIG = 0x70,
     STRING_DATA = 0x71,
@@ -109,46 +115,32 @@ public enum class FirmataSysexCommand {
     SYSEX_REALTIME = 0x7F,
 };
 
-public enum class FirmataPinMode {
-    INPUT = 0x00,
-    OUTPUT = 0x01,
-    ANALOG = 0x02,
-    PWM = 0x03,
-    SERVO = 0x04,
-    SHIFT = 0x05,
-    I2C = 0x06,
-    ONEWIRE = 0x07,
-    STEPPER = 0x08,
-    ENCODER = 0x09,
-    IGNORE = 0x7F,
-    TOTAL_PIN_MODES = 0x0B,
-};
 
-public delegate void CallbackFunction(UAPFirmataClient ^caller, CallbackEventArgs ^argv);
+public delegate void CallbackFunction( UAPFirmataClient ^caller, CallbackEventArgs ^argv );
 public delegate void StringCallbackFunction(UAPFirmataClient ^caller, StringCallbackEventArgs ^argv);
 public delegate void SysexCallbackFunction(UAPFirmataClient ^caller, SysexCallbackEventArgs ^argv);
-public delegate void SystemResetCallbackFunction(UAPFirmataClient ^caller, SystemResetCallbackEventArgs ^argv);
+public delegate void SystemResetCallbackFunction( UAPFirmataClient ^caller, SystemResetCallbackEventArgs ^argv );
 
 public ref class UAPFirmataClient sealed
 {
-  public:
-    event CallbackFunction^ CallbackEvent;
-    event StringCallbackFunction^ StringCallbackEvent;
-    event SysexCallbackFunction^ SysexCallbackEvent;
-    event SystemResetCallbackFunction^ SystemResetCallbackEvent;
+public:
+	event CallbackFunction^ DigitalCallbackEvent;
+	event CallbackFunction^ AnalogCallbackEvent;
+	event StringCallbackFunction^ StringCallbackEvent;
+	event SysexCallbackFunction^ SysexCallbackEvent;
+	event SystemResetCallbackFunction^ SystemResetCallbackEvent;
 
-    UAPFirmataClient();
+	UAPFirmataClient();
 
-    void
-    begin(
-        uint32_t speed
-    );
+	void
+	begin(
+		Serial::ISerial ^s
+	);
 
-    [Windows::Foundation::Metadata::DefaultOverload]
-    void
-    begin(
-        Serial::ISerial ^s
-    );
+	void
+	finish(
+		void
+	);
 
     void
     printVersion(
@@ -162,9 +154,9 @@ public ref class UAPFirmataClient sealed
 
     void
     setFirmwareNameAndVersion(
-        String ^name,
-        byte major,
-        byte minor
+		String ^name,
+		uint8_t major,
+		uint8_t minor
     );
 
     int
@@ -179,15 +171,21 @@ public ref class UAPFirmataClient sealed
 
     void
     sendAnalog(
-        byte pin,
-        int value
+		uint8_t pin,
+		int value
     );
 
     void
     sendDigitalPort(
-        byte portNumber,
-        int portData
+		uint8_t portNumber,
+		int portData
     );
+
+	void
+	setDigitalReadEnabled(
+		uint8_t portNumber,
+		int portData
+	);
 
     void
     sendString(
@@ -196,27 +194,47 @@ public ref class UAPFirmataClient sealed
 
     void
     sendString(
-        byte command,
+		uint8_t command,
         String ^string
     );
 
     void
     sendSysex(
-        byte command,
-        byte bytec,
-        String ^bytev
+		uint8_t command,
+		uint8_t bytec,
+		String ^bytev
     );
 
     void
     write(
-        byte c
-    );
+		uint8_t c
+	);
+
+
+	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	static inline
+	void
+	digitalInvoke(
+		UAPFirmataClient ^caller,
+		uint8_t port_,
+		int value_
+	) {
+		caller->DigitalCallbackEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
+	}
+
+	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	static inline
+	void
+	analogInvoke(
+		UAPFirmataClient ^caller,
+		uint8_t pin_,
+		int value_
+	) {
+		caller->AnalogCallbackEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
+	}
+
 
   private:
-    CallbackFunction^ _callback_function;
-    StringCallbackFunction^ _string_callback_function;
-    SysexCallbackFunction^ _sysex_callback_function;
-    SystemResetCallbackFunction^ _system_reset_callback_function;
 };
 
 }
