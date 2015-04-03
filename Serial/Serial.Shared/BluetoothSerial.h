@@ -6,10 +6,15 @@
 
 namespace Wiring {
 namespace Serial {
+	public delegate void ConnectionEstablishedCallback();
+	public delegate void ConnectionLostCallback();
 
 public ref class BluetoothSerial sealed : public ISerial
 {
 public:
+	event ConnectionEstablishedCallback^ ConnectionEstablished;
+	event ConnectionLostCallback^ ConnectionLost;
+
     BluetoothSerial();
 
     virtual
@@ -43,24 +48,14 @@ public:
         uint8_t c_
     );
 
-    void
+	void
     beginAsync (
         void
     );
 
-    bool
+	bool
     connectionReady(
         void
-    );
-
-    Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-    listAvailableDevicesAsync(
-        void
-    );
-
-    Windows::Storage::Streams::DataReaderLoadOperation ^
-    loadAsync(
-        unsigned int count_
     );
 
 private:
@@ -69,7 +64,9 @@ private:
     Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId ^_service_id;
     Windows::Devices::Bluetooth::Rfcomm::RfcommServiceProvider ^_service_provider;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
-    Windows::Storage::Streams::DataWriter ^_tx;
+	Windows::Storage::Streams::DataWriter ^_tx;
+	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
+	Windows::Storage::Streams::DataReaderLoadOperation ^currentWriteOperation;
 
     LONG volatile _connection_ready;
     bool _synchronous_mode;
@@ -77,7 +74,17 @@ private:
     void
     begin (
         bool synchronous_mode_
-    );
+		);
+
+	Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+		listAvailableDevicesAsync(
+		void
+		);
+
+	Windows::Storage::Streams::DataReaderLoadOperation ^
+		loadAsync(
+		unsigned int count_
+		);
 };
 
 }

@@ -70,8 +70,13 @@ namespace {
     }
 }  // namespace
 
-BluetoothSerial::BluetoothSerial
-(
+
+
+//******************************************************************************
+//* Constructors
+//******************************************************************************
+
+BluetoothSerial::BluetoothSerial(
     void
 ) :
     _connection_ready(0),
@@ -83,6 +88,10 @@ BluetoothSerial::BluetoothSerial
     _tx(nullptr)
 {
 }
+
+//******************************************************************************
+//* Public Methods
+//******************************************************************************
 
 uint16_t
 BluetoothSerial::available(
@@ -107,55 +116,15 @@ BluetoothSerial::begin(
     begin(true);
 }
 
-void
-BluetoothSerial::begin(
-    bool synchronous_mode_
-) {
-    _synchronous_mode = synchronous_mode_;
-
-    // Ensure known good state
-    end();
-
-    // Identify all paired serial devices
-    Concurrency::create_task(listAvailableDevicesAsync())
-    .then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^devices_){
-        // Ensure at least one device satisfies query
-        if ( !devices_->Size ) { return; }
-
-        Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(devices_->GetAt(0)->Id))
-        .then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_){
-            _device_service = device_service_;
-            _stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
-
-            // Connect the socket
-            Concurrency::create_task(_stream_socket->ConnectAsync(
-                _device_service->ConnectionHostName,
-                _device_service->ConnectionServiceName,
-                Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
-            .then([this](){
-                _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
-                if ( _synchronous_mode ) {
-                    _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::ReadAhead;
-                    _rx->LoadAsync(1);
-                }
-
-                _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
-
-                // Set connection ready flag
-                InterlockedOr(&_connection_ready, true);
-            });
-        });
-    });
-
-    return;
-}
 
 void
 BluetoothSerial::beginAsync(
     void
-) {
+	)
+{
     begin(false);
 }
+
 
 bool
 BluetoothSerial::connectionReady(
@@ -163,6 +132,7 @@ void
 ) {
     return static_cast<bool>(InterlockedAnd(&_connection_ready, true));
 }
+
 
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
 void
@@ -181,24 +151,6 @@ BluetoothSerial::end(
     _service_provider = nullptr;
 }
 
-Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-BluetoothSerial::listAvailableDevicesAsync(
-void
-) {
-    // Construct AQS String from service id of desired device
-    Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector(Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort);
-
-    // Identify all paired devices satisfying query
-    return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
-}
-
-Windows::Storage::Streams::DataReaderLoadOperation ^
-BluetoothSerial::loadAsync(
-    unsigned int count_
-) {
-    //TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
-    return _rx->LoadAsync(count_);
-}
 
 uint16_t
 BluetoothSerial::read(
@@ -211,7 +163,21 @@ BluetoothSerial::read(
     }
 
     // Prefetch buffer
-    if ( _synchronous_mode && !_rx->UnconsumedBufferLength ) { _rx->LoadAsync(1); }
+	if( connectionReady() && 
+		_synchronous_mode &&
+		!_rx->UnconsumedBufferLength &&
+		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
+	{
+		//attempt to detect disconnection
+		if( currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error )
+		{
+			InterlockedAnd( &_connection_ready, false );
+			ConnectionLost();
+			return -1;
+		}
+		currentLoadOperation->Close();
+		currentLoadOperation = _rx->LoadAsync( 100 );
+	}
 
     return c;
 }
@@ -223,7 +189,95 @@ BluetoothSerial::write(
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
 
+	if( ( currentWriteOperation != nullptr ) && currentWriteOperation->Status == Windows::Foundation::AsyncStatus::Error )
+	{
+		InterlockedAnd( &_connection_ready, false );
+		ConnectionLost();
+		return 0;
+	}
+
     _tx->WriteByte(c_);
     _tx->StoreAsync();
     return 1;
+}
+
+
+//******************************************************************************
+//* Private Methods
+//******************************************************************************
+
+
+void
+BluetoothSerial::begin(
+bool synchronous_mode_
+)
+{
+	_synchronous_mode = synchronous_mode_;
+
+	// Ensure known good state
+	end();
+
+	// Identify all paired serial devices
+	Concurrency::create_task( listAvailableDevicesAsync() )
+		.then( [this]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices_ )
+	{
+		// Ensure at least one device satisfies query
+		if( !devices_->Size ) { return; }
+
+		Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( devices_->GetAt( 0 )->Id ) )
+			.then( [this]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
+		{
+			_device_service = device_service_;
+			_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
+
+			// Connect the socket
+			Concurrency::create_task( _stream_socket->ConnectAsync(
+				_device_service->ConnectionHostName,
+				_device_service->ConnectionServiceName,
+				Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
+				.then( [this]()
+			{
+				_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
+				if( _synchronous_mode )
+				{
+					//partial mode will allow for better async reads
+					_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
+					currentLoadOperation = _rx->LoadAsync( 100 );
+					currentWriteOperation = nullptr;
+				}
+
+				_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
+
+				// Set connection ready flag
+				InterlockedOr( &_connection_ready, true );
+
+				ConnectionEstablished();
+			} );
+		} );
+	} );
+
+	return;
+}
+
+
+Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+BluetoothSerial::listAvailableDevicesAsync(
+void
+)
+{
+	// Construct AQS String from service id of desired device
+	Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector( Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort );
+
+	// Identify all paired devices satisfying query
+	return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync( device_aqs );
+}
+
+
+Windows::Storage::Streams::DataReaderLoadOperation ^
+BluetoothSerial::loadAsync(
+unsigned int count_
+)
+{
+	//TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
+	return _rx->LoadAsync( count_ );
 }
