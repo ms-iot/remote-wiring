@@ -216,12 +216,20 @@ public:
         String ^string
     );
 
-    void
-    sendSysex(
-		uint8_t command,
-		uint8_t bytec,
-		String ^bytev
-    );
+	void
+	beginSysex(
+		uint8_t command_
+	);
+
+	void
+	appendSysex(
+		uint8_t byte_
+	);
+
+	void
+	endSysex(
+		void
+	);
 
     void
     write(
@@ -259,7 +267,8 @@ public:
 		UAPFirmataClient ^caller,
 		uint8_t port_,
 		int value_
-	) {
+	)
+	{
 		caller->DigitalCallbackEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
 	}
 
@@ -270,7 +279,8 @@ public:
 		UAPFirmataClient ^caller,
 		uint8_t pin_,
 		int value_
-	) {
+	)
+	{
 		caller->AnalogCallbackEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
 	}
 
@@ -282,7 +292,8 @@ public:
 		uint8_t command_,
 		uint8_t argc_,
 		uint8_t *argv_
-	) {
+	)
+	{
 		/*
 		 * we need to convert to wchar string, but the data will be replied as 2 7-bit bytes for every actual byte. So we're going to reuse the same memory
 		 * space, since we can combine the two bytes back together and zero out the MSB. additionally, cannot use std string conversion functions here because some bytes may be 0.
@@ -310,6 +321,12 @@ public:
 	}
 
   private:
+	//sysex-building
+	  uint8_t _sysCommand;
+	  uint8_t *_sysBuffer;
+	  uint8_t _sysPosition;
+	  const size_t MAX_SYSEX_LEN = 16;
+
 	void
 	sendI2cSysex(
 		const uint8_t address_,

@@ -64,9 +64,9 @@ public:
 	}
 
 	/*
-		* a read function which allows for the option of continous reads.
-		* if continuous reads are desired, a register must be provided.
-		*/
+	 * a read function which allows for the option of continous reads.
+	 * if continuous reads are desired, a register must be provided.
+	 */
 	void
 	read(
 		uint8_t address_,

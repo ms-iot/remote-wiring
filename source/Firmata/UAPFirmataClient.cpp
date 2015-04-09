@@ -23,6 +23,10 @@ UAPFirmataClient::UAPFirmataClient(
 	void
 	)
 {
+	_sysCommand = 0;
+	_sysBuffer = (byte*)malloc(16);
+	_sysPosition = 0;
+
 	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::digitalInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::analogInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UAPFirmataClient::sysexInvoke, this, _1, _2, _3 ) ) );
@@ -155,18 +159,40 @@ UAPFirmataClient::sendString(
 
 
 void
-UAPFirmataClient::sendSysex(
-	uint8_t command_,
-	uint8_t bytec_,
-    String ^bytev_
+UAPFirmataClient::beginSysex(
+	uint8_t command_
 	)
 {
-    std::wstring bytevW = bytev_->ToString()->Begin();
-    std::string bytevA(bytevW.begin(), bytevW.end());
-    uint8_t *bytev = reinterpret_cast<uint8_t *>(const_cast<char *>(bytevA.c_str()));
-    return ::RawFirmata.sendSysex(command_, bytec_, bytev);
+	_sysCommand = command_;
 }
 
+
+void
+UAPFirmataClient::appendSysex(
+	uint8_t byte_
+	)
+{
+	if ( _sysCommand && ( _sysPosition < MAX_SYSEX_LEN ) )
+	{
+		_sysBuffer[_sysPosition] = byte_;
+		++_sysPosition;
+	}
+}
+
+
+void
+UAPFirmataClient::endSysex(
+	void
+	)
+{
+	if (_sysCommand)
+	{
+		::RawFirmata.sendSysex(_sysCommand, _sysPosition, _sysBuffer);
+	}
+	_sysCommand = 0;
+	_sysPosition = 0;
+}
+	
 
 void
 UAPFirmataClient::write(
