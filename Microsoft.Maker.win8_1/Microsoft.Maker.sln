@@ -1,0 +1,146 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.Serial", "Microsoft.Maker.Serial", "{DF164236-82E3-4B94-A35E-20C15D977711}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Shared", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems", "{E6EEFBC1-44D0-428B-B071-D70BAFAADC93}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Windows", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj", "{02438027-2444-49CB-87BF-AC4D4DF8EF0F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.WindowsPhone", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj", "{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.Firmata", "Microsoft.Maker.Firmata", "{2E147377-A641-4AD8-BA34-1A9F3A3227E3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Firmata.Shared", "Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems", "{34BC66C7-CDFF-4F9B-87A2-4789BD159016}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Firmata.Windows", "Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Windows\Microsoft.Maker.Firmata.Windows.vcxproj", "{8C570513-5FB3-4586-A757-B910E56B66A9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F} = {02438027-2444-49CB-87BF-AC4D4DF8EF0F}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Firmata.WindowsPhone", "Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.WindowsPhone\Microsoft.Maker.Firmata.WindowsPhone.vcxproj", "{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F} = {E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.RemoteWiring", "Microsoft.Maker.RemoteWiring", "{6269660E-C568-4FE2-8B78-B2C350094F61}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.RemoteWiring.Shared", "Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems", "{D161CBE5-D85B-4062-A9B0-AF19940ABCFE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.RemoteWiring.Windows", "Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Windows\Microsoft.Maker.RemoteWiring.Windows.vcxproj", "{67ADAC13-BA28-4CB1-A706-17B0301171F1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8C570513-5FB3-4586-A757-B910E56B66A9} = {8C570513-5FB3-4586-A757-B910E56B66A9}
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F} = {02438027-2444-49CB-87BF-AC4D4DF8EF0F}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.RemoteWiring.WindowsPhone", "Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.WindowsPhone\Microsoft.Maker.RemoteWiring.WindowsPhone.vcxproj", "{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF} = {83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F} = {E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{02438027-2444-49cb-87bf-ac4d4df8ef0f}*SharedItemsImports = 4
+		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e26ce8ba-b9dc-45f6-8d7d-d019a42ade3f}*SharedItemsImports = 4
+		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{83a94c48-af35-4fd9-b6c2-b0c12254abff}*SharedItemsImports = 4
+		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{d161cbe5-d85b-4062-a9b0-af19940abcfe}*SharedItemsImports = 9
+		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{34bc66c7-cdff-4f9b-87a2-4789bd159016}*SharedItemsImports = 9
+		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{67adac13-ba28-4cb1-a706-17b0301171f1}*SharedItemsImports = 4
+		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{2b16a0fe-ea4f-411d-b25e-2ff9605c875b}*SharedItemsImports = 4
+		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{8c570513-5fb3-4586-a757-b910e56b66a9}*SharedItemsImports = 4
+		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e6eefbc1-44d0-428b-b071-d70bafaadc93}*SharedItemsImports = 9
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|ARM = Release|ARM
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|ARM.ActiveCfg = Debug|ARM
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|ARM.Build.0 = Debug|ARM
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|Win32.Build.0 = Debug|Win32
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|x64.ActiveCfg = Debug|x64
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Debug|x64.Build.0 = Debug|x64
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|ARM.ActiveCfg = Release|ARM
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|ARM.Build.0 = Release|ARM
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|Win32.ActiveCfg = Release|Win32
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|Win32.Build.0 = Release|Win32
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|x64.ActiveCfg = Release|x64
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F}.Release|x64.Build.0 = Release|x64
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Debug|ARM.ActiveCfg = Debug|ARM
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Debug|ARM.Build.0 = Debug|ARM
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Debug|Win32.Build.0 = Debug|Win32
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Debug|x64.ActiveCfg = Debug|Win32
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Release|ARM.ActiveCfg = Release|ARM
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Release|ARM.Build.0 = Release|ARM
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Release|Win32.ActiveCfg = Release|Win32
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Release|Win32.Build.0 = Release|Win32
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}.Release|x64.ActiveCfg = Release|Win32
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|ARM.ActiveCfg = Debug|ARM
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|ARM.Build.0 = Debug|ARM
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|Win32.Build.0 = Debug|Win32
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|x64.ActiveCfg = Debug|x64
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Debug|x64.Build.0 = Debug|x64
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|ARM.ActiveCfg = Release|ARM
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|ARM.Build.0 = Release|ARM
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|Win32.ActiveCfg = Release|Win32
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|Win32.Build.0 = Release|Win32
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|x64.ActiveCfg = Release|x64
+		{8C570513-5FB3-4586-A757-B910E56B66A9}.Release|x64.Build.0 = Release|x64
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Debug|ARM.ActiveCfg = Debug|ARM
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Debug|ARM.Build.0 = Debug|ARM
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Debug|Win32.Build.0 = Debug|Win32
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Debug|x64.ActiveCfg = Debug|Win32
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Release|ARM.ActiveCfg = Release|ARM
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Release|ARM.Build.0 = Release|ARM
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Release|Win32.ActiveCfg = Release|Win32
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Release|Win32.Build.0 = Release|Win32
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF}.Release|x64.ActiveCfg = Release|Win32
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|ARM.ActiveCfg = Debug|ARM
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|ARM.Build.0 = Debug|ARM
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|Win32.Build.0 = Debug|Win32
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|x64.ActiveCfg = Debug|x64
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Debug|x64.Build.0 = Debug|x64
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|ARM.ActiveCfg = Release|ARM
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|ARM.Build.0 = Release|ARM
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|Win32.ActiveCfg = Release|Win32
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|Win32.Build.0 = Release|Win32
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|x64.ActiveCfg = Release|x64
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1}.Release|x64.Build.0 = Release|x64
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Debug|ARM.ActiveCfg = Debug|ARM
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Debug|ARM.Build.0 = Debug|ARM
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Debug|Win32.Build.0 = Debug|Win32
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Debug|x64.ActiveCfg = Debug|Win32
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Release|ARM.ActiveCfg = Release|ARM
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Release|ARM.Build.0 = Release|ARM
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Release|Win32.ActiveCfg = Release|Win32
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Release|Win32.Build.0 = Release|Win32
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B}.Release|x64.ActiveCfg = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E6EEFBC1-44D0-428B-B071-D70BAFAADC93} = {DF164236-82E3-4B94-A35E-20C15D977711}
+		{02438027-2444-49CB-87BF-AC4D4DF8EF0F} = {DF164236-82E3-4B94-A35E-20C15D977711}
+		{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F} = {DF164236-82E3-4B94-A35E-20C15D977711}
+		{34BC66C7-CDFF-4F9B-87A2-4789BD159016} = {2E147377-A641-4AD8-BA34-1A9F3A3227E3}
+		{8C570513-5FB3-4586-A757-B910E56B66A9} = {2E147377-A641-4AD8-BA34-1A9F3A3227E3}
+		{83A94C48-AF35-4FD9-B6C2-B0C12254ABFF} = {2E147377-A641-4AD8-BA34-1A9F3A3227E3}
+		{D161CBE5-D85B-4062-A9B0-AF19940ABCFE} = {6269660E-C568-4FE2-8B78-B2C350094F61}
+		{67ADAC13-BA28-4CB1-A706-17B0301171F1} = {6269660E-C568-4FE2-8B78-B2C350094F61}
+		{2B16A0FE-EA4F-411D-B25E-2FF9605C875B} = {6269660E-C568-4FE2-8B78-B2C350094F61}
+	EndGlobalSection
+EndGlobal

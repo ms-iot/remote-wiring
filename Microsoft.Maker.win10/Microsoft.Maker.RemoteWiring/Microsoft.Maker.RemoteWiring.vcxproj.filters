@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>a9c8b462-a485-4c57-9905-93ff33e41bcf</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\..\source\RemoteWiring\RemoteDevice.cpp" />
+    <ClCompile Include="..\..\source\RemoteWiring\TwoWire.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\..\source\RemoteWiring\RemoteDevice.h" />
+    <ClInclude Include="..\..\source\RemoteWiring\TwoWire.h" />
+  </ItemGroup>
+</Project>
