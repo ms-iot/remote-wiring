@@ -2,3 +2,4 @@
 Debug/
 ipch/
 Release/
+*.opensdf

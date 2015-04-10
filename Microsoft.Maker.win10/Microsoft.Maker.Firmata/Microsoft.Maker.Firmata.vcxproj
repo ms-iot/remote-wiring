@@ -228,10 +228,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Maker.Serial">
-      <HintPath>..\Debug\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
+    <ProjectReference Include="..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.vcxproj">
+      <Project>{8376216c-282a-4927-b9ef-c2d545fe0bca}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

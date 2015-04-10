@@ -216,18 +216,21 @@ bool synchronous_mode_
 
 	// Ensure known good state
 	end();
+}
 
+
+
+void
+BluetoothSerial::connect(
+	Windows::Devices::Enumeration::DeviceInformation ^device_
+	)
+{
 	try
 	{
-		// Identify all paired serial devices
-		Concurrency::create_task(listAvailableDevicesAsync())
-			.then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^devices_)
+		Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
+			.then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_)
 		{
-			// Ensure at least one device satisfies query
-			if (!devices_->Size) { return; }
-
-			Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(devices_->GetAt(0)->Id))
-				.then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_)
+			try
 			{
 				_device_service = device_service_;
 				_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
@@ -255,15 +258,17 @@ bool synchronous_mode_
 
 					ConnectionEstablished();
 				});
-			});
+			}
+			catch (Platform::Exception ^e)
+			{
+				ConnectionFailed();
+			}
 		});
 	}
-	catch( Platform::Exception ^e )
+	catch (Platform::Exception ^e)
 	{
 		ConnectionFailed();
 	}
-
-	return;
 }
 
 

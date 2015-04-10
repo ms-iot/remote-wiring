@@ -228,14 +228,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Maker.Firmata">
-      <HintPath>..\Debug\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="Microsoft.Maker.Serial">
-      <HintPath>..\Debug\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
+    <ProjectReference Include="..\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.vcxproj">
+      <Project>{f0a53bc9-c617-47dd-8b68-f91e3502d633}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.vcxproj">
+      <Project>{8376216c-282a-4927-b9ef-c2d545fe0bca}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

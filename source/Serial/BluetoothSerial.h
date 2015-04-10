@@ -62,6 +62,16 @@ public:
         void
     );
 
+	Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+	listAvailableDevicesAsync(
+		void
+	);
+
+	void
+	connect(
+		Windows::Devices::Enumeration::DeviceInformation ^device_
+	);
+
 private:
     Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
     Windows::Storage::Streams::DataReader ^_rx;
@@ -78,11 +88,6 @@ private:
     void
     begin (
         bool synchronous_mode_
-		);
-
-	Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-		listAvailableDevicesAsync(
-		void
 		);
 
 	Windows::Storage::Streams::DataReaderLoadOperation ^
