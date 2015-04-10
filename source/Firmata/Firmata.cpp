@@ -324,7 +324,7 @@ FirmataClass::processInput(
 			systemReset();
 			break;
 		case REPORT_VERSION:
-			printVersion();
+			//do nothing
 			break;
 		}
 	}
