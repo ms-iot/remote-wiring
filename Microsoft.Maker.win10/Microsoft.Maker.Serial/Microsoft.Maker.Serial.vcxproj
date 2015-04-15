@@ -212,7 +212,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\Serial\BluetoothSerial.h" />
-    <ClInclude Include="..\..\source\Serial\ISerial.h" />
+    <ClInclude Include="..\..\source\Serial\IArduinoStream.h" />
     <ClInclude Include="..\..\source\Serial\USBSerial.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

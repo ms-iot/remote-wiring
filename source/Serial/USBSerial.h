@@ -1,21 +1,24 @@
 ﻿#pragma once
 
-#include "ISerial.h"
+#include "IArduinoStream.h"
 
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
 
-public ref class UsbSerial sealed : public ISerial
+public ref class UsbSerial sealed : public IArduinoStream
 {
 public:
-    UsbSerial();
+	event RemoteWiringConnectionCallback^ ConnectionEstablished;
+	event RemoteWiringConnectionCallback^ ConnectionFailed;
+	event RemoteWiringConnectionCallback^ ConnectionLost;
 
     virtual
     uint16_t
     available (
         void
     );
+    UsbSerial();
 
     virtual
     void
@@ -66,6 +69,8 @@ private:
     Windows::Devices::SerialCommunication::SerialDevice ^_usb_device;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
+	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
+	Windows::Storage::Streams::DataWriterStoreOperation ^currentStoreOperation;
 
 	uint32_t _baud;
 	SerialConfig _config;

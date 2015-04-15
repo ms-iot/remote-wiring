@@ -110,7 +110,7 @@ BluetoothSerial::begin(
     uint32_t baud_,
 	SerialConfig config_
 ) {
-    // Discard incoming parameters inherited from ISerial interface.
+    // Discard incoming parameters inherited from IArduinoStream interface.
     UNREFERENCED_PARAMETER(baud_);
     UNREFERENCED_PARAMETER(config_);
     begin(true);
@@ -189,7 +189,7 @@ BluetoothSerial::write(
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
 
-	if( ( currentWriteOperation != nullptr ) && currentWriteOperation->Status == Windows::Foundation::AsyncStatus::Error )
+	if( ( currentStoreOperation != nullptr ) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error )
 	{
 		InterlockedAnd( &_connection_ready, false );
 		ConnectionLost();
@@ -197,7 +197,7 @@ BluetoothSerial::write(
 	}
 
     _tx->WriteByte(c_);
-    _tx->StoreAsync();
+	currentStoreOperation = _tx->StoreAsync();
     return 1;
 }
 
@@ -248,7 +248,7 @@ BluetoothSerial::connect(
 						//partial mode will allow for better async reads
 						_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
 						currentLoadOperation = _rx->LoadAsync(100);
-						currentWriteOperation = nullptr;
+						currentStoreOperation = nullptr;
 					}
 
 					_tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);

@@ -34,7 +34,9 @@ public enum class SerialConfig {
 	SERIAL_CONFIG_COUNT,
 };
 
-public interface struct ISerial
+public delegate void RemoteWiringConnectionCallback();
+
+public interface struct IArduinoStream
 {
     virtual
     uint16_t

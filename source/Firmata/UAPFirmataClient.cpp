@@ -39,7 +39,7 @@ UAPFirmataClient::UAPFirmataClient(
 
 void
 UAPFirmataClient::begin(
-    ISerial ^s_
+    IArduinoStream ^s_
 	)
 {
     return ::RawFirmata.begin(s_);

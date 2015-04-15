@@ -1,23 +1,17 @@
 ﻿#pragma once
 
-#include "ISerial.h"
-
-#include <cstdint>
+#include "IArduinoStream.h"
 
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
 
-public delegate void ConnectionEstablishedCallback();
-public delegate void ConnectionFailedCallback();
-public delegate void ConnectionLostCallback();
-
-public ref class BluetoothSerial sealed : public ISerial
+public ref class BluetoothSerial sealed : public IArduinoStream
 {
 public:
-	event ConnectionEstablishedCallback^ ConnectionEstablished;
-	event ConnectionFailedCallback^ ConnectionFailed;
-	event ConnectionLostCallback^ ConnectionLost;
+	event RemoteWiringConnectionCallback^ ConnectionEstablished;
+	event RemoteWiringConnectionCallback^ ConnectionFailed;
+	event RemoteWiringConnectionCallback^ ConnectionLost;
 
     BluetoothSerial();
 
@@ -74,13 +68,13 @@ public:
 
 private:
     Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
-    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId ^_service_id;
     Windows::Devices::Bluetooth::Rfcomm::RfcommServiceProvider ^_service_provider;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
+	Windows::Storage::Streams::DataReader ^_rx;
 	Windows::Storage::Streams::DataWriter ^_tx;
 	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
-	Windows::Storage::Streams::DataReaderLoadOperation ^currentWriteOperation;
+	Windows::Storage::Streams::DataWriterStoreOperation ^currentStoreOperation;
 
     LONG volatile _connection_ready;
     bool _synchronous_mode;

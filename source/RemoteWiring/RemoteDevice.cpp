@@ -12,7 +12,7 @@ using namespace Microsoft::Maker::RemoteWiring;
 //******************************************************************************
 
 RemoteDevice::RemoteDevice(
-	Serial::ISerial ^serial_connection_
+	Serial::IArduinoStream ^serial_connection_
 	) :
 	_firmata( ref new Firmata::UAPFirmataClient ),
 	_twoWire( nullptr )

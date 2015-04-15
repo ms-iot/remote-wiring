@@ -54,155 +54,164 @@ UsbSerial::begin(
     // Ensure known good state
     end();
 
-    // Identify all paired serial devices
-    Concurrency::create_task(listAvailableDevicesAsync())
-    .then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^usb_devices_){
-        // Ensure at least one device satisfies query
-        if ( !usb_devices_->Size ) { return; }
+	try
+	{
+		// Identify all paired serial devices
+		Concurrency::create_task(listAvailableDevicesAsync())
+			.then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^usb_devices_) {
+			// Ensure at least one device satisfies query
+			if (!usb_devices_->Size) { return; }
 
-		for (unsigned int i = 0; i < usb_devices_->Size; ++i) {
-			if (std::string::npos == std::wstring(usb_devices_->GetAt(i)->Name->Data()).find(L"VID_2341") && std::string::npos == std::wstring(usb_devices_->GetAt(i)->Id->Data()).find(L"VID_2341")) { continue; }
+			for (unsigned int i = 0; i < usb_devices_->Size; ++i) {
+				if (std::string::npos == std::wstring(usb_devices_->GetAt(i)->Name->Data()).find(L"VID_2341") && std::string::npos == std::wstring(usb_devices_->GetAt(i)->Id->Data()).find(L"VID_2341")) { continue; }
 
-			Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(usb_devices_->GetAt(i)->Id))
-			.then([this](Windows::Devices::SerialCommunication::SerialDevice ^usb_device_) {
-				_usb_device = usb_device_;
-				_usb_device->BaudRate = _baud;
-				switch ( _config ) {
-				  case SerialConfig::SERIAL_5E1:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_5E2:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_5N1:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_5N2:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_5O1:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_5O2:
-					_usb_device->DataBits = 5;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_6E1:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_6E2:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_6N1:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_6N2:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_6O1:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_6O2:
-					_usb_device->DataBits = 6;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_7E1:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_7E2:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_7N1:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_7N2:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_7O1:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_7O2:
-					_usb_device->DataBits = 7;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_8E1:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_8E2:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::Even;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_8N1:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_8N2:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::None;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				  case SerialConfig::SERIAL_8O1:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::One;
-					break;
-				  case SerialConfig::SERIAL_8O2:
-					_usb_device->DataBits = 8;
-					_usb_device->Parity = SerialParity::Odd;
-					_usb_device->StopBits = SerialStopBitCount::Two;
-					break;
-				}
+				Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(usb_devices_->GetAt(i)->Id))
+					.then([this](Windows::Devices::SerialCommunication::SerialDevice ^usb_device_) {
+					_usb_device = usb_device_;
+					_usb_device->BaudRate = _baud;
+					switch (_config) {
+					case SerialConfig::SERIAL_5E1:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_5E2:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_5N1:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_5N2:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_5O1:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_5O2:
+						_usb_device->DataBits = 5;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_6E1:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_6E2:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_6N1:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_6N2:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_6O1:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_6O2:
+						_usb_device->DataBits = 6;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_7E1:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_7E2:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_7N1:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_7N2:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_7O1:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_7O2:
+						_usb_device->DataBits = 7;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_8E1:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_8E2:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::Even;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_8N1:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_8N2:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::None;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					case SerialConfig::SERIAL_8O1:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::One;
+						break;
+					case SerialConfig::SERIAL_8O2:
+						_usb_device->DataBits = 8;
+						_usb_device->Parity = SerialParity::Odd;
+						_usb_device->StopBits = SerialStopBitCount::Two;
+						break;
+					}
 
-				_rx = ref new Windows::Storage::Streams::DataReader(usb_device_->InputStream);
-				if (_synchronous_mode) {
-					_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::ReadAhead;
-					_rx->LoadAsync(1);
-				}
+					_rx = ref new Windows::Storage::Streams::DataReader(usb_device_->InputStream);
+					if (_synchronous_mode) {
+						_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
+						currentLoadOperation = _rx->LoadAsync(100);
+						currentStoreOperation = nullptr;
+					}
 
-				_tx = ref new Windows::Storage::Streams::DataWriter(usb_device_->OutputStream);
+					_tx = ref new Windows::Storage::Streams::DataWriter(usb_device_->OutputStream);
 
-				// Set connection ready flag
-				InterlockedOr(&_connection_ready, true);
-			});
-		}
-    });
+					// Set connection ready flag
+					InterlockedOr(&_connection_ready, true);
+					ConnectionEstablished();
+				});
+			}
+		});
+	}
+	catch (Platform::Exception ^e)
+	{
+		ConnectionFailed();
+	}
 
     return;
 }
@@ -259,30 +268,52 @@ UsbSerial::loadAsync(
     return _rx->LoadAsync(count_);
 }
 
+
 uint16_t
 UsbSerial::read(
-    void
-) {
-    uint16_t c = static_cast<uint16_t>(-1);
+	void
+	) {
+	uint16_t c = static_cast<uint16_t>(-1);
 
-    if ( available() ) {
-         c = _rx->ReadByte();
-    }
+	if (available()) {
+		c = _rx->ReadByte();
+	}
 
-    // Prefetch buffer
-    if ( _synchronous_mode && !_rx->UnconsumedBufferLength ) { _rx->LoadAsync(1); }
+	// Prefetch buffer
+	if (connectionReady() &&
+		_synchronous_mode &&
+		!_rx->UnconsumedBufferLength &&
+		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started)
+	{
+		//attempt to detect disconnection
+		if (currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error)
+		{
+			InterlockedAnd(&_connection_ready, false);
+			ConnectionLost();
+			return -1;
+		}
+		currentLoadOperation->Close();
+		currentLoadOperation = _rx->LoadAsync(100);
+	}
 
-    return c;
+	return c;
 }
 
 uint32_t
 UsbSerial::write(
-    uint8_t c_
-) {
-    // Check to see if connection is ready
-    if ( !connectionReady() ) { return 0; }
+	uint8_t c_
+	) {
+	// Check to see if connection is ready
+	if (!connectionReady()) { return 0; }
 
-    _tx->WriteByte(c_);
-    _tx->StoreAsync();
-    return 1;
+	if ((currentStoreOperation != nullptr) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error)
+	{
+		InterlockedAnd(&_connection_ready, false);
+		ConnectionLost();
+		return 0;
+	}
+
+	_tx->WriteByte(c_);
+	currentStoreOperation = _tx->StoreAsync();
+	return 1;
 }

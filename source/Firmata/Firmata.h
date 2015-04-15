@@ -113,7 +113,7 @@ class FirmataClass
 
 	void
 	begin(
-		Microsoft::Maker::Serial::ISerial ^s
+		Microsoft::Maker::Serial::IArduinoStream ^s
 	);
 
 	void
@@ -249,7 +249,7 @@ class FirmataClass
 	);
 
   private:
-    Microsoft::Maker::Serial::ISerial ^FirmataStream;
+    Microsoft::Maker::Serial::IArduinoStream ^FirmataStream;
 
     // firmware name and version
     byte firmwareVersionCount;

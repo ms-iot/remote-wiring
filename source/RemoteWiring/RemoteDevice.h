@@ -35,7 +35,7 @@ public ref class RemoteDevice sealed {
 public:
 	[Windows::Foundation::Metadata::DefaultOverload]
 	RemoteDevice(
-		Serial::ISerial ^serial_connection_
+		Serial::IArduinoStream ^serial_connection_
 	);
 
 
