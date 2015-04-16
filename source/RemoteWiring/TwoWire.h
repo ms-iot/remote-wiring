@@ -90,7 +90,7 @@ private:
 		_i2cReplyCallback( nullptr )
 	{
 		_i2cReplyCallback = nullptr;
-		_firmata->I2cCallbackEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
+		_firmata->I2cEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
 	}
 
 	//since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire

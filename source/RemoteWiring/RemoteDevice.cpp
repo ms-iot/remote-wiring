@@ -3,7 +3,6 @@
 #include "RemoteDevice.h"
 #include <ppltasks.h>
 
-using namespace Concurrency;
 using namespace Microsoft::Maker;
 using namespace Microsoft::Maker::RemoteWiring;
 
@@ -137,7 +136,7 @@ RemoteDevice::pinMode(
 	if( mode_ ==  PinMode::INPUT )
 	{
 		_subscribed_ports[port] |= port_mask;
-		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) ); //TODO JDF UPDATE THIS FOR BOTH ANALOG AND DIGITAL
+		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
 		_firmata->write( _subscribed_ports[port] );
 	}
 	//if the selected mode is NOT input and we WERE subscribed to it, unsubscribe
@@ -145,7 +144,7 @@ RemoteDevice::pinMode(
 	{
 		//make sure we aren't subscribed to this port
 		_subscribed_ports[port] &= ~port_mask;
-		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) ); //TODO JDF UPDATE THIS FOR BOTH ANALOG AND DIGITAL
+		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
 		_firmata->write( _subscribed_ports[port] );
 	}
 
@@ -155,12 +154,10 @@ RemoteDevice::pinMode(
 
 
 void
-RemoteDevice::shutdown(
+RemoteDevice::finish(
 	void
 	)
 {
-	stopThreads();
-	while( !inputThreadExited );
 	_firmata->finish();
 }
 
@@ -203,8 +200,8 @@ RemoteDevice::initialize(
 	void
 	)
 {
-	_firmata->DigitalCallbackEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
-	_firmata->AnalogCallbackEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
+	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
 
 
 	//TODO: Initialize from Firmata, I have a good idea how to do this, JDF
@@ -212,40 +209,6 @@ RemoteDevice::initialize(
 	for( int i = 0; i < sizeof( _subscribed_ports ); ++i ) { _subscribed_ports[i] = 0; }
 	for( int i = 0; i < sizeof( _analog_pins ); ++i ) { _analog_pins[i] = 0; }
 	for( int i = 0; i < sizeof( _pin_mode ); ++i ) { _pin_mode[i] = static_cast<uint8_t>( PinMode::OUTPUT ); }
-
-	//initialize the input thread
-	running = true;
-	create_async( [this]() -> void { inputThread(); } );
-}
-
-
-void
-RemoteDevice::inputThread(
-	void
-	)
-{
-	inputThreadExited = false;
-	while( running )
-	{
-		try
-		{
-			_firmata->processInput();
-		}
-		catch( Platform::Exception ^e )
-		{
-			OutputDebugString( e->Message->Begin() );
-		}
-	}
-	inputThreadExited = true;
-}
-
-
-void
-RemoteDevice::stopThreads(
-	void
-	)
-{
-	running = false;
 }
 
 
