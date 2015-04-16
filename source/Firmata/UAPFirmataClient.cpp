@@ -42,7 +42,10 @@ UAPFirmataClient::begin(
     IArduinoStream ^s_
 	)
 {
-    return ::RawFirmata.begin(s_);
+    ::RawFirmata.begin(s_);
+
+	//initialize the input thread
+	create_async([this]() -> void { inputThread(); });
 }
 
 
@@ -51,6 +54,8 @@ UAPFirmataClient::finish(
 	void
 	)
 {
+	stopThreads();
+	while( !inputThreadExited );
 	return ::RawFirmata.finish();
 }
 
@@ -280,4 +285,38 @@ UAPFirmataClient::sendI2cSysex(
 		::RawFirmata.sendValueAsTwo7bitBytes( data[i] );
 	}
 	::RawFirmata.endSysex();
+}
+
+
+void
+UAPFirmataClient::inputThread(
+	void
+	)
+{
+	if( inputThreadRunning ) return;
+
+	//set state-tracking member variables and begin processing input
+	inputThreadRunning = true;
+	inputThreadExited = false;
+	while( inputThreadRunning )
+	{
+		try
+		{
+			::RawFirmata.processInput();
+		}
+		catch (Platform::Exception ^e)
+		{
+			OutputDebugString(e->Message->Begin());
+		}
+	}
+	inputThreadExited = true;
+}
+
+
+void
+UAPFirmataClient::stopThreads(
+	void
+	)
+{
+	inputThreadRunning = false;
 }

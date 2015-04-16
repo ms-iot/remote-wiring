@@ -48,7 +48,7 @@ public:
 	///Perform a clean shutdown
 	///</summary>
 	void
-		shutdown(
+		finish(
 	);
 
 	///<summary>
@@ -134,20 +134,12 @@ private:
 	//initialization for constructor
 	void const initialize();
 
-	//reporting callbacks for input thread
+	//reporting callbacks
 	void onDigitalReport( Firmata::CallbackEventArgs ^argv );
 	void onAnalogReport( Firmata::CallbackEventArgs ^argv );
 
-	//input-thread related functions
-	void inputThread( void );
-	void stopThreads( void );
-
 	//maps the given pin number to the correct port and mask
 	void getPinMap( byte, int *, byte * );
-
-	//threading state member variables
-	volatile bool running;
-	volatile bool inputThreadExited;
 
 	//state-tracking cache variables
 	byte volatile _subscribed_ports[MAX_PORTS];

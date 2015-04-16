@@ -3,6 +3,7 @@
 #include <cstdint>
 
 using namespace Platform;
+using namespace Concurrency;
 using namespace Windows::Storage::Streams;
 
 namespace Microsoft {
@@ -10,7 +11,6 @@ namespace Maker {
 namespace Firmata {
 
 ref class UAPFirmataClient;
-
 
 public ref class CallbackEventArgs sealed
 {
@@ -141,12 +141,12 @@ public delegate void I2cReplyCallbackFunction( UAPFirmataClient ^caller, I2cCall
 public ref class UAPFirmataClient sealed
 {
 public:
-	event CallbackFunction^ DigitalCallbackEvent;
-	event CallbackFunction^ AnalogCallbackEvent;
-	event StringCallbackFunction^ StringCallbackEvent;
-	event SysexCallbackFunction^ SysexCallbackEvent;
-	event I2cReplyCallbackFunction^ I2cCallbackEvent;
-	event SystemResetCallbackFunction^ SystemResetCallbackEvent;
+	event CallbackFunction^ DigitalPortValueEvent;
+	event CallbackFunction^ AnalogValueEvent;
+	event StringCallbackFunction^ StringEvent;
+	event SysexCallbackFunction^ SysexEvent;
+	event I2cReplyCallbackFunction^ I2cEvent;
+	event SystemResetCallbackFunction^ SystemResetEvent;
 
 	UAPFirmataClient();
 
@@ -269,7 +269,7 @@ public:
 		int value_
 	)
 	{
-		caller->DigitalCallbackEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
+		caller->DigitalPortValueEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
 	}
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
@@ -281,7 +281,7 @@ public:
 		int value_
 	)
 	{
-		caller->AnalogCallbackEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
+		caller->AnalogValueEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
 	}
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
@@ -312,11 +312,11 @@ public:
 		if( command_ == static_cast<uint8_t>( SysexCommand::I2C_REPLY ) )
 		{
 			//if we're receiving an I2C reply we should remove the first 2 characters (4 bytes) from the string, which are the reply address and the register.
-			caller->I2cCallbackEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
+			caller->I2cEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
 		}
 		else
 		{
-			caller->SysexCallbackEvent( caller, ref new SysexCallbackEventArgs( command_, ref new String( (const wchar_t *)argv_, argc_ / 2 ) ) );
+			caller->SysexEvent( caller, ref new SysexCallbackEventArgs( command_, ref new String( (const wchar_t *)argv_, argc_ / 2 ) ) );
 		}
 	}
 
@@ -326,6 +326,14 @@ public:
 	  uint8_t *_sysBuffer;
 	  uint8_t _sysPosition;
 	  const size_t MAX_SYSEX_LEN = 16;
+
+	  //threading state member variables
+	  volatile bool inputThreadRunning;
+	  volatile bool inputThreadExited;
+
+	  //input-thread related functions
+	  void inputThread(void);
+	  void stopThreads(void);
 
 	void
 	sendI2cSysex(
