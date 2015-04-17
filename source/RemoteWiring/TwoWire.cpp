@@ -27,13 +27,11 @@ TwoWire::read(
 	uint8_t address_,
 	size_t numBytes_,
 	uint8_t reg_,
-	bool continuous_,
-	I2cCallback ^callback_
+	bool continuous_
 	)
 {
 	//if you want to do continuous reads, you must provide a register to prompt for new data
 	if( continuous_ && ( reg_ == 0xFF ) ) return;
-	_i2cReplyCallback = callback_;
 	_firmata->readI2c( address_, numBytes_, reg_, continuous_ );
 }
 
@@ -52,5 +50,5 @@ TwoWire::stop(
 	I2cCallbackEventArgs ^args
 	)
  {
-	 if( _i2cReplyCallback ) _i2cReplyCallback( args->getAddress(), args->getResponseString() );
+	 I2cReplyEvent( args->getAddress(), args->getResponseString() );
 }

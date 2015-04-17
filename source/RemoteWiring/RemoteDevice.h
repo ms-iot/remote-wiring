@@ -30,9 +30,15 @@ public enum class PinState
 	HIGH = 0x01,
 };
 
+public delegate void DigitalPinUpdatedCallback( byte pin, PinState state );
+public delegate void AnalogPinUpdatedCallback( byte pin, uint16_t value );
+
 public ref class RemoteDevice sealed {
 
 public:
+	event DigitalPinUpdatedCallback ^ DigitalPinUpdatedEvent;
+	event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
+
 	[Windows::Foundation::Metadata::DefaultOverload]
 	RemoteDevice(
 		Serial::IArduinoStream ^serial_connection_

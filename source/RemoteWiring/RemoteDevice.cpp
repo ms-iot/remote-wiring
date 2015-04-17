@@ -65,7 +65,8 @@ RemoteDevice::analogWrite(
 	}
 
 	_analog_pins[pin_] = value_;
-	_firmata->sendAnalog(pin_, value_);
+	_firmata->sendAnalog( pin_, value_ );
+	AnalogPinUpdatedEvent( pin_, value_ );
 }
 
 
@@ -106,6 +107,7 @@ RemoteDevice::digitalWrite(
     }
 
 	_firmata->sendDigitalPort( port, static_cast<uint16_t>( _digital_port[port] ) );
+	DigitalPinUpdatedEvent( pin_, state_ );
 }
 
 
@@ -173,9 +175,28 @@ RemoteDevice::onDigitalReport(
 	)
 {
 	uint8_t port = args->getPort();
-	int val = args->getValue();
+	uint8_t port_val = args->getValue();
+
+	//output_state will only set bits which correspond to output pins that are HIGH
 	uint8_t output_state = ~_subscribed_ports[port] & _digital_port[port];
-	_digital_port[port] = val | output_state;
+	port_val |= output_state;
+
+	//determine which pins have changed
+	uint8_t port_xor = port_val ^ _digital_port[port];
+
+	//throw a pin event for each pin that has changed
+	uint8_t i = 0;
+	while( port_xor > 0 )
+	{
+		if( port_xor & 0x01 )
+		{
+			DigitalPinUpdatedEvent( ( port * 8 ) + i, ( ( port_val >> i ) & 0x01 ) > 0 ? PinState::HIGH : PinState::LOW );
+		}
+		port_xor >>= 1;
+		++i;
+	}
+
+	_digital_port[port] = port_val;
 }
 
 
@@ -185,8 +206,9 @@ RemoteDevice::onAnalogReport(
 	)
 {
 	uint8_t pin = args->getPort();
-	int val = args->getValue();
+	uint16_t val = args->getValue();
 	_analog_pins[pin] = val;
+	AnalogPinUpdatedEvent( pin, val );
 }
 
 

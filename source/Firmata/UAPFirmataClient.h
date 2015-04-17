@@ -145,7 +145,7 @@ public:
 	event CallbackFunction^ AnalogValueEvent;
 	event StringCallbackFunction^ StringEvent;
 	event SysexCallbackFunction^ SysexEvent;
-	event I2cReplyCallbackFunction^ I2cEvent;
+	event I2cReplyCallbackFunction^ I2cReplyEvent;
 	event SystemResetCallbackFunction^ SystemResetEvent;
 
 	UAPFirmataClient();
@@ -317,7 +317,7 @@ public:
 		if( command_ == static_cast<uint8_t>( SysexCommand::I2C_REPLY ) )
 		{
 			//if we're receiving an I2C reply we should remove the first 2 characters (4 bytes) from the string, which are the reply address and the register.
-			caller->I2cEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
+			caller->I2cReplyEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
 		}
 		else
 		{
