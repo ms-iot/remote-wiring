@@ -250,14 +250,16 @@ bool synchronous_mode_
 	// Ensure known good state
 	end();
 
-	if ( _device != nullptr )
+	//if a device was specified, attempt to connect to that device and bounce
+	if( _device != nullptr )
 	{
 		connect( _device );
 		return;
 	}
 
-	Concurrency::create_task(listAvailableDevicesAsync())
-		.then( [ this ](Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
+	//otherwise, we first need to get a list of all possible devices
+	Concurrency::create_task( listAvailableDevicesAsync() )
+		.then( [this]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
 	{
 		if( !devices->Size )
 		{
@@ -266,36 +268,52 @@ bool synchronous_mode_
 			return;
 		}
 
+		//if a device identifier is specified, we will attempt to match one of the devices in the collection to the identifier.
 		if( _deviceIdentifier != nullptr )
 		{
 			for each( auto device in devices )
 			{
 				if( device->Id->Equals( _deviceIdentifier ) || device->Name->Equals( _deviceIdentifier ) )
 				{
-					_device = device;
-					connect( _device );
+					connect( device );
 					return;
 				}
 			}
+
 			//if we've exhausted the list and found nothing that matches the identifier, we've failed to connect.
 			ConnectionFailed();
 			return;
 		}
 
-			//if no device or device identifier is specified, we manually try to connect to each device
-			
-	});
+		//if no device or device identifier is specified, we try brute-force to connect to each device
+		for each( auto device in devices )
+		{
+			try
+			{
+				connect( device, false ).wait();
+				if( connectionReady() )return;
+			}
+			catch( Platform::Exception ^e )
+			{
+				//do nothing
+			}
+		}
+
+		//if we reach this line, then we never connected to a device or found a device to connect to
+		ConnectionFailed();
+	} );
 }
 
 
 
-void
+Concurrency::task<void>
 BluetoothSerial::connect(
-	Windows::Devices::Enumeration::DeviceInformation ^device_
-	)
+Windows::Devices::Enumeration::DeviceInformation ^device_,
+bool throwEventOnFailure
+)
 {
-	Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
-		.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
+	auto task = Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
+		.then( [this]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
 	{
 		_device_service = device_service_;
 		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
@@ -305,7 +323,7 @@ BluetoothSerial::connect(
 			_device_service->ConnectionHostName,
 			_device_service->ConnectionServiceName,
 			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
-			.then( [ this ]()
+			.then( [this]()
 		{
 			_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
 			if( _synchronous_mode )
@@ -322,8 +340,12 @@ BluetoothSerial::connect(
 			InterlockedOr( &_connection_ready, true );
 
 			ConnectionEstablished();
-		} )
-			.then( [ this ]( task<void> t )
+		} );
+	} );
+
+	if( throwEventOnFailure )
+	{
+		task = task.then( [this]( Concurrency::task<void> t )
 		{
 			try
 			{
@@ -335,8 +357,9 @@ BluetoothSerial::connect(
 				ConnectionFailed();
 			}
 		} );
-		;
-	} );
+	}
+
+	return task;
 }
 
 

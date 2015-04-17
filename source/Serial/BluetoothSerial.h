@@ -86,9 +86,10 @@ private:
         bool synchronous_mode_
 	);
 
-	void
+	Concurrency::task<void>
 	connect(
-		Windows::Devices::Enumeration::DeviceInformation ^device_
+		Windows::Devices::Enumeration::DeviceInformation ^device_,
+		bool throwEventOnFailure = true
 	);
 
 	Windows::Storage::Streams::DataReaderLoadOperation ^
