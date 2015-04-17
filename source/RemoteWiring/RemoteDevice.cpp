@@ -209,6 +209,8 @@ RemoteDevice::initialize(
 	for( int i = 0; i < sizeof( _subscribed_ports ); ++i ) { _subscribed_ports[i] = 0; }
 	for( int i = 0; i < sizeof( _analog_pins ); ++i ) { _analog_pins[i] = 0; }
 	for( int i = 0; i < sizeof( _pin_mode ); ++i ) { _pin_mode[i] = static_cast<uint8_t>( PinMode::OUTPUT ); }
+
+	_firmata->startListening();
 }
 
 
