@@ -37,13 +37,20 @@ UAPFirmataClient::UAPFirmataClient(
 //* Public Methods
 //******************************************************************************
 
+
 void
 UAPFirmataClient::begin(
     IArduinoStream ^s_
 	)
 {
     ::RawFirmata.begin(s_);
+}
 
+void
+UAPFirmataClient::startListening(
+	void
+	)
+{
 	//initialize the input thread
 	create_async([this]() -> void { inputThread(); });
 }
