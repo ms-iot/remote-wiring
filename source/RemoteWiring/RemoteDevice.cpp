@@ -203,7 +203,6 @@ RemoteDevice::initialize(
 	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
 	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
 
-
 	//TODO: Initialize from Firmata, I have a good idea how to do this, JDF
 	for( int i = 0; i < sizeof( _digital_port ); ++i ) { _digital_port[i] = 0; }
 	for( int i = 0; i < sizeof( _subscribed_ports ); ++i ) { _subscribed_ports[i] = 0; }

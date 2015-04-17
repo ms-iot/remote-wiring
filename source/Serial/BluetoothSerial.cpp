@@ -1,5 +1,6 @@
 ﻿
 #include "pch.h"
+#include <pplawait.h>
 #include "BluetoothSerial.h"
 
 using namespace Windows::Devices::Enumeration;
@@ -85,7 +86,39 @@ BluetoothSerial::BluetoothSerial(
     _service_id(nullptr),
     _service_provider(nullptr),
     _stream_socket(nullptr),
-    _tx(nullptr)
+    _tx(nullptr),
+	_deviceIdentifier(nullptr),
+	_device(nullptr)
+{
+}
+
+BluetoothSerial::BluetoothSerial(
+	Platform::String ^deviceIdentifier_
+	) :
+	_connection_ready(0),
+	_device_service(nullptr),
+	_rx(nullptr),
+	_service_id(nullptr),
+	_service_provider(nullptr),
+	_stream_socket(nullptr),
+	_tx(nullptr),
+	_deviceIdentifier(deviceIdentifier_),
+	_device(nullptr)
+{
+}
+
+BluetoothSerial::BluetoothSerial(
+	DeviceInformation ^device_
+	) :
+	_connection_ready(0),
+	_device_service(nullptr),
+	_rx(nullptr),
+	_service_id(nullptr),
+	_service_provider(nullptr),
+	_stream_socket(nullptr),
+	_tx(nullptr),
+	_deviceIdentifier(nullptr),
+	_device(device_)
 {
 }
 
@@ -216,6 +249,42 @@ bool synchronous_mode_
 
 	// Ensure known good state
 	end();
+
+	if ( _device != nullptr )
+	{
+		connect( _device );
+		return;
+	}
+
+	Concurrency::create_task(listAvailableDevicesAsync())
+		.then( [ this ](Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
+	{
+		if( !devices->Size )
+		{
+			//no devices found
+			ConnectionFailed();
+			return;
+		}
+
+		if( _deviceIdentifier != nullptr )
+		{
+			for each( auto device in devices )
+			{
+				if( device->Id->Equals( _deviceIdentifier ) || device->Name->Equals( _deviceIdentifier ) )
+				{
+					_device = device;
+					connect( _device );
+					return;
+				}
+			}
+			//if we've exhausted the list and found nothing that matches the identifier, we've failed to connect.
+			ConnectionFailed();
+			return;
+		}
+
+			//if no device or device identifier is specified, we manually try to connect to each device
+			
+	});
 }
 
 
@@ -225,50 +294,49 @@ BluetoothSerial::connect(
 	Windows::Devices::Enumeration::DeviceInformation ^device_
 	)
 {
-	try
+	Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
+		.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
 	{
-		Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
-			.then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_)
+		_device_service = device_service_;
+		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
+
+		// Connect the socket
+		Concurrency::create_task( _stream_socket->ConnectAsync(
+			_device_service->ConnectionHostName,
+			_device_service->ConnectionServiceName,
+			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
+			.then( [ this ]()
+		{
+			_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
+			if( _synchronous_mode )
+			{
+				//partial mode will allow for better async reads
+				_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
+				currentLoadOperation = _rx->LoadAsync( 100 );
+				currentStoreOperation = nullptr;
+			}
+
+			_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
+
+			// Set connection ready flag
+			InterlockedOr( &_connection_ready, true );
+
+			ConnectionEstablished();
+		} )
+			.then( [ this ]( task<void> t )
 		{
 			try
 			{
-				_device_service = device_service_;
-				_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
-
-				// Connect the socket
-				Concurrency::create_task(_stream_socket->ConnectAsync(
-					_device_service->ConnectionHostName,
-					_device_service->ConnectionServiceName,
-					Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
-					.then([this]()
-				{
-					_rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
-					if (_synchronous_mode)
-					{
-						//partial mode will allow for better async reads
-						_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-						currentLoadOperation = _rx->LoadAsync(100);
-						currentStoreOperation = nullptr;
-					}
-
-					_tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
-
-					// Set connection ready flag
-					InterlockedOr(&_connection_ready, true);
-
-					ConnectionEstablished();
-				});
+				//if anything in our task chain threw an exception, get() will receive it.
+				t.get();
 			}
-			catch (Platform::Exception ^e)
+			catch( Platform::Exception ^e )
 			{
 				ConnectionFailed();
 			}
-		});
-	}
-	catch (Platform::Exception ^e)
-	{
-		ConnectionFailed();
-	}
+		} );
+		;
+	} );
 }
 
 

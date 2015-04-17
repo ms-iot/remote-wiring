@@ -13,7 +13,9 @@ public:
 	event RemoteWiringConnectionCallback^ ConnectionFailed;
 	event RemoteWiringConnectionCallback^ ConnectionLost;
 
-    BluetoothSerial();
+	BluetoothSerial();
+	BluetoothSerial( Platform::String ^deviceIdentifier_ );
+	BluetoothSerial( Windows::Devices::Enumeration::DeviceInformation ^device_ );
 
     virtual
     uint16_t
@@ -56,14 +58,10 @@ public:
         void
     );
 
+	static
 	Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
 	listAvailableDevicesAsync(
 		void
-	);
-
-	void
-	connect(
-		Windows::Devices::Enumeration::DeviceInformation ^device_
 	);
 
 private:
@@ -76,18 +74,27 @@ private:
 	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
 	Windows::Storage::Streams::DataWriterStoreOperation ^currentStoreOperation;
 
+	//optional device-specifiers
+	Platform::String ^_deviceIdentifier;
+	Windows::Devices::Enumeration::DeviceInformation ^_device;
+
     LONG volatile _connection_ready;
     bool _synchronous_mode;
 
     void
     begin (
         bool synchronous_mode_
-		);
+	);
+
+	void
+	connect(
+		Windows::Devices::Enumeration::DeviceInformation ^device_
+	);
 
 	Windows::Storage::Streams::DataReaderLoadOperation ^
-		loadAsync(
+	loadAsync(
 		unsigned int count_
-		);
+	);
 };
 
 } // namespace Serial
