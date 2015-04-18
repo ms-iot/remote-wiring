@@ -16,7 +16,7 @@ However, devices like an Arduino are fundamentally limited by the single-threade
 Windows 10 introduces the concept of a [Universal Application Platform (UAP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino Wiring** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
 
 #Structure
-The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that they are bound to come up with. 
+The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
 
 ##Layers
 There are three layers in the architecture of Remote Arduino Wiring; they are interface, protocol, and transport. Each layer is a consumer of all layers below it, and therefore dependent on them. However, a layer is never dependent on anything above it. The layered construction allows individual layers to be swapped or utilized directly at any time, which provides the ability to supply alternate implementations at each layer. The layers, in their respective ordering, are given below.
@@ -25,10 +25,10 @@ There are three layers in the architecture of Remote Arduino Wiring; they are in
 - Firmata (protocol)
 - ArduinoStream (transport)
 
-For example, the Firmata layer translates the requests of the RemoteWiring layer into the Firmata protocol and then passes them on to the ArduinoStream layer for transport to the Arduino (and visa-versa). The Firmata layer has no knowledge of what the ArduinoStream implementation looks like, or what method of transport is actually being used. However, the Firmata layer absolutely depends on this layer in order to work. In sharp contrast, the Firmata layer is not aware of the RemoteWiring layer's existence, and therefore could be interacted with directly.
+For example, the Firmata layer translates the requests of the RemoteWiring layer into the Firmata protocol and then passes them on to the ArduinoStream layer for transport to the Arduino (and vise-versa). The Firmata layer has no knowledge of what the ArduinoStream implementation looks like, or what method of transport is actually being used. However, the Firmata layer absolutely depends on this layer in order to work. In sharp contrast, the Firmata layer is not aware of the RemoteWiring layer's existence, and therefore could be interacted with directly.
 
 ###RemoteWiring
-The main interface class of the RemoteWiring layer is the RemoteDevice class, and it is the main API entry point that should be used in most cases. It offers an interface that is nearly identical to what you will find in the Arduino Wiring API, and should therefore be familiar if you have written Arduino sketches yourself. However, It is safe to say that all calls through this layer are directed to the Firmata layer below it, so it is only necessary to bypass or extend this layer when very advanced behaviors are desired for a project!
+The main interface class of the RemoteWiring layer is RemoteDevice, and it is the main API entry point that should be used in most cases. It offers an interface that is nearly identical to what you will find in the Arduino Wiring API, and should therefore be familiar if you have written Arduino sketches yourself. However, It is safe to say that all calls through this layer are directed to the Firmata layer below it, so it is only necessary to bypass or extend this layer when very advanced behaviors are desired for a project!
 
 ###Firmata
 The implementation of Firmata is taken directly from the [Firmata repository](https://github.com/firmata/arduino), with absolute minimal changes (i.e. removing arduino/hardware dependencies), and is wrapped by a transparent [Windows Runtime Component](https://msdn.microsoft.com/en-us/library/hh441572.aspx) library class.
@@ -116,7 +116,7 @@ A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C.
 
 ###Events
 
-As previously mentioned, the RemoteWiring layer allows interactions with the RemoteDevice class to feel like interacting with the device directly through the Wiring API. However, Windows `events` give us the power to respond immediately to changes reported by the Arduino. 
+As previously mentioned, the RemoteWiring layer allows interactions with the RemoteDevice class to feel like interacting with the device directly through the Wiring API. However, Windows `events` give us the power to respond immediately to changes reported by the Arduino. [Click here for more information about events.](https://msdn.microsoft.com/en-us/library/hh758286.aspx)
 
 For example, whenever you set an analog or digital pin to INPUT, the library will be notified whenever a pin value changes for digital pins, and every few milliseconds for analog pins. Windows Remote Arduino Wiring can pass these notifications on to you in the form of `events`. Simply subscribe to the event with a delegate function, and that function will automatically be called whenever it is appropriate!
 
@@ -157,11 +157,6 @@ public void MyAnalogPinUpdateCallback( byte pin, UInt16 value )
 
 ```
 
-
-##Advanced Usage
-Please refer to the [Advanced Usage](advanced.md) documentation.
-
-
 ##Enabling Bluetooth Capabilities
 In order to invoke the bluetooth capabilities of a WinRT application, you will need to open the package.appxmanifest file of your project by right-clicking and selecting the "View Code" option. Then find the <Capabilities> tag and paste the following as a child node.
 
@@ -183,6 +178,8 @@ In order to invoke the bluetooth capabilities of a WinRT application, you will n
 </DeviceCapability>
 ```
 
+##Advanced Usage
+Please refer to the [Advanced Usage](advanced.md) documentation.
 
 ##Notes
 For more details, visit [MSDN: How to specify device capabilities in a package manifest (Windows Runtime apps)](https://msdn.microsoft.com/en-us/library/windows/apps/dn263092.aspx).

@@ -250,10 +250,10 @@ bool synchronous_mode_
 	// Ensure known good state
 	end();
 
-	//if a device was specified, attempt to connect to that device and bounce
+	//if a device was specified, attempt to connectAsync to that device and bounce
 	if( _device != nullptr )
 	{
-		connect( _device );
+		connectAsync( _device );
 		return;
 	}
 
@@ -267,6 +267,7 @@ bool synchronous_mode_
 			ConnectionFailed();
 			return;
 		}
+		_devices = devices;
 
 		//if a device identifier is specified, we will attempt to match one of the devices in the collection to the identifier.
 		if( _deviceIdentifier != nullptr )
@@ -275,45 +276,54 @@ bool synchronous_mode_
 			{
 				if( device->Id->Equals( _deviceIdentifier ) || device->Name->Equals( _deviceIdentifier ) )
 				{
-					connect( device );
+					connectAsync( device );
 					return;
 				}
 			}
 
-			//if we've exhausted the list and found nothing that matches the identifier, we've failed to connect.
+			//if we've exhausted the list and found nothing that matches the identifier, we've failed to connectAsync.
 			ConnectionFailed();
 			return;
 		}
 
-		//if no device or device identifier is specified, we try brute-force to connect to each device
-		for each( auto device in devices )
+		//if no device or device identifier is specified, we try brute-force to connectAsync to each device
+		Concurrency::create_task( [ this ]()
 		{
-			try
+			for each( auto device in _devices )
 			{
-				connect( device, false ).wait();
-				if( connectionReady() )return;
-			}
-			catch( Platform::Exception ^e )
-			{
-				//do nothing
-			}
-		}
+				connectAsync( device, false )
 
-		//if we reach this line, then we never connected to a device or found a device to connect to
-		ConnectionFailed();
+					.then( [ this ]( Concurrency::task<void> t )
+				{
+					try
+					{
+						//if anything in our task chain threw an exception, get() will receive it.
+						t.get();
+					}
+					catch( ... )
+					{
+						//do nothing
+					}
+				} ).wait();
+
+				if( connectionReady() ) return;
+			}
+
+			ConnectionFailed();
+		} );
 	} );
 }
 
 
 
 Concurrency::task<void>
-BluetoothSerial::connect(
+BluetoothSerial::connectAsync(
 Windows::Devices::Enumeration::DeviceInformation ^device_,
 bool throwEventOnFailure
 )
 {
 	auto task = Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
-		.then( [this]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
+		.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
 	{
 		_device_service = device_service_;
 		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
@@ -323,7 +333,8 @@ bool throwEventOnFailure
 			_device_service->ConnectionHostName,
 			_device_service->ConnectionServiceName,
 			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
-			.then( [this]()
+
+			.then( [ this ]()
 		{
 			_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
 			if( _synchronous_mode )
@@ -340,7 +351,8 @@ bool throwEventOnFailure
 			InterlockedOr( &_connection_ready, true );
 
 			ConnectionEstablished();
-		} );
+		} ).wait();
+
 	} );
 
 	if( throwEventOnFailure )
@@ -352,7 +364,7 @@ bool throwEventOnFailure
 				//if anything in our task chain threw an exception, get() will receive it.
 				t.get();
 			}
-			catch( Platform::Exception ^e )
+			catch( ... )
 			{
 				ConnectionFailed();
 			}

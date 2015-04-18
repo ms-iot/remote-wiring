@@ -77,6 +77,8 @@ private:
 	//optional device-specifiers
 	Platform::String ^_deviceIdentifier;
 	Windows::Devices::Enumeration::DeviceInformation ^_device;
+	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
+
 
     LONG volatile _connection_ready;
     bool _synchronous_mode;
@@ -87,7 +89,7 @@ private:
 	);
 
 	Concurrency::task<void>
-	connect(
+	connectAsync(
 		Windows::Devices::Enumeration::DeviceInformation ^device_,
 		bool throwEventOnFailure = true
 	);
