@@ -79,7 +79,6 @@ private:
 	Windows::Devices::Enumeration::DeviceInformation ^_device;
 	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
 
-
     LONG volatile _connection_ready;
     bool _synchronous_mode;
 
@@ -88,10 +87,9 @@ private:
         bool synchronous_mode_
 	);
 
-	Concurrency::task<void>
+	Concurrency::task<bool>
 	connectAsync(
-		Windows::Devices::Enumeration::DeviceInformation ^device_,
-		bool throwEventOnFailure = true
+		Windows::Devices::Enumeration::DeviceInformation ^device_
 	);
 
 	Windows::Storage::Streams::DataReaderLoadOperation ^
