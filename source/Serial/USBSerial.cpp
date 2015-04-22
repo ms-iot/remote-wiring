@@ -63,11 +63,16 @@ UsbSerial::begin(
 			if (!usb_devices_->Size) { return; }
 
 			for (unsigned int i = 0; i < usb_devices_->Size; ++i) {
-				if (std::string::npos == std::wstring(usb_devices_->GetAt(i)->Name->Data()).find(L"VID_2341") && std::string::npos == std::wstring(usb_devices_->GetAt(i)->Id->Data()).find(L"VID_2341")) { continue; }
+				if(std::string::npos == std::wstring(usb_devices_->GetAt(i)->Name->Data()).find(L"VID_2341") && std::string::npos == std::wstring(usb_devices_->GetAt(i)->Id->Data()).find(L"VID_2341")) { continue; }
 
 				Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(usb_devices_->GetAt(i)->Id))
 					.then([this](Windows::Devices::SerialCommunication::SerialDevice ^usb_device_) {
+					if (usb_device_ == nullptr)
+					{
+						return;
+					}
 					_usb_device = usb_device_;
+					_usb_device->Handshake = SerialHandshake::None;
 					_usb_device->BaudRate = _baud;
 					switch (_config) {
 					case SerialConfig::SERIAL_5E1:
@@ -244,6 +249,7 @@ UsbSerial::end(
     _usb_device = nullptr;
 }
 
+
 Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
 UsbSerial::listAvailableDevicesAsync(
 void
@@ -254,7 +260,7 @@ void
 
     // Construct AQS String from service id of desired device
     //Platform::String ^device_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelectorFromUsbVidPid(vid, pid);  // Arduino Uno only
-	Platform::String ^device_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelector("ALL");
+	Platform::String ^device_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelector();
 
     // Identify all paired devices satisfying query
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
