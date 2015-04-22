@@ -36,7 +36,7 @@ public enum class SerialConfig {
 
 public delegate void RemoteWiringConnectionCallback();
 
-public interface struct IArduinoStream
+public interface struct IStream
 {
     virtual
     uint16_t

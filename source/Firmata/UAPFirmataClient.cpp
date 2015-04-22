@@ -42,7 +42,7 @@ UAPFirmataClient::UAPFirmataClient(
 
 void
 UAPFirmataClient::begin(
-    IArduinoStream ^s_
+    Microsoft::Maker::Serial::IStream ^s_
 	)
 {
     ::RawFirmata.begin(s_);

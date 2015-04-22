@@ -81,7 +81,7 @@ FirmataClass::begin(
 
 void
 FirmataClass::begin(
-	Microsoft::Maker::Serial::IArduinoStream ^s
+	Microsoft::Maker::Serial::IStream ^s
 	)
 {
 	FirmataStream = s;

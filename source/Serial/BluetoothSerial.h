@@ -1,12 +1,12 @@
 ﻿#pragma once
 
-#include "IArduinoStream.h"
+#include "IStream.h"
 
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
 
-public ref class BluetoothSerial sealed : public IArduinoStream
+public ref class BluetoothSerial sealed : public IStream
 {
 public:
 	event RemoteWiringConnectionCallback^ ConnectionEstablished;
