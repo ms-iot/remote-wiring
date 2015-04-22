@@ -55,6 +55,7 @@ public:
         void
     );
 
+	static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(
         void
