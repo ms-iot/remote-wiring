@@ -24,8 +24,10 @@ UAPFirmataClient::UAPFirmataClient(
 	)
 {
 	_sysCommand = 0;
-	_sysBuffer = (byte*)malloc(16);
+	_dataBuffer = (uint8_t*)malloc(31);
 	_sysPosition = 0;
+	_blobStarted = false;
+	_blobPosition = 0;
 
 	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::digitalInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UAPFirmataClient::analogInvoke, this, _1, _2 ) ) );
@@ -170,39 +172,98 @@ UAPFirmataClient::sendString(
 }
 
 
-void
+bool
 UAPFirmataClient::beginSysex(
 	uint8_t command_
 	)
 {
+	if( _blobStarted ) return false;
 	_sysCommand = command_;
+	_sysPosition = 0;
+	return true;
 }
 
 
-void
+bool
 UAPFirmataClient::appendSysex(
 	uint8_t byte_
 	)
 {
-	if ( _sysCommand && ( _sysPosition < MAX_SYSEX_LEN ) )
+	if( _sysCommand && ( _sysPosition < MAX_SYSEX_LEN ) && !_blobStarted )
 	{
-		_sysBuffer[_sysPosition] = byte_;
+		_dataBuffer[ _sysPosition ] = byte_;
 		++_sysPosition;
+		return true;
 	}
+	return false;
 }
 
 
-void
+bool
 UAPFirmataClient::endSysex(
 	void
 	)
 {
-	if (_sysCommand)
+	if( _sysCommand && !_blobStarted )
 	{
-		::RawFirmata.sendSysex(_sysCommand, _sysPosition, _sysBuffer);
+		::RawFirmata.sendSysex( _sysCommand, _sysPosition, _dataBuffer );
+		_sysCommand = 0;
+		_sysPosition = 0;
+		return true;
 	}
-	_sysCommand = 0;
-	_sysPosition = 0;
+	return false;
+}
+
+
+bool
+UAPFirmataClient::beginBlob(
+	void
+	)
+{
+	if( _sysCommand ) return false;
+
+	_blobStarted = true;
+	_blobPosition = 0;
+	return true;
+}
+
+
+bool
+UAPFirmataClient::appendBlob(
+	uint8_t byte_
+	)
+{
+	if( !_blobStarted || _sysCommand ) return false;
+
+	if( _blobPosition >= MAX_BLOB_LEN )
+	{
+		endBlob();
+		beginBlob();
+	}
+
+	_dataBuffer[ _blobPosition ] = byte_ & 0x7F;
+	++_blobPosition;
+	return true;
+}
+
+
+bool
+UAPFirmataClient::endBlob(
+	void
+	)
+{
+	if( !_blobStarted || _sysCommand ) return false;
+
+	::RawFirmata.write( static_cast<byte>( START_SYSEX ) );
+	::RawFirmata.write( static_cast<byte>( SYSEX_BLOB_COMMAND ) );
+	for( uint8_t i = 0; i < _blobPosition; ++i )
+	{
+		::RawFirmata.write( _dataBuffer[ i ] );
+	}
+	::RawFirmata.write( static_cast<byte>( END_SYSEX ) );
+	_blobPosition = 0;
+	_blobStarted = false;
+	return true;
 }
 	
 

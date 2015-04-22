@@ -58,7 +58,7 @@ public:
 	);
 
 	///<summary>
-	//reads analog data stored in the cache
+	///reads analog data stored in the cache
 	///</summary>
 	uint16_t
 	analogRead(
@@ -66,7 +66,7 @@ public:
 	);
 
 	///<summary>
-	//writes analog data to the remote device and the cache
+	///writes analog data to the remote device and the cache
 	///</summary>
 	void
 	analogWrite(
@@ -75,7 +75,7 @@ public:
 	);
 
 	///<summary>
-	//reads a digital pin state from the cache 
+	///reads a digital pin state from the cache 
 	///</summary>
 	PinState
 	digitalRead(
@@ -83,7 +83,7 @@ public:
 	);
 
 	///<summary>
-	//writes a digital state to the remote device and the cache
+	///writes a digital state to the remote device and the cache
 	///</summary>
 	void
 	digitalWrite(
@@ -92,7 +92,7 @@ public:
 	);
 
 	///<summary>
-	//sets the given pin to the given mode and stores the value in the cache
+	///sets the given pin to the given mode and stores the value in the cache
 	///</summary>
 	void
 	pinMode(
@@ -101,7 +101,7 @@ public:
 	);
 
 	///<summary>
-	//retrieves the mode of the given pin from the cache
+	///retrieves the mode of the given pin from the cache
 	///</summary>
 	PinMode
 	getPinMode(
@@ -109,7 +109,7 @@ public:
 	);
 
 	///<summary>
-	//singleton pattern returns a current instance of TwoWire for I2C communication
+	///singleton pattern returns a current instance of TwoWire for I2C communication
 	///</summary>
 	inline
 	I2c::TwoWire ^

@@ -221,18 +221,33 @@ public:
         String ^string
     );
 
-	void
+	bool
 	beginSysex(
 		uint8_t command_
 	);
 
-	void
+	bool
 	appendSysex(
 		uint8_t byte_
 	);
 
-	void
+	bool
 	endSysex(
+		void
+	);
+
+	bool
+	beginBlob(
+		void
+	);
+
+	bool
+	appendBlob(
+		uint8_t byte_
+	);
+
+	bool
+	endBlob(
 		void
 	);
 
@@ -328,9 +343,16 @@ public:
   private:
 	//sysex-building
 	  uint8_t _sysCommand;
-	  uint8_t *_sysBuffer;
 	  uint8_t _sysPosition;
-	  const size_t MAX_SYSEX_LEN = 16;
+	  const size_t MAX_SYSEX_LEN = 15;
+
+	  //blob-related
+	  bool _blobStarted;
+	  uint8_t _blobPosition;
+	  const size_t MAX_BLOB_LEN = 31;
+
+	  //common buffer
+	  uint8_t *_dataBuffer;
 
 	  //threading state member variables
 	  volatile bool inputThreadRunning;
