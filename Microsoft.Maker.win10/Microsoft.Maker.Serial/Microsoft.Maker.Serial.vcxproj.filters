@@ -15,6 +15,6 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\..\source\Serial\BluetoothSerial.h" />
     <ClInclude Include="..\..\source\Serial\USBSerial.h" />
-    <ClInclude Include="..\..\source\Serial\IArduinoStream.h" />
+    <ClInclude Include="..\..\source\Serial\IStream.h" />
   </ItemGroup>
 </Project>

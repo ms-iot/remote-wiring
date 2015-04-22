@@ -1,25 +1,41 @@
-#Windows Remote Arduino Wiring
+#Windows Remote Arduino
 
-Windows Remote Arduino Wiring is an open-source [Windows Runtime Component](https://msdn.microsoft.com/en-us/magazine/jj651567.aspx?utm_source=rss&utm_medium=rss&utm_campaign=windows-runtime-reimagining-app-development-with-the-windows-runtime) library which allows Makers to control an Arduino through a Bluetooth or USB connection! It is intended for [Windows Runtime (WinRT)](https://msdn.microsoft.com/en-us/library/windows/apps/br211369.aspx) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the [Firmata protocol](https://github.com/firmata/protocol), which is implemented in a pre-packaged [Firmata library](http://arduino.cc/en/reference/firmata) included in the Arduino software obtained from [http://arduino.cc](http://arduino.cc).
+Windows Remote Arduino is an open-source [Windows Runtime Component](https://msdn.microsoft.com/en-us/magazine/jj651567.aspx?utm_source=rss&utm_medium=rss&utm_campaign=windows-runtime-reimagining-app-development-with-the-windows-runtime) library which allows Makers to control an Arduino through a Bluetooth or USB connection! It is intended for [Windows Runtime (WinRT)](https://msdn.microsoft.com/en-us/library/windows/apps/br211369.aspx) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the [Firmata protocol](https://github.com/firmata/protocol), which is implemented in a pre-packaged [Firmata library](http://arduino.cc/en/reference/firmata) included in the Arduino software obtained from [http://arduino.cc](http://arduino.cc).
 
 [View the open-source license](license.txt).
 
 ##Overview
-Remote Arduino Wiring bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
+Windows Remote Arduino bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
+
+##Functionality
+Windows Remote Arduino enables the following functionality, right "out of the box".
+
+1. GPIO – Analog and Digital I/O
+  a. digitalWrite - Digital Write
+  b. digitalRead - Digital Read
+  c. analogWrite - Analog Write
+  d. analogRead - Analog Read
+  e. PinMode - Set the mode for any pins.
+  f. Eventing - receive events when values change / are reported.
+2. I2C/TwoWire
+  a. Send/Receive data to devices over I2C.
+  b. Subscribe to a device, repeated queries and automatic reporting.
+3. Custom protocols via Firmata SysEx command
+
 
 ###The Microcontroller
 Arduinos are a series of open source microcontrollers built on an established platform. An individual Arduino device is a simple programmable device that is capable of tasks such as GPIO, but also more advanced communication protocols such as I2C. Makers have the ability of quickly hooking up sensors and other devices to an Arduino and using basic Arduino “sketches” to give instructions to the hardware.
 
-However, devices like an Arduino are fundamentally limited by the single-threaded nature of a microcontroller. Remote Arduino Wiring brings together all of the physical control of an Arduino and the supercharged software abilities of Windows devices such as multi-threading, native file systems, simple internet access, and more.
+However, devices like an Arduino are fundamentally limited by the single-threaded nature of a microcontroller. Remote Arduino brings together all of the physical control of an Arduino and the supercharged software abilities of Windows devices such as multi-threading, native file systems, simple internet access, and more.
 
 ###Windows 10
-Windows 10 introduces the concept of a [Universal Application Platform (UAP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino Wiring** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
+Windows 10 introduces the concept of a [Universal Application Platform (UAP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
 
 #Structure
 The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
 
 ##Layers
-There are three layers in the architecture of Remote Arduino Wiring; they are interface, protocol, and transport. Each layer is a consumer of all layers below it, and therefore dependent on them. However, a layer is never dependent on anything above it. The layered construction allows individual layers to be swapped or utilized directly at any time, which provides the ability to supply alternate implementations at each layer. The layers, in their respective ordering, are given below.
+There are three layers in the architecture of Windows Remote Arduino; they are interface, protocol, and transport. Each layer is a consumer of all layers below it, and therefore dependent on them. However, a layer is never dependent on anything above it. The layered construction allows individual layers to be swapped or utilized directly at any time, which provides the ability to supply alternate implementations at each layer. The layers, in their respective ordering, are given below.
 
 - RemoteWiring (interface)
 - Firmata (protocol)
@@ -35,7 +51,7 @@ The implementation of Firmata is taken directly from the [Firmata repository](ht
 The wrapper does not change or add functionality, it only provides parameter smoothing (i.e. `char *` -> `String`) and paradigm translation (i.e. `callbacks` -> `events`). This layer is completely independent from the RemoteWiring layer above it, so it can be used as a fully-functional Firmata implementation!
 
 ###ArduinoStream
-ArduinoStream is the transport layer, which provides the physical communication between applications and the Arduino device. IArduinoStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
+ArduinoStream is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
 
 - `begin(int, char)` -> `void` -- initializes the stream
 - `end(void)` -> `void` -- finalizes the stream
@@ -43,12 +59,16 @@ ArduinoStream is the transport layer, which provides the physical communication 
 - `read(void)` -> `short` -- reads a single character from the incoming stream
 - `write(char)` -> `void` -- writes a single character to the outgoing stream
 
-#Usage
-This section explains the basic usage of Windows Remote Arduino Wiring. This is an excellent place to start if you are new to this library or Arduino Wiring itself. For advanced behaviors, see the [advanced readme](advanced.md).
+##RemoteDevice
 
-##Arduino Wiring
+A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C. After adding this package to your solution either manually or through NuGet, you may construct a RemoteDevice object directly.
 
-Remote Arduino Wiring uses the [Firmata protocol](https://github.com/firmata/protocol), which has implementations in many languages including Arduino! The Arduino implementation is called [StandardFirmata](https://github.com/firmata/arduino/blob/master/examples/StandardFirmata/StandardFirmata.ino) and comes pre-packaged with the Arduino software when you install it! Follow the steps below to upload the StandardFirmata sketch to your Arduino.
+#Setup
+This section explains how to set up your Arduino and how to add the Windows Remote Arduino library to your Windows projects!
+
+##Arduino Setup
+
+Windows Remote Arduino uses the [Firmata protocol](https://github.com/firmata/protocol), which has implementations in many languages including Arduino! The Arduino implementation is called [StandardFirmata](https://github.com/firmata/arduino/blob/master/examples/StandardFirmata/StandardFirmata.ino) and comes pre-packaged with the Arduino software when you install it! Follow the steps below to upload the StandardFirmata sketch to your Arduino.
 
 1. Download and install the Arduino software from [http://arduino.cc](http://arduino.cc).
 2. Connect your Arduino device to the computer using USB. 
@@ -68,9 +88,13 @@ StandardFirmata uses the Serial lines to talk to a Bluetooth device or over USB.
 
 Simply change the `begin` parameter to match the configuration of your Bluetooth device. The most common configurations are 1152000, 57600, and 9600. The recommended SparkFun Bluetooth Mate devices use 115200 by default. If you are not sure of the default baud rate of your Bluetooth device, check the device documentation.
 
-##RemoteDevice
+##Project Setup
 
-A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C. After adding this package to your solution either manually or through NuGet, you may construct a RemoteDevice object directly.
+
+
+
+#Usage
+This section explains the basic usage of Windows Remote Arduino. This is an excellent place to start if you are new to this library or Arduino Wiring itself. For advanced behaviors, see the [advanced readme](advanced.md).
 
 ####C# Example:
 
@@ -80,10 +104,10 @@ A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C.
         using namespace Microsoft.Maker.Wiring.Serial;
 
 		//create a bluetooth connection and pass it to the RemoteDevice
-		IArduinoStream bt = new BluetoothSerial();
+		IStream bt = new BluetoothSerial();
         RemoteDevice arduino = new RemoteDevice( bt );
 		
-		//always begin your IArduinoStream
+		//always begin your IStream
 		bt.begin( 115200, 0 );
 
         arduino->pinMode( 7, PinMode.OUTPUT );
@@ -101,10 +125,10 @@ A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C.
         using namespace Microsoft::Maker::Wiring::Serial;
 		
 		//create a bluetooth connection and pass it to the RemoteDevice
-		IArduinoStream ^bt = ref new BluetoothSerial;
+		IStream ^bt = ref new BluetoothSerial;
         RemoteDevice ^arduino = ref new RemoteDevice( bt );
 		
-		//always begin your IArduinoStream
+		//always begin your IStream
 		bt->begin( 115200, 0 );
 
         arduino->pinMode( 7, PinMode::OUTPUT );
@@ -118,10 +142,10 @@ A user-friendly wrapper for Firmata, providing an Arduino feel for GPIO and I2C.
 
 As previously mentioned, the RemoteWiring layer allows interactions with the RemoteDevice class to feel like interacting with the device directly through the Wiring API. However, Windows `events` give us the power to respond immediately to changes reported by the Arduino. [Click here for more information about events.](https://msdn.microsoft.com/en-us/library/hh758286.aspx)
 
-For example, whenever you set an analog or digital pin to INPUT, the library will be notified whenever a pin value changes for digital pins, and every few milliseconds for analog pins. Windows Remote Arduino Wiring can pass these notifications on to you in the form of `events`. Simply subscribe to the event with a delegate function, and that function will automatically be called whenever it is appropriate!
+For example, whenever you set an analog or digital pin to INPUT, the library will be notified whenever a pin value changes for digital pins, and every few milliseconds for analog pins. Windows Remote Arduino can pass these notifications on to you in the form of `events`. Simply subscribe to the event with a delegate function, and that function will automatically be called whenever it is appropriate!
 
 ```c#
-IArduinoStream bt;
+IStream bt;
 RemoteDevice arduino;
 
 public MyObject()
@@ -129,10 +153,13 @@ public MyObject()
 	bt = new Bluetooth Serial( "RNBT_BTLE" ); //Directly providing a device name to connect to
 	arduino = new RemoteDevice( bt );
 
+	//subscribe to the DigitalPinUpdateEvent with the name of the function to be called.
 	arduino.DigitalPinUpdateEvent += MyDigitalPinUpdateCallback;
+	
+	//subscribe to the AnalogPinUpdateEvent with the name of the function to be called.
 	arduino.AnalogPinUpdateEvent += MyAnalogPinUpdateCallback;
 
-	//always begin your IArduinoStream
+	//always begin your IStream
 	bt.begin( 115200, 0 );
 	
 	//set pin 7 to input mode to automatically receive callbacks when it changes
@@ -159,15 +186,6 @@ public void MyAnalogPinUpdateCallback( byte pin, UInt16 value )
 
 ##Enabling Bluetooth Capabilities
 In order to invoke the bluetooth capabilities of a WinRT application, you will need to open the package.appxmanifest file of your project by right-clicking and selecting the "View Code" option. Then find the <Capabilities> tag and paste the following as a child node.
-
-###Windows 8.1
-```xml
-<m2:DeviceCapability Name="bluetooth.rfcomm">
-  <m2:Device Id="any">
-    <m2:Function Type="name:serialPort"/>
-  </m2:Device>
-</m2:DeviceCapability>
-```
 
 ###Windows 10
 ```xml

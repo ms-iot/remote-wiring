@@ -152,7 +152,7 @@ public:
 
 	void
 	begin(
-		Serial::IArduinoStream ^s
+		Serial::IStream ^s
 	);
 
 	void

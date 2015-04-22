@@ -1,6 +1,6 @@
 #Advanced Usage
 
-While the RemoteDevice class is intended to be the main interface between your apps and the Arduino device, you may find it necessary to break outside of the basic functionality and define your own advanced behaviors. This might occur when you need to clock large amounts of data to another device (like an LED strip), or if you want to execute multiple commands on the Arduino by sending only a single command over Bluetooth. Fortunately, this is possible within the Firmata protocol by defining a Sysex command. A Sysex command is a special command type that is very extensible, allowing you to fully customize the behavior of the Arduino without modifying the Firmata or Remote Arduino Wiring libraries. However, you will need to add some code to the StandardFirmata sketch to handle your new custom command.
+While the RemoteDevice class is intended to be the main interface between your apps and the Arduino device, you may find it necessary to break outside of the basic functionality and define your own advanced behaviors. This might occur when you need to clock large amounts of data to another device (like an LED strip), or if you want to execute multiple commands on the Arduino by sending only a single command over Bluetooth. Fortunately, this is possible within the Firmata protocol by defining a Sysex command. A Sysex command is a special command type that is very extensible, allowing you to fully customize the behavior of the Arduino without modifying the Firmata or Remote Arduino libraries. However, you will need to add some code to the StandardFirmata sketch to handle your new custom command.
 
 As an example, let's turn on (set HIGH) or off (set LOW) all fourteen of the Arduino's digital pins with a Sysex command. While this is possible using the RemoteDevice class, it requires fourteen `digitalWrite` commands to be sent and processed. We can instead do this with Sysex, and will serve as a basic example of how to simplify complex behaviors into a single command.
 
@@ -21,7 +21,7 @@ Every Sysex command must have a unique command byte which will allow the Arduino
 
 ##Implementation
 
-In our example, we will use 0x42 as our command byte. We start by defining our command byte in both the StandardFirmata sketch as well as the UAP application using Windows Remote Arduino Wiring.
+In our example, we will use 0x42 as our command byte. We start by defining our command byte in both the StandardFirmata sketch as well as the UAP application using Windows Remote Arduino.
 
 ####StandardFirmata
 ```c++
@@ -33,13 +33,13 @@ In our example, we will use 0x42 as our command byte. We start by defining our c
 const byte ALL_PINS_COMMAND = 0x42;
 ```
 
-###Implementing the Windows Remote Arduino Wiring side
+###Implementation in your Windows Remote Arduino project
 
-We will bypass the RemoteWiring layer and use the Firmata layer directly to send Sysex commands. In the basic example, we constructed the RemoteDevice object by passing our IArduinoStream object of choice (BluetoothSerial), in which case the Firmata layer is constructed for us. In this example, we're going to construct that layer manually so that we can keep a reference to it.
+We will bypass the RemoteWiring layer and use the Firmata layer directly to send Sysex commands. In the basic example, we constructed the RemoteDevice object by passing our IStream object of choice (BluetoothSerial), in which case the Firmata layer is constructed for us. In this example, we're going to construct that layer manually so that we can keep a reference to it.
 
 ```c#
 //member variables
-IArduinoStream bluetooth;
+IStream bluetooth;
 UAPFirmataCliient firmata;
 RemoteDevice arduino;
 
@@ -58,7 +58,7 @@ public MyObject()
 	//if you create the firmata client yourself, don't forget to begin it!
 	firmata.begin( bt );
 	
-	//you must always call 'begin' on your IArduinoStream object to connect.
+	//you must always call 'begin' on your IStream object to connect.
 	bt.begin( 115200, 0 );
 }
 ```
@@ -88,7 +88,7 @@ public void toggleAllDigitalPins( bool setPinsHigh )
 
 ##Implementing the Arduino side
 
-locate the function `sysexCallback` in StandardFirmata. You'll notice that the function parameters already separate the command from the rest of the payload. This means that when our sysex command is sent the parameter `byte command` will be 0x42, where argc and argv will contain the *payload*, ie- anything that was added by calling `appendSysex` on the Remote Arduino Wiring side.
+locate the function `sysexCallback` in StandardFirmata. You'll notice that the function parameters already separate the command from the rest of the payload. This means that when our sysex command is sent the parameter `byte command` will be 0x42, where argc and argv will contain the *payload*, ie- anything that was added by calling `appendSysex` on the Remote Arduino side.
 
 **Note**
 Remember that Firmata is based on the MIDI standard. MIDI distinguishes *status* bytes from *data* bytes by using the MSB of each byte. If the MSB is set, then it is a status byte. If the MSB is not set, then it is a data byte. To comply with this standard, all payload bytes sent with Firmata are sent as two bytes. This means that we must reassemble our bytes on the Arduino side.
@@ -117,4 +117,45 @@ switch (command) {	//this line already exists in the sketch
 	
 	case I2C_WRITE:			//this line already exists in the sketch
 	...						//switch statement continues with other code
+```
+
+#Advanced Topic #2: Ports
+
+Many hardware devices use ports to monitor & control the state of GPIO pins. Since digital pins can only be in two states: HIGH or LOW, it is easy to correspond these states with the values 1 and 0. Therefore, hardware devices can use a single 8-bit register to store the state of 8 pins at once. These registers are called ports, and can directly be associated with the values of digital pins.
+
+##Why is this important?
+
+Firmata also deals with ports when it comes to digital values. After all, it is the format which the pin states are retrieved from the hardware, and it is much more efficient to send an entire port at once than individual pins (especially when multiple pins in a single port need to be updated).
+
+Therefore, Firmata itself uses ports to skip dealing with things as 'pins' and sending (or receiving) them individually. By interfacing with the Firmata layer directly, it is possible to update the state of 8 pins at once and to subscribe to port updates as a whole, rather than pins. In fact, when you subscribe to pin updates in the RemoteWiring layer, the RemoteDevice class is subscribed to the port events from Firmata, converts these into pin values for each pin value that has changed, and provides you an event for each one.
+
+there is a simple math function to convert a pin into a port, which works only because of integer division:
+`port = pin / 8;`
+therefore, pins 0-7 are port 0. pins 8-15 are port 1, and so on. You look to the bit position in the port value to determine the value of an individual pin. Essentially,
+`pin = ( port * 8 ) + index;`
+therefore, to set only pin 2 HIGH, and all other pins of port 0 LOW, we would send the binary value 00000100 ( hex: 0x04 ) to port 0, because the bit in position 2 is set.
+
+##Reimplementing Our Example
+
+The sysex example was far more simple than what you would *typically* do with sysex. It was just an example of *how* do use it. Let's accomplish the same thing using ports!
+
+Here is another look at the toggleAllDigitalPins function, reimplemented using ports instead of sysex.
+
+```c#
+public void toggleAllDigitalPins( bool setPinsHigh )
+{
+	/*
+	 * we have 14 pins, so that is pin 0-7 in port 0, and pin 8-13 in port 1.
+	 */
+	if( setPinsHigh )
+	{
+		firmata.sendDigitalPort( 0, 0xFF );	//all 8 pins of port 0 HIGH
+		firmata.sendDigitalPort( 1, 0x3F ); //the first 6 pins of port 1 HIGH
+	}
+	else
+	{
+		firmata.sendDigitalPort( 0, 0 );	//all pins low
+		firmata.sendDigitalPort( 1, 0 );	//all pins low
+	}
+}
 ```

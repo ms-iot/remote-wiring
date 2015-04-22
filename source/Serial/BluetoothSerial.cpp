@@ -145,7 +145,7 @@ BluetoothSerial::begin(
     uint32_t baud_,
 	SerialConfig config_
 ) {
-    // Discard incoming parameters inherited from IArduinoStream interface.
+    // Discard incoming parameters inherited from IStream interface.
     UNREFERENCED_PARAMETER(baud_);
     UNREFERENCED_PARAMETER(config_);
     begin(true);

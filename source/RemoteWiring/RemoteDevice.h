@@ -41,7 +41,7 @@ public:
 
 	[Windows::Foundation::Metadata::DefaultOverload]
 	RemoteDevice(
-		Serial::IArduinoStream ^serial_connection_
+		Serial::IStream ^serial_connection_
 	);
 
 
