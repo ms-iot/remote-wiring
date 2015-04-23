@@ -18,9 +18,11 @@ public:
     available (
         void
     );
-    UsbSerial();
+	UsbSerial(Windows::Devices::Enumeration::DeviceInformation ^deviceInfo_);
+	UsbSerial(Platform::String ^vid_);
+	UsbSerial(Platform::String ^vid_, Platform::String ^pid_);
 
-    virtual
+	virtual
     void
     begin (
         uint32_t baud_,
@@ -67,21 +69,28 @@ public:
     );
 
 private:
-    Windows::Devices::SerialCommunication::SerialDevice ^_usb_device;
+    Windows::Devices::SerialCommunication::SerialDevice ^_device;
+	Windows::Devices::Enumeration::DeviceInformation ^_deviceInfo;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
 	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
 	Windows::Storage::Streams::DataWriterStoreOperation ^currentStoreOperation;
-
+	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
+	Platform::String ^_deviceIdentifier;
+	Platform::String ^_vid;
+	Platform::String ^_pid;
+	
 	uint32_t _baud;
 	SerialConfig _config;
 	LONG volatile _connection_ready;
     bool _synchronous_mode;
 
+
     void
     begin (
         bool synchronous_mode_
     );
+
 };
 
 } // namespace Serial
