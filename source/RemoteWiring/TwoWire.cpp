@@ -49,6 +49,6 @@ TwoWire::stop(
  TwoWire::onI2cReply( 
 	I2cCallbackEventArgs ^args
 	)
- {
+{
 	 I2cReplyEvent( args->getAddress(), args->getResponseString() );
 }

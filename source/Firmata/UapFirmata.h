@@ -10,7 +10,7 @@ namespace Microsoft {
 namespace Maker {
 namespace Firmata {
 
-ref class UAPFirmataClient;
+ref class UapFirmata;
 
 public ref class CallbackEventArgs sealed
 {
@@ -132,13 +132,13 @@ public enum class SysexCommand {
 };
 
 
-public delegate void CallbackFunction( UAPFirmataClient ^caller, CallbackEventArgs ^argv );
-public delegate void StringCallbackFunction(UAPFirmataClient ^caller, StringCallbackEventArgs ^argv);
-public delegate void SysexCallbackFunction(UAPFirmataClient ^caller, SysexCallbackEventArgs ^argv);
-public delegate void SystemResetCallbackFunction( UAPFirmataClient ^caller, SystemResetCallbackEventArgs ^argv );
-public delegate void I2cReplyCallbackFunction( UAPFirmataClient ^caller, I2cCallbackEventArgs ^argv );
+public delegate void CallbackFunction( UapFirmata ^caller, CallbackEventArgs ^argv );
+public delegate void StringCallbackFunction(UapFirmata ^caller, StringCallbackEventArgs ^argv);
+public delegate void SysexCallbackFunction(UapFirmata ^caller, SysexCallbackEventArgs ^argv);
+public delegate void SystemResetCallbackFunction( UapFirmata ^caller, SystemResetCallbackEventArgs ^argv );
+public delegate void I2cReplyCallbackFunction( UapFirmata ^caller, I2cCallbackEventArgs ^argv );
 
-public ref class UAPFirmataClient sealed
+public ref class UapFirmata sealed
 {
 public:
 	event CallbackFunction^ DigitalPortValueEvent;
@@ -148,7 +148,7 @@ public:
 	event I2cReplyCallbackFunction^ I2cReplyEvent;
 	event SystemResetCallbackFunction^ SystemResetEvent;
 
-	UAPFirmataClient();
+	UapFirmata();
 
 	void
 	begin(
@@ -284,7 +284,7 @@ public:
 	static inline
 	void
 	digitalInvoke(
-		UAPFirmataClient ^caller,
+		UapFirmata ^caller,
 		uint8_t port_,
 		int value_
 	)
@@ -296,7 +296,7 @@ public:
 	static inline
 	void
 	analogInvoke(
-		UAPFirmataClient ^caller,
+		UapFirmata ^caller,
 		uint8_t pin_,
 		int value_
 	)
@@ -308,7 +308,7 @@ public:
 	static inline
 	void
 	sysexInvoke(
-		UAPFirmataClient ^caller,
+		UapFirmata ^caller,
 		uint8_t command_,
 		uint8_t argc_,
 		uint8_t *argv_

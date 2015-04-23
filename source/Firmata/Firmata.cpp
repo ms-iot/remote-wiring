@@ -73,8 +73,6 @@ FirmataClass::begin(
 	long speed
 	)
 {
-	//TODO we need some assumed connection
-	//FirmataStream = ref new Microsoft::Maker::Serial::UsbSerial(speed, Microsoft::Maker::Serial::SerialConfig::SERIAL_8N1);
 	FirmataStream->begin(speed, Microsoft::Maker::Serial::SerialConfig::SERIAL_8N1);
 }
 

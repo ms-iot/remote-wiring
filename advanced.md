@@ -37,10 +37,16 @@ const byte ALL_PINS_COMMAND = 0x42;
 
 We will bypass the RemoteWiring layer and use the Firmata layer directly to send Sysex commands. In the basic example, we constructed the RemoteDevice object by passing our IStream object of choice (BluetoothSerial), in which case the Firmata layer is constructed for us. In this example, we're going to construct that layer manually so that we can keep a reference to it.
 
+####Note:
+
+Whenever you construct the UapFirmata object yourself, you **must** call startListening() in order to enable any inputs. This is done so that you can define your own behaviors, as some projects may not care about inputs, or may need to process inputs themselves. When the UapFirmata object is constructed for you (as in the basic examples) this function is called for you.
+
+**You will not receive any events, I2C replies, or valid data returned from digitalRead() or analogRead() if you do not startListening() on the UapFirmata object**
+
 ```c#
 //member variables
 IStream bluetooth;
-UAPFirmataCliient firmata;
+UapFirmata firmata;
 RemoteDevice arduino;
 
 //MyObject constructor
@@ -50,13 +56,16 @@ public MyObject()
 	bt = new BluetoothSerial();
 	
 	//construct the firmata client
-	firmata = new UAPFirmataCliient();
+	firmata = new UapFirmata();
 	
 	//last, construct the RemoteWiring layer by passing in our Firmata layer.
 	arduino = new RemoteDevice( firmata );
 	
 	//if you create the firmata client yourself, don't forget to begin it!
 	firmata.begin( bt );
+	
+	//since we do not care about inputs in this example, we will not call firmata.startListening()!
+	//firmata.startListening();
 	
 	//you must always call 'begin' on your IStream object to connect.
 	bt.begin( 115200, 0 );

@@ -83,11 +83,11 @@ public:
 private:
 	//singleton pattern w/ friend class to instantiate
 	TwoWire(
-		Firmata::UAPFirmataClient ^ firmata_
+		Firmata::UapFirmata ^ firmata_
 		) :
 		_firmata( firmata_ )
 	{
-		_firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UAPFirmataClient ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
+		_firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UapFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
 	}
 
 	//since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire
@@ -96,7 +96,7 @@ private:
 	void onI2cReply( Firmata::I2cCallbackEventArgs ^argv );
 
 	//a reference to the UAP firmata interface
-	Firmata::UAPFirmataClient ^_firmata;
+	Firmata::UapFirmata ^_firmata;
 };
 
 } // namespace I2c

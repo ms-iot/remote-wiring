@@ -11,15 +11,15 @@ Windows Remote Arduino bridges the gap between the software world and the physic
 Windows Remote Arduino enables the following functionality, right "out of the box".
 
 1. GPIO – Analog and Digital I/O
-  a. digitalWrite - Digital Write
-  b. digitalRead - Digital Read
-  c. analogWrite - Analog Write
-  d. analogRead - Analog Read
-  e. PinMode - Set the mode for any pins.
-  f. Eventing - receive events when values change / are reported.
+  * digitalWrite - Digital Write
+  * digitalRead - Digital Read
+  * analogWrite - Analog Write
+  * analogRead - Analog Read
+  * pinMode - Set the mode for any pins.
+  * Eventing - receive events when values change / are reported.
 2. I2C/TwoWire
-  a. Send/Receive data to devices over I2C.
-  b. Subscribe to a device, repeated queries and automatic reporting.
+  * Send/Receive data to devices over I2C.
+  * Subscribe to a device, repeated queries and automatic reporting.
 3. Custom protocols via Firmata SysEx command
 
 
@@ -39,19 +39,19 @@ There are three layers in the architecture of Windows Remote Arduino; they are i
 
 - RemoteWiring (interface)
 - Firmata (protocol)
-- ArduinoStream (transport)
+- Serial (transport)
 
-For example, the Firmata layer translates the requests of the RemoteWiring layer into the Firmata protocol and then passes them on to the ArduinoStream layer for transport to the Arduino (and vise-versa). The Firmata layer has no knowledge of what the ArduinoStream implementation looks like, or what method of transport is actually being used. However, the Firmata layer absolutely depends on this layer in order to work. In sharp contrast, the Firmata layer is not aware of the RemoteWiring layer's existence, and therefore could be interacted with directly.
+For example, the Firmata layer translates the requests of the RemoteWiring layer into the Firmata protocol and then passes them on to the Serial layer for transport to the Arduino (and vise-versa). The Firmata layer has no knowledge of what the Serial implementation looks like, or what method of transport is actually being used. However, the Firmata layer absolutely depends on this layer in order to work. In sharp contrast, the Firmata layer is not aware of the RemoteWiring layer's existence, and therefore could be interacted with directly.
 
 ###RemoteWiring
 The main interface class of the RemoteWiring layer is RemoteDevice, and it is the main API entry point that should be used in most cases. It offers an interface that is nearly identical to what you will find in the Arduino Wiring API, and should therefore be familiar if you have written Arduino sketches yourself. However, It is safe to say that all calls through this layer are directed to the Firmata layer below it, so it is only necessary to bypass or extend this layer when very advanced behaviors are desired for a project!
 
 ###Firmata
-The implementation of Firmata is taken directly from the [Firmata repository](https://github.com/firmata/arduino), with absolute minimal changes (i.e. removing arduino/hardware dependencies), and is wrapped by a transparent [Windows Runtime Component](https://msdn.microsoft.com/en-us/library/hh441572.aspx) library class.
+The implementation of Firmata is taken directly from the [Firmata repository](https://github.com/firmata/arduino), with absolute minimal changes (i.e. removing arduino/hardware dependencies), and is wrapped by a transparent [Windows Runtime Component](https://msdn.microsoft.com/en-us/library/hh441572.aspx) library class named UapFirmata.
 The wrapper does not change or add functionality, it only provides parameter smoothing (i.e. `char *` -> `String`) and paradigm translation (i.e. `callbacks` -> `events`). This layer is completely independent from the RemoteWiring layer above it, so it can be used as a fully-functional Firmata implementation!
 
-###ArduinoStream
-ArduinoStream is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
+###Serial
+Serial is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
 
 - `begin(int, char)` -> `void` -- initializes the stream
 - `end(void)` -> `void` -- finalizes the stream
@@ -90,7 +90,19 @@ Simply change the `begin` parameter to match the configuration of your Bluetooth
 
 ##Project Setup
 
+Typically, you will want to add the Windows Remote Arduino library into your own Maker projects. The easiest way to do this is by installing the NuGet package into your projects! 
 
+Simply open the [NuGet Package Manager Console](https://docs.nuget.org/consume/package-manager-console) and type the following command:
+
+``
+
+The necessary projects and any dependencies will automatically be downloaded and installed into your project!
+
+[What is NuGet?](http://blogs.msdn.com/b/davidebb/archive/2010/10/05/introducing-nupack-the-smart-way-to-bring-bits-into-your-projects.aspx)
+
+[How do I use the NuGet Package Manager?](https://docs.nuget.org/consume/package-manager-console)
+
+However, if you'd prefer to manually download the source code and compile it yourself, either as a separate project or included in your solution, refer to the [manual installation instructions](installation.md)
 
 
 #Usage
@@ -144,6 +156,10 @@ As previously mentioned, the RemoteWiring layer allows interactions with the Rem
 
 For example, whenever you set an analog or digital pin to INPUT, the library will be notified whenever a pin value changes for digital pins, and every few milliseconds for analog pins. Windows Remote Arduino can pass these notifications on to you in the form of `events`. Simply subscribe to the event with a delegate function, and that function will automatically be called whenever it is appropriate!
 
+####Note:
+
+Events are often called on background threads. You may need to consider basic threading behaviors if you are storing data into an array or object created/used on your main thread, or if you are working with a user interface. When you use digital and analog read, the threading issues are taken care of by the library and are of no concern to you.
+
 ```c#
 IStream bt;
 RemoteDevice arduino;
@@ -159,15 +175,23 @@ public MyObject()
 	//subscribe to the AnalogPinUpdateEvent with the name of the function to be called.
 	arduino.AnalogPinUpdateEvent += MyAnalogPinUpdateCallback;
 
-	//always begin your IStream
-	bt.begin( 115200, 0 );
+	//subscribe to the ConnectionEstablished event with the name of the function to be called.
+	bt.ConnectionEstablished += MyConnectionEstablishedCallback;
 	
+	//always begin your IStream object
+	bt.begin( 115200, 0 );
+}
+
+//this function will automatically be called when the bluetooth connection is established
+public void MyConnectionEstablishedCallback()
+{
 	//set pin 7 to input mode to automatically receive callbacks when it changes
 	arduino.pinMode( 7, PinMode.INPUT );
 	
-	//setting a pin value also triggers the callback
 	arduino.pinMode( 8, OUTPUT );
-	arduino.digitalWrite( 8, PinState.HIGH ); //this line will trigger the event, causing MyDigitalPinUpdateCallback to be invoked.
+	
+	//you will also get a pin event when you change the value yourself.
+	arduino.digitalWrite( 8, PinState.HIGH );
 }
 
 //this function will automatically be called whenever a digital pin value changes
