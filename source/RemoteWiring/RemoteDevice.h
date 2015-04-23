@@ -46,7 +46,7 @@ public:
 
 
 	RemoteDevice(
-		Firmata::UAPFirmataClient ^firmata_
+		Firmata::UapFirmata ^firmata_
 	);
 
 
@@ -135,7 +135,7 @@ private:
 	I2c::TwoWire ^_twoWire;
 
 	//a reference to the UAP firmata interface
-	Firmata::UAPFirmataClient ^_firmata;
+	Firmata::UapFirmata ^_firmata;
 
 	//initialization for constructor
 	void const initialize();

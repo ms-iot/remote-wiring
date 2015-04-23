@@ -130,8 +130,9 @@ BluetoothSerial::BluetoothSerial(
 
 uint16_t
 BluetoothSerial::available(
-    void
-) {
+	void
+	)
+{
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
 
@@ -144,7 +145,8 @@ void
 BluetoothSerial::begin(
     uint32_t baud_,
 	SerialConfig config_
-) {
+	)
+{
     // Discard incoming parameters inherited from IStream interface.
     UNREFERENCED_PARAMETER(baud_);
     UNREFERENCED_PARAMETER(config_);
@@ -163,8 +165,9 @@ BluetoothSerial::beginAsync(
 
 bool
 BluetoothSerial::connectionReady(
-void
-) {
+	void
+	)
+{
     return static_cast<bool>(InterlockedAnd(&_connection_ready, true));
 }
 
@@ -172,8 +175,9 @@ void
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
 void
 BluetoothSerial::end(
-    void
-) {
+	void
+	)
+{
     InterlockedAnd(&_connection_ready, false);
     delete(_rx); //_rx->Close();
     _rx = nullptr;
@@ -189,8 +193,9 @@ BluetoothSerial::end(
 
 uint16_t
 BluetoothSerial::read(
-    void
-) {
+	void
+	)
+{
     uint16_t c = static_cast<uint16_t>(-1);
 
     if ( available() ) {
@@ -219,8 +224,9 @@ BluetoothSerial::read(
 
 uint32_t
 BluetoothSerial::write(
-    uint8_t c_
-) {
+	uint8_t c_
+	)
+{
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
 
@@ -244,8 +250,8 @@ BluetoothSerial::write(
 
 void
 BluetoothSerial::begin(
-bool synchronous_mode_
-)
+	bool synchronous_mode_
+	)
 {
 	_synchronous_mode = synchronous_mode_;
 
@@ -318,8 +324,8 @@ bool synchronous_mode_
 
 Concurrency::task<bool>
 BluetoothSerial::connectAsync(
-Windows::Devices::Enumeration::DeviceInformation ^device_
-)
+	Windows::Devices::Enumeration::DeviceInformation ^device_
+	)
 {
 	return Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
 
@@ -379,8 +385,8 @@ Windows::Devices::Enumeration::DeviceInformation ^device_
 
 Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
 BluetoothSerial::listAvailableDevicesAsync(
-void
-)
+	void
+	)
 {
 	// Construct AQS String from service id of desired device
 	Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector( Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort );
@@ -392,8 +398,8 @@ void
 
 Windows::Storage::Streams::DataReaderLoadOperation ^
 BluetoothSerial::loadAsync(
-unsigned int count_
-)
+	unsigned int count_
+	)
 {
 	//TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
 	return _rx->LoadAsync( count_ );

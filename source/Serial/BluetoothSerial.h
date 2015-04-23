@@ -19,13 +19,13 @@ public:
 
     virtual
     uint16_t
-    available (
-        void
+    available(
+		void
     );
 
     virtual
     void
-    begin (
+    begin(
         uint32_t baud_,
 		SerialConfig config_
     );
@@ -33,24 +33,24 @@ public:
     virtual
     void
     end(
-        void
+		void
     );
 
     virtual
     uint16_t
-    read (
-        void
+    read(
+		void
     );
 
     virtual
     uint32_t
-    write (
-        uint8_t c_
+    write(
+		uint8_t c_
     );
 
 	void
-    beginAsync (
-        void
+    beginAsync(
+		void
     );
 
 	bool
@@ -83,8 +83,8 @@ private:
     bool _synchronous_mode;
 
     void
-    begin (
-        bool synchronous_mode_
+    begin(
+		bool synchronous_mode_
 	);
 
 	Concurrency::task<bool>
