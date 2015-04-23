@@ -94,7 +94,7 @@ Typically, you will want to add the Windows Remote Arduino library into your own
 
 Simply open the [NuGet Package Manager Console](https://docs.nuget.org/consume/package-manager-console) and type the following command:
 
-``
+`Install-Package Windows.Remote.Arduino`
 
 The necessary projects and any dependencies will automatically be downloaded and installed into your project!
 
@@ -112,8 +112,8 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 
 
 ```c#
-        using namespace Microsoft.Maker.Wiring;
-        using namespace Microsoft.Maker.Wiring.Serial;
+        using namespace Microsoft.Maker.RemoteWiring;
+        using namespace Microsoft.Maker.Serial;
 
 		//create a bluetooth connection and pass it to the RemoteDevice
 		IStream bt = new BluetoothSerial();
@@ -133,8 +133,8 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 
 
 ```c++
-        using namespace Microsoft::Maker::Wiring;
-        using namespace Microsoft::Maker::Wiring::Serial;
+        using namespace Microsoft::Maker::RemoteWiring;
+        using namespace Microsoft::Maker::Serial;
 		
 		//create a bluetooth connection and pass it to the RemoteDevice
 		IStream ^bt = ref new BluetoothSerial;
