@@ -137,6 +137,7 @@ UsbSerial::begin(
 		{
 			if (device_ == nullptr)
 			{
+				ConnectionFailed();
 				return;
 			}
 			_device = device_;
@@ -273,10 +274,22 @@ UsbSerial::begin(
 			}
 
 			_tx = ref new Windows::Storage::Streams::DataWriter(device_->OutputStream);
+		}).then( [ this ]( Concurrency::task<void> t )
+		{
+			try
+			{
+				//if anything in our task chain threw an exception, get() will receive it.
+				t.get();
 
-			// Set connection ready flag
-			InterlockedOr(&_connection_ready, true);
-			ConnectionEstablished();
+				//if no exception was thrown, connection was successful. set connection ready flag
+				InterlockedOr( &_connection_ready, true );
+				ConnectionEstablished();
+			}
+			catch( ... )
+			{
+				ConnectionFailed();
+				return;
+			}
 		});
 	})
 	.then([this](Concurrency::task<void> t)

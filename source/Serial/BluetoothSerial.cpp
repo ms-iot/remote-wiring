@@ -360,11 +360,6 @@ BluetoothSerial::connectAsync(
 		}
 
 		_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
-
-		// Set connection ready flag
-		InterlockedOr( &_connection_ready, true );
-
-		ConnectionEstablished();
 		return true;
 	} )
 
@@ -373,7 +368,14 @@ BluetoothSerial::connectAsync(
 		try
 		{
 			//if anything in our task chain threw an exception, get() will receive it.
-			return t.get();
+			bool success = t.get();
+			if( success )
+			{
+				// Set connection ready flag
+				InterlockedOr( &_connection_ready, true );
+				ConnectionEstablished();
+			}
+			return success;
 		}
 		catch( ... )
 		{
