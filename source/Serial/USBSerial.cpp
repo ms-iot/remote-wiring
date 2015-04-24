@@ -17,30 +17,30 @@ using namespace Microsoft::Maker::Serial;
 UsbSerial::UsbSerial(
 	Windows::Devices::Enumeration::DeviceInformation ^deviceInfo_
 	) :
-	_baud(9600),
-	_config(SerialConfig::SERIAL_8N1),
-	_connection_ready(0),
-	_device(nullptr),
-	_deviceInfo(deviceInfo_),
-	_vid(nullptr),
-	_pid(nullptr),
-	_rx(nullptr),
-	_tx(nullptr)
+	_baud( 9600 ),
+	_config( SerialConfig::SERIAL_8N1 ),
+	_connection_ready( 0 ),
+	_device( nullptr ),
+	_deviceInfo( deviceInfo_ ),
+	_vid( nullptr ),
+	_pid( nullptr ),
+	_rx( nullptr ),
+	_tx( nullptr )
 {
 }
 
 UsbSerial::UsbSerial(
 	Platform::String ^vid_
 	) :
-	_baud(9600),
-	_config(SerialConfig::SERIAL_8N1),
-	_connection_ready(0),
-	_device(nullptr),
-	_deviceInfo(nullptr),
-	_vid(vid_),
-	_pid(nullptr),
-	_rx(nullptr),
-	_tx(nullptr)
+	_baud( 9600 ),
+	_config( SerialConfig::SERIAL_8N1 ),
+	_connection_ready( 0 ),
+	_device( nullptr ),
+	_deviceInfo( nullptr ),
+	_vid( vid_ ),
+	_pid( nullptr ),
+	_rx( nullptr ),
+	_tx( nullptr )
 {
 }
 
@@ -48,15 +48,15 @@ UsbSerial::UsbSerial(
 	Platform::String ^vid_,
 	Platform::String ^pid_
 	) :
-	_baud(9600),
-	_config(SerialConfig::SERIAL_8N1),
-	_connection_ready(0),
-	_device(nullptr),
-	_deviceInfo(nullptr),
-	_vid(vid_),
-	_pid(pid_),
-	_rx(nullptr),
-	_tx(nullptr)
+	_baud( 9600 ),
+	_config( SerialConfig::SERIAL_8N1 ),
+	_connection_ready( 0 ),
+	_device( nullptr ),
+	_deviceInfo( nullptr ),
+	_vid( vid_ ),
+	_pid( pid_ ),
+	_rx( nullptr ),
+	_tx( nullptr )
 {
 }
 
@@ -69,7 +69,7 @@ UsbSerial::available(
 	void
 	) {
 	// Check to see if connection is ready
-	if (!connectionReady()) { return 0; }
+	if( !connectionReady() ) { return 0; }
 
 	return _rx->UnconsumedBufferLength;
 }
@@ -83,7 +83,7 @@ UsbSerial::begin(
 	) {
 	_baud = baud_;
 	_config = config_;
-	begin(true);
+	begin( true );
 }
 
 void
@@ -96,46 +96,46 @@ UsbSerial::begin(
 	end();
 
 	// Identify all paired serial devices
-	Concurrency::create_task(listAvailableDevicesAsync())
-		.then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^devices_) {
+	Concurrency::create_task( listAvailableDevicesAsync() )
+		.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices_ ) {
 		// Ensure at least one device satisfies query
-		if (!devices_->Size)
+		if( !devices_->Size )
 		{
 			//no devices found
 			ConnectionFailed();
 			return;
 		}
 		_deviceIdentifier = nullptr;
-		for (unsigned int i = 0; i < devices_->Size; ++i)
+		for( unsigned int i = 0; i < devices_->Size; ++i )
 		{
-			if (_deviceInfo == nullptr && _vid != nullptr && std::string::npos == std::wstring(devices_->GetAt(i)->Id->Data()).find(_vid->Data())) 
-			{ 
-				continue; 
+			if( _deviceInfo == nullptr && _vid != nullptr && std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _vid->Data() ) )
+			{
+				continue;
 			}
-			if (_deviceInfo == nullptr && _pid != nullptr && std::string::npos == std::wstring(devices_->GetAt(i)->Id->Data()).find(_pid->Data())) 
-			{ 
-				continue; 
+			if( _deviceInfo == nullptr && _pid != nullptr && std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _pid->Data() ) )
+			{
+				continue;
 			}
-			if (_deviceInfo != nullptr) {
+			if( _deviceInfo != nullptr ) {
 				_deviceIdentifier = _deviceInfo->Id;
 				break;
 			}
 			else
 			{
-				_deviceIdentifier = devices_->GetAt(i)->Id;
+				_deviceIdentifier = devices_->GetAt( i )->Id;
 				break;
 			}
 		}
-		if (_deviceIdentifier == nullptr)
+		if( _deviceIdentifier == nullptr )
 		{
 			//Requested device not found
 			ConnectionFailed();
 			return;
 		}
-		Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(_deviceIdentifier))
-			.then([this](Windows::Devices::SerialCommunication::SerialDevice ^device_)
+		Concurrency::create_task( Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync( _deviceIdentifier ) )
+			.then( [ this ]( Windows::Devices::SerialCommunication::SerialDevice ^device_ )
 		{
-			if (device_ == nullptr)
+			if( device_ == nullptr )
 			{
 				ConnectionFailed();
 				return;
@@ -143,7 +143,7 @@ UsbSerial::begin(
 			_device = device_;
 			_device->Handshake = SerialHandshake::None;
 			_device->BaudRate = _baud;
-			switch (_config) {
+			switch( _config ) {
 			case SerialConfig::SERIAL_5E1:
 				_device->DataBits = 5;
 				_device->Parity = SerialParity::Even;
@@ -266,15 +266,15 @@ UsbSerial::begin(
 				break;
 			}
 
-			_rx = ref new Windows::Storage::Streams::DataReader(device_->InputStream);
-			if (_synchronous_mode) {
+			_rx = ref new Windows::Storage::Streams::DataReader( device_->InputStream );
+			if( _synchronous_mode ) {
 				_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-				currentLoadOperation = _rx->LoadAsync(100);
+				currentLoadOperation = _rx->LoadAsync( 100 );
 				currentStoreOperation = nullptr;
 			}
 
-			_tx = ref new Windows::Storage::Streams::DataWriter(device_->OutputStream);
-		}).then( [ this ]( Concurrency::task<void> t )
+			_tx = ref new Windows::Storage::Streams::DataWriter( device_->OutputStream );
+		} ).then( [ this ]( Concurrency::task<void> t )
 		{
 			try
 			{
@@ -290,21 +290,21 @@ UsbSerial::begin(
 				ConnectionFailed();
 				return;
 			}
-		});
-	})
-	.then([this](Concurrency::task<void> t)
+		} );
+	} )
+		.then( [ this ]( Concurrency::task<void> t )
 	{
 		try
 		{
 			//if anything in our task chain threw an exception, get() will receive it.
 			return t.get();
 		}
-		catch (...)
+		catch( ... )
 		{
 			ConnectionFailed();
 			return;
 		}
-	});
+	} );
 }
 
 
@@ -312,14 +312,14 @@ void
 UsbSerial::beginAsync(
 	void
 	) {
-	begin(false);
+	begin( false );
 }
 
 bool
 UsbSerial::connectionReady(
 	void
 	) {
-	return static_cast<bool>(InterlockedAnd(&_connection_ready, true));
+	return static_cast<bool>( InterlockedAnd( &_connection_ready, true ) );
 }
 
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
@@ -327,12 +327,12 @@ void
 UsbSerial::end(
 	void
 	) {
-	InterlockedAnd(&_connection_ready, false);
-	delete(_rx); //_rx->Close();
+	InterlockedAnd( &_connection_ready, false );
+	delete( _rx ); //_rx->Close();
 	_rx = nullptr;
-	delete(_tx); //_tx->Close();
+	delete( _tx ); //_tx->Close();
 	_tx = nullptr;
-	delete(_device);
+	delete( _device );
 	_device = nullptr;
 }
 
@@ -346,7 +346,7 @@ UsbSerial::listAvailableDevicesAsync(
 	Platform::String ^device_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelector();
 
 	// Identify all paired devices satisfying query
-	return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
+	return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync( device_aqs );
 }
 
 Windows::Storage::Streams::DataReaderLoadOperation ^
@@ -354,7 +354,7 @@ UsbSerial::loadAsync(
 	unsigned int count_
 	) {
 	//TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
-	return _rx->LoadAsync(count_);
+	return _rx->LoadAsync( count_ );
 }
 
 
@@ -362,27 +362,27 @@ uint16_t
 UsbSerial::read(
 	void
 	) {
-	uint16_t c = static_cast<uint16_t>(-1);
+	uint16_t c = static_cast<uint16_t>( -1 );
 
-	if (available()) {
+	if( available() ) {
 		c = _rx->ReadByte();
 	}
 
 	// Prefetch buffer
-	if (connectionReady() &&
+	if( connectionReady() &&
 		_synchronous_mode &&
 		!_rx->UnconsumedBufferLength &&
-		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started)
+		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
 	{
 		//attempt to detect disconnection
-		if (currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error)
+		if( currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error )
 		{
-			InterlockedAnd(&_connection_ready, false);
+			InterlockedAnd( &_connection_ready, false );
 			ConnectionLost();
 			return -1;
 		}
 		currentLoadOperation->Close();
-		currentLoadOperation = _rx->LoadAsync(100);
+		currentLoadOperation = _rx->LoadAsync( 100 );
 	}
 
 	return c;
@@ -393,16 +393,16 @@ UsbSerial::write(
 	uint8_t c_
 	) {
 	// Check to see if connection is ready
-	if (!connectionReady()) { return 0; }
+	if( !connectionReady() ) { return 0; }
 
-	if ((currentStoreOperation != nullptr) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error)
+	if( ( currentStoreOperation != nullptr ) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error )
 	{
-		InterlockedAnd(&_connection_ready, false);
+		InterlockedAnd( &_connection_ready, false );
 		ConnectionLost();
 		return 0;
 	}
 
-	_tx->WriteByte(c_);
+	_tx->WriteByte( c_ );
 	currentStoreOperation = _tx->StoreAsync();
 	return 1;
 }

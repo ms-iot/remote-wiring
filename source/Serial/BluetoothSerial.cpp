@@ -13,64 +13,64 @@ using namespace Concurrency;
 using namespace Microsoft::Maker::Serial;
 
 namespace {
-    // Connection code taken from:
-    // https://msdn.microsoft.com/en-us/library/windows/apps/xaml/dn264586.aspx
+	// Connection code taken from:
+	// https://msdn.microsoft.com/en-us/library/windows/apps/xaml/dn264586.aspx
 
-    // This App requires a connection that is encrypted but does not care about
-    // whether its authenticated.
-    bool SupportsProtection(RfcommDeviceService^ service)
-    {
-        switch (service->ProtectionLevel)
-        {
-        case SocketProtectionLevel::PlainSocket:
-            if ((SocketProtectionLevel::BluetoothEncryptionWithAuthentication == service->MaxProtectionLevel)
-                || (service->MaxProtectionLevel == SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
-            {
-                // The connection can be upgraded when opening the socket so the
-                // App may offer UI here to notify the user that Windows may
-                // prompt for a PIN exchange.
-                return true;
-            }
-            else
-            {
-                // The connection cannot be upgraded so an App may offer UI here
-                // to explain why a connection won’t be made.
-                return false;
-            }
-        case SocketProtectionLevel::BluetoothEncryptionWithAuthentication:
-            return true;
-        case SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication:
-            return true;
-        }
-        return false;
-    }
+	// This App requires a connection that is encrypted but does not care about
+	// whether its authenticated.
+	bool SupportsProtection( RfcommDeviceService^ service )
+	{
+		switch( service->ProtectionLevel )
+		{
+		case SocketProtectionLevel::PlainSocket:
+			if( ( SocketProtectionLevel::BluetoothEncryptionWithAuthentication == service->MaxProtectionLevel )
+				|| ( service->MaxProtectionLevel == SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
+			{
+				// The connection can be upgraded when opening the socket so the
+				// App may offer UI here to notify the user that Windows may
+				// prompt for a PIN exchange.
+				return true;
+			}
+			else
+			{
+				// The connection cannot be upgraded so an App may offer UI here
+				// to explain why a connection won’t be made.
+				return false;
+			}
+		case SocketProtectionLevel::BluetoothEncryptionWithAuthentication:
+			return true;
+		case SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication:
+			return true;
+		}
+		return false;
+	}
 
-    // This App relies on CRC32 checking available in version 2.0 of the service.
-    bool IsCompatibleVersion(RfcommDeviceService^ service)
-    {
-        const uint32_t SERVICE_VERSION_ATTRIBUTE_ID = 0x0300;
-        const byte SERVICE_VERSION_ATTRIBUTE_TYPE = 0x0A;   // UINT32
-        const uint32_t MINIMUM_SERVICE_VERSION = 0x0200;
+	// This App relies on CRC32 checking available in version 2.0 of the service.
+	bool IsCompatibleVersion( RfcommDeviceService^ service )
+	{
+		const uint32_t SERVICE_VERSION_ATTRIBUTE_ID = 0x0300;
+		const byte SERVICE_VERSION_ATTRIBUTE_TYPE = 0x0A;   // UINT32
+		const uint32_t MINIMUM_SERVICE_VERSION = 0x0200;
 
-        create_task(service->GetSdpRawAttributesAsync(
-            Windows::Devices::Bluetooth::BluetoothCacheMode::Uncached))
-        .then([&](Windows::Foundation::Collections::IMapView<uint32_t, Windows::Storage::Streams::IBuffer ^> ^attributes_){
-            Windows::Storage::Streams::DataReader ^reader = DataReader::FromBuffer(attributes_->Lookup(SERVICE_VERSION_ATTRIBUTE_ID));
+		create_task( service->GetSdpRawAttributesAsync(
+			Windows::Devices::Bluetooth::BluetoothCacheMode::Uncached ) )
+			.then( [ & ]( Windows::Foundation::Collections::IMapView<uint32_t, Windows::Storage::Streams::IBuffer ^> ^attributes_ ) {
+			Windows::Storage::Streams::DataReader ^reader = DataReader::FromBuffer( attributes_->Lookup( SERVICE_VERSION_ATTRIBUTE_ID ) );
 
-            // The first byte contains the attribute's type
-            byte attributeType = reader->ReadByte();
-            if ( attributeType == SERVICE_VERSION_ATTRIBUTE_TYPE )
-            {
-                // The remainder is the data
-                uint32_t version = reader->ReadUInt32();
-                return version >= MINIMUM_SERVICE_VERSION;
-            }
+			// The first byte contains the attribute's type
+			byte attributeType = reader->ReadByte();
+			if( attributeType == SERVICE_VERSION_ATTRIBUTE_TYPE )
+			{
+				// The remainder is the data
+				uint32_t version = reader->ReadUInt32();
+				return version >= MINIMUM_SERVICE_VERSION;
+			}
 
-            return true;
-        });
+			return true;
+		} );
 
-        return true; // bug, returns erroneous result
-    }
+		return true; // bug, returns erroneous result
+	}
 }  // namespace
 
 
@@ -80,47 +80,47 @@ namespace {
 //******************************************************************************
 
 BluetoothSerial::BluetoothSerial(
-    void
-) :
-    _connection_ready(0),
-    _device_service(nullptr),
-    _rx(nullptr),
-    _service_id(nullptr),
-    _service_provider(nullptr),
-    _stream_socket(nullptr),
-    _tx(nullptr),
-	_deviceIdentifier(nullptr),
-	_device(nullptr)
+	void
+	) :
+	_connection_ready( 0 ),
+	_device_service( nullptr ),
+	_rx( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
+	_tx( nullptr ),
+	_deviceIdentifier( nullptr ),
+	_device( nullptr )
 {
 }
 
 BluetoothSerial::BluetoothSerial(
 	Platform::String ^deviceIdentifier_
 	) :
-	_connection_ready(0),
-	_device_service(nullptr),
-	_rx(nullptr),
-	_service_id(nullptr),
-	_service_provider(nullptr),
-	_stream_socket(nullptr),
-	_tx(nullptr),
-	_deviceIdentifier(deviceIdentifier_),
-	_device(nullptr)
+	_connection_ready( 0 ),
+	_device_service( nullptr ),
+	_rx( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
+	_tx( nullptr ),
+	_deviceIdentifier( deviceIdentifier_ ),
+	_device( nullptr )
 {
 }
 
 BluetoothSerial::BluetoothSerial(
 	DeviceInformation ^device_
 	) :
-	_connection_ready(0),
-	_device_service(nullptr),
-	_rx(nullptr),
-	_service_id(nullptr),
-	_service_provider(nullptr),
-	_stream_socket(nullptr),
-	_tx(nullptr),
-	_deviceIdentifier(nullptr),
-	_device(device_)
+	_connection_ready( 0 ),
+	_device_service( nullptr ),
+	_rx( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
+	_tx( nullptr ),
+	_deviceIdentifier( nullptr ),
+	_device( device_ )
 {
 }
 
@@ -133,33 +133,33 @@ BluetoothSerial::available(
 	void
 	)
 {
-    // Check to see if connection is ready
-    if ( !connectionReady() ) { return 0; }
+	// Check to see if connection is ready
+	if( !connectionReady() ) { return 0; }
 
-    return _rx->UnconsumedBufferLength;
+	return _rx->UnconsumedBufferLength;
 }
 
 /// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a bluetooth connection. An Advanced Query String is constructed based upon the service id of the desired device. Then build a collection of all paired devices matching the query.
 /// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
 void
 BluetoothSerial::begin(
-    uint32_t baud_,
+	uint32_t baud_,
 	SerialConfig config_
 	)
 {
-    // Discard incoming parameters inherited from IStream interface.
-    UNREFERENCED_PARAMETER(baud_);
-    UNREFERENCED_PARAMETER(config_);
-    begin(true);
+	// Discard incoming parameters inherited from IStream interface.
+	UNREFERENCED_PARAMETER( baud_ );
+	UNREFERENCED_PARAMETER( config_ );
+	begin( true );
 }
 
 
 void
 BluetoothSerial::beginAsync(
-    void
+	void
 	)
 {
-    begin(false);
+	begin( false );
 }
 
 
@@ -168,7 +168,7 @@ BluetoothSerial::connectionReady(
 	void
 	)
 {
-    return static_cast<bool>(InterlockedAnd(&_connection_ready, true));
+	return static_cast<bool>( InterlockedAnd( &_connection_ready, true ) );
 }
 
 
@@ -178,16 +178,16 @@ BluetoothSerial::end(
 	void
 	)
 {
-    InterlockedAnd(&_connection_ready, false);
-    delete(_rx); //_rx->Close();
-    _rx = nullptr;
-    delete(_tx); //_tx->Close();
-    _tx = nullptr;
-    delete(_stream_socket); //_socket->Close();
-    _stream_socket = nullptr;
-    _device_service = nullptr;
-    _service_id = nullptr;
-    _service_provider = nullptr;
+	InterlockedAnd( &_connection_ready, false );
+	delete( _rx ); //_rx->Close();
+	_rx = nullptr;
+	delete( _tx ); //_tx->Close();
+	_tx = nullptr;
+	delete( _stream_socket ); //_socket->Close();
+	_stream_socket = nullptr;
+	_device_service = nullptr;
+	_service_id = nullptr;
+	_service_provider = nullptr;
 }
 
 
@@ -196,14 +196,14 @@ BluetoothSerial::read(
 	void
 	)
 {
-    uint16_t c = static_cast<uint16_t>(-1);
+	uint16_t c = static_cast<uint16_t>( -1 );
 
-    if ( available() ) {
-         c = _rx->ReadByte();
-    }
+	if( available() ) {
+		c = _rx->ReadByte();
+	}
 
-    // Prefetch buffer
-	if ( connectionReady() &&
+	// Prefetch buffer
+	if( connectionReady() &&
 		_synchronous_mode &&
 		!_rx->UnconsumedBufferLength &&
 		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
@@ -219,7 +219,7 @@ BluetoothSerial::read(
 		currentLoadOperation = _rx->LoadAsync( 100 );
 	}
 
-    return c;
+	return c;
 }
 
 uint32_t
@@ -227,8 +227,8 @@ BluetoothSerial::write(
 	uint8_t c_
 	)
 {
-    // Check to see if connection is ready
-    if ( !connectionReady() ) { return 0; }
+	// Check to see if connection is ready
+	if( !connectionReady() ) { return 0; }
 
 	if( ( currentStoreOperation != nullptr ) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error )
 	{
@@ -237,9 +237,9 @@ BluetoothSerial::write(
 		return 0;
 	}
 
-    _tx->WriteByte(c_);
+	_tx->WriteByte( c_ );
 	currentStoreOperation = _tx->StoreAsync();
-    return 1;
+	return 1;
 }
 
 
@@ -261,7 +261,7 @@ BluetoothSerial::begin(
 	/*
 	 * there are several scenarios here which may involve blocking operations for proper error handling and etc. we need to absolutely guarantee that this can never
 	 * execute on the main thread.
-	 */ 
+	 */
 	std::thread thr( [ this ] {
 		//if a device was specified, attempt to connectAsync to that device and bounce
 		if( _device != nullptr )

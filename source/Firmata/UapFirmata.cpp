@@ -10,7 +10,7 @@ using namespace Microsoft::Maker::Firmata;
 using namespace std::placeholders;
 
 namespace {
-    FirmataClass RawFirmata;
+	FirmataClass RawFirmata;
 }
 
 
@@ -24,7 +24,7 @@ UapFirmata::UapFirmata(
 	)
 {
 	_sysCommand = 0;
-	_dataBuffer = (uint8_t*)malloc(31);
+	_dataBuffer = (uint8_t*)malloc( 31 );
 	_sysPosition = 0;
 	_blobStarted = false;
 	_blobPosition = 0;
@@ -42,10 +42,10 @@ UapFirmata::UapFirmata(
 
 void
 UapFirmata::begin(
-    Microsoft::Maker::Serial::IStream ^s_
+	Microsoft::Maker::Serial::IStream ^s_
 	)
 {
-    ::RawFirmata.begin(s_);
+	::RawFirmata.begin( s_ );
 }
 
 void
@@ -54,7 +54,7 @@ UapFirmata::startListening(
 	)
 {
 	//initialize the input thread
-	create_async([this]() -> void { inputThread(); });
+	create_async( [ this ]() -> void { inputThread(); } );
 }
 
 
@@ -74,7 +74,7 @@ UapFirmata::printVersion(
 	void
 	)
 {
-    return ::RawFirmata.printVersion();
+	return ::RawFirmata.printVersion();
 }
 
 
@@ -83,7 +83,7 @@ UapFirmata::printFirmwareVersion(
 	void
 	)
 {
-    return ::RawFirmata.printFirmwareVersion();
+	return ::RawFirmata.printFirmwareVersion();
 }
 
 
@@ -94,18 +94,18 @@ UapFirmata::setFirmwareNameAndVersion(
 	uint8_t minor_
 	)
 {
-    std::wstring nameW = name_->ToString()->Begin();
-    std::string nameA(nameW.begin(), nameW.end());
-    return ::RawFirmata.setFirmwareNameAndVersion(nameA.c_str(), major_, minor_);
+	std::wstring nameW = name_->ToString()->Begin();
+	std::string nameA( nameW.begin(), nameW.end() );
+	return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
 }
 
 
 int
 UapFirmata::available(
-    void
+	void
 	)
 {
-    return ::RawFirmata.available();
+	return ::RawFirmata.available();
 }
 
 
@@ -114,7 +114,7 @@ UapFirmata::processInput(
 	void
 	)
 {
-    return ::RawFirmata.processInput();
+	return ::RawFirmata.processInput();
 }
 
 
@@ -124,7 +124,7 @@ UapFirmata::sendAnalog(
 	int value_
 	)
 {
-    return ::RawFirmata.sendAnalog(pin_, value_);
+	return ::RawFirmata.sendAnalog( pin_, value_ );
 }
 
 
@@ -134,7 +134,7 @@ UapFirmata::sendDigitalPort(
 	int portData_
 	)
 {
-    return ::RawFirmata.sendDigitalPort(portNumber_, portData_);
+	return ::RawFirmata.sendDigitalPort( portNumber_, portData_ );
 }
 
 
@@ -144,8 +144,8 @@ UapFirmata::setDigitalReadEnabled(
 	int portData
 	)
 {
-	write(static_cast<uint8_t>(Command::REPORT_DIGITAL_PIN) | (portNumber & 0x0F));
-	write(static_cast<uint8_t>(portData));
+	write( static_cast<uint8_t>( Command::REPORT_DIGITAL_PIN ) | ( portNumber & 0x0F ) );
+	write( static_cast<uint8_t>( portData ) );
 }
 
 
@@ -154,9 +154,9 @@ UapFirmata::sendString(
 	String ^string_
 	)
 {
-    std::wstring stringW = string_->ToString()->Begin();
-    std::string stringA(stringW.begin(), stringW.end());
-    return ::RawFirmata.sendString(stringA.c_str());
+	std::wstring stringW = string_->ToString()->Begin();
+	std::string stringA( stringW.begin(), stringW.end() );
+	return ::RawFirmata.sendString( stringA.c_str() );
 }
 
 
@@ -166,9 +166,9 @@ UapFirmata::sendString(
 	String ^string_
 	)
 {
-    std::wstring stringW = string_->ToString()->Begin();
-    std::string stringA(stringW.begin(), stringW.end());
-    return ::RawFirmata.sendString(command_, stringA.c_str());
+	std::wstring stringW = string_->ToString()->Begin();
+	std::string stringA( stringW.begin(), stringW.end() );
+	return ::RawFirmata.sendString( command_, stringA.c_str() );
 }
 
 
@@ -265,14 +265,14 @@ UapFirmata::endBlob(
 	_blobStarted = false;
 	return true;
 }
-	
+
 
 void
 UapFirmata::write(
 	uint8_t c_
 	)
 {
-    return ::RawFirmata.write(c_);
+	return ::RawFirmata.write( c_ );
 }
 
 
@@ -350,7 +350,7 @@ UapFirmata::sendI2cSysex(
 
 	for( size_t i = 0; i < len; i++ )
 	{
-		::RawFirmata.sendValueAsTwo7bitBytes( data[i] );
+		::RawFirmata.sendValueAsTwo7bitBytes( data[ i ] );
 	}
 	::RawFirmata.endSysex();
 }
@@ -372,9 +372,9 @@ UapFirmata::inputThread(
 		{
 			::RawFirmata.processInput();
 		}
-		catch (Platform::Exception ^e)
+		catch( Platform::Exception ^e )
 		{
-			OutputDebugString(e->Message->Begin());
+			OutputDebugString( e->Message->Begin() );
 		}
 	}
 	inputThreadExited = true;

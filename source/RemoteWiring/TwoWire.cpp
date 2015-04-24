@@ -45,10 +45,10 @@ TwoWire::stop(
 }
 
 
- void
- TwoWire::onI2cReply( 
+void
+TwoWire::onI2cReply(
 	I2cCallbackEventArgs ^args
 	)
 {
-	 I2cReplyEvent( args->getAddress(), args->getResponseString() );
+	I2cReplyEvent( args->getAddress(), args->getResponseString() );
 }

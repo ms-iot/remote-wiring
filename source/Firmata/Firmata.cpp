@@ -10,9 +10,9 @@
   See file LICENSE.txt for further informations on licensing terms.
   */
 
-//******************************************************************************
-//* Includes
-//******************************************************************************
+  //******************************************************************************
+  //* Includes
+  //******************************************************************************
 
 #include "pch.h"
 #include "Firmata.h"
@@ -73,7 +73,7 @@ FirmataClass::begin(
 	long speed
 	)
 {
-	FirmataStream->begin(speed, Microsoft::Maker::Serial::SerialConfig::SERIAL_8N1);
+	FirmataStream->begin( speed, Microsoft::Maker::Serial::SerialConfig::SERIAL_8N1 );
 }
 
 
@@ -116,11 +116,11 @@ FirmataClass::printFirmwareVersion(
 	{ // make sure that the name has been set before reporting
 		startSysex();
 		FirmataStream->write( static_cast<byte>( REPORT_FIRMWARE ) );
-		FirmataStream->write( firmwareVersionVector[0] ); // major version number
-		FirmataStream->write( firmwareVersionVector[1] ); // minor version number
+		FirmataStream->write( firmwareVersionVector[ 0 ] ); // major version number
+		FirmataStream->write( firmwareVersionVector[ 1 ] ); // minor version number
 		for( i = 2; i < firmwareVersionCount; ++i )
 		{
-			sendValueAsTwo7bitBytes( firmwareVersionVector[i] );
+			sendValueAsTwo7bitBytes( firmwareVersionVector[ i ] );
 		}
 		endSysex();
 	}
@@ -163,9 +163,9 @@ FirmataClass::setFirmwareNameAndVersion(
 	// in case anyone calls setFirmwareNameAndVersion more than once
 	delete[]( firmwareVersionVector );
 
-	firmwareVersionVector = new byte[firmwareVersionCount + 1](); // create and initialize to zero
-	firmwareVersionVector[0] = major;
-	firmwareVersionVector[1] = minor;
+	firmwareVersionVector = new byte[ firmwareVersionCount + 1 ](); // create and initialize to zero
+	firmwareVersionVector[ 0 ] = major;
+	firmwareVersionVector[ 1 ] = minor;
 	strncpy_s( (char *)firmwareVersionVector + 2, firmwareVersionCount - 2, firmwareName, firmwareVersionCount - 2 );
 }
 
@@ -184,7 +184,7 @@ FirmataClass::processSysexMessage(
 	void
 	)
 {
-	switch( storedInputData[0] )
+	switch( storedInputData[ 0 ] )
 	{ //first byte in buffer is command
 	case REPORT_FIRMWARE:
 		printFirmwareVersion();
@@ -199,25 +199,25 @@ FirmataClass::processSysexMessage(
 			{
 				// The string length will only be at most half the size of the
 				// stored input buffer so we can decode the string within the buffer.
-				storedInputData[j] = storedInputData[i];
+				storedInputData[ j ] = storedInputData[ i ];
 				i++;
-				storedInputData[j] += ( storedInputData[i] << 7 );
+				storedInputData[ j ] += ( storedInputData[ i ] << 7 );
 				i++;
 				j++;
 			}
 			// Make sure string is null terminated. This may be the case for data
 			// coming from client libraries in languages that don't null terminate
 			// strings.
-			if( storedInputData[j - 1] != '\0' )
+			if( storedInputData[ j - 1 ] != '\0' )
 			{
-				storedInputData[j] = '\0';
+				storedInputData[ j ] = '\0';
 			}
-			currentStringCallback( (char *)&storedInputData[0] );
+			currentStringCallback( (char *)&storedInputData[ 0 ] );
 		}
 		break;
 	default:
 		if( currentSysexCallback )
-			currentSysexCallback( storedInputData[0], sysexBytesRead - 1, storedInputData + 1 );
+			currentSysexCallback( storedInputData[ 0 ], sysexBytesRead - 1, storedInputData + 1 );
 	}
 }
 
@@ -244,14 +244,14 @@ FirmataClass::processInput(
 		else
 		{
 			//normal data byte - add to buffer
-			storedInputData[sysexBytesRead] = static_cast<byte>(inputData);
+			storedInputData[ sysexBytesRead ] = static_cast<byte>( inputData );
 			sysexBytesRead++;
 		}
 	}
 	else if( ( waitForData > 0 ) && ( inputData < 128 ) )
 	{
 		waitForData--;
-		storedInputData[waitForData] = static_cast<byte>(inputData);
+		storedInputData[ waitForData ] = static_cast<byte>( inputData );
 		if( ( waitForData == 0 ) && executeMultiByteCommand )
 		{ // got the whole message
 			switch( executeMultiByteCommand )
@@ -260,29 +260,29 @@ FirmataClass::processInput(
 				if( currentAnalogCallback )
 				{
 					currentAnalogCallback( multiByteChannel,
-						( storedInputData[0] << 7 )
-						+ storedInputData[1] );
+						( storedInputData[ 0 ] << 7 )
+						+ storedInputData[ 1 ] );
 				}
 				break;
 			case DIGITAL_MESSAGE:
 				if( currentDigitalCallback )
 				{
 					currentDigitalCallback( multiByteChannel,
-						( storedInputData[0] << 7 )
-						+ storedInputData[1] );
+						( storedInputData[ 0 ] << 7 )
+						+ storedInputData[ 1 ] );
 				}
 				break;
 			case SET_PIN_MODE:
 				if( currentPinModeCallback )
-					currentPinModeCallback( storedInputData[1], storedInputData[0] );
+					currentPinModeCallback( storedInputData[ 1 ], storedInputData[ 0 ] );
 				break;
 			case REPORT_ANALOG:
 				if( currentReportAnalogCallback )
-					currentReportAnalogCallback( multiByteChannel, storedInputData[0] );
+					currentReportAnalogCallback( multiByteChannel, storedInputData[ 0 ] );
 				break;
 			case REPORT_DIGITAL:
 				if( currentReportDigitalCallback )
-					currentReportDigitalCallback( multiByteChannel, storedInputData[0] );
+					currentReportDigitalCallback( multiByteChannel, storedInputData[ 0 ] );
 				break;
 			}
 			executeMultiByteCommand = 0;
@@ -364,7 +364,7 @@ FirmataClass::sendSysex(
 	FirmataStream->write( command );
 	for( i = 0; i < bytec; i++ )
 	{
-		sendValueAsTwo7bitBytes( bytev[i] );
+		sendValueAsTwo7bitBytes( bytev[ i ] );
 	}
 	endSysex();
 }
@@ -490,7 +490,7 @@ FirmataClass::systemReset(
 
 	for( i = 0; i < MAX_DATA_BYTES; i++ )
 	{
-		storedInputData[i] = 0;
+		storedInputData[ i ] = 0;
 	}
 
 	parsingSysex = false;
