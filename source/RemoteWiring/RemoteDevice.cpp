@@ -65,9 +65,7 @@ RemoteDevice::analogWrite(
 		}
 	}
 
-	_analog_pins[ pin_ ] = value_;
 	_firmata->sendAnalog( pin_, value_ );
-	AnalogPinUpdatedEvent( pin_, value_ );
 }
 
 
