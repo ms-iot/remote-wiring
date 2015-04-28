@@ -10,13 +10,7 @@ Of these options, installing the NuGet package is by far the easiest.
 
 ##Option 1: Install the NuGet package
 
-Simply open the [NuGet Package Manager Console](https://docs.nuget.org/consume/package-manager-console) and type the following command:
-
-`Install-Package Windows.Remote.Arduino`
-
-The necessary projects and any dependencies will automatically be downloaded and installed into your project!
-
-
+NuGet is a quick and easy way to automatically install the packages and setup dependencies. Unfortunately, we do not yet have support for NuGet in Windows 10.
 
 ##Option 2: Add the Windows Remote Arduino projects to your solution
 
@@ -78,6 +72,8 @@ The necessary projects and any dependencies will automatically be downloaded and
 10. Rebuild your solution by selecting *Build -> Rebuild All*
 
  ![Rebuild All](https://github.com/ms-iot/content/images/remote-wiring/compile_03.png)
+ 
+11. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
 ###Step 3: Have fun!!
 
@@ -178,6 +174,8 @@ Manually compiling a WinRT component library produces .winmd and .dll files whic
 11. Right-click on the project again and select "Reload Project". If you are prompted to save, select yes!
 
  ![Reload Project](https://github.com/ms-iot/content/images/remote-wiring/ref_10.png)
+ 
+12. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
 
 ###Step 4: Have fun!
@@ -185,3 +183,59 @@ Manually compiling a WinRT component library produces .winmd and .dll files whic
 You can now use the three projects directly in your source code! You will notice I have constructed a BluetoothSerial object and attached it to my RemoteDevice object, so I have included the two appropriate namespaces at the top of my .cs file.
 
  ![Have Fun!](https://github.com/ms-iot/content/images/remote-wiring/utilize_00.png)
+ 
+ 
+#Device Capabilities
+
+Each Windows project will contain a manifest file that must be configured to allow certain permissions, such as Bluetooth and USB connectivity. Fortunately, it is fairly easy to configure these.
+
+You will need to open the package.appxmanifest file of your project by right-clicking and selecting the "View Code" option. Then find the <Capabilities> tag and paste one or both of the following tag blocks as a child node.
+
+####Note:
+For **Windows 8.1**, you will need to add the following namespace to the top of the XML file, inside the `<Package>` tag.
+
+`xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest"`
+
+##Enabling Bluetooth Capabilities
+You will need to add one of the following XML blocks to your manifest file in order to invoke the Bluetooth capabilities of a WinRT application, depending on which OS version you are targetting.
+
+###Windows 8.1
+```xml
+<m2:DeviceCapability Name="bluetooth.rfcomm">
+  <m2:Device Id="any">
+    <m2:Function Type="name:serialPort"/>
+  </m2:Device>
+</m2:DeviceCapability>
+```
+
+
+###Windows 10
+```xml
+<DeviceCapability Name="bluetooth.rfcomm">
+  <Device Id="any">
+    <Function Type="name:serialPort"/>
+  </Device>
+</DeviceCapability>
+```
+
+##Enabling USB Capabilities
+You will need to add one of the following XML blocks to your manifest file in order to invoke the USB capabilities of a WinRT application, depending on which OS version you are targetting.
+
+###Windows 8.1
+```xml
+<m2:DeviceCapability Name="serialcommunication">
+  <m2:Device Id="any">
+    <m2:Function Type="name:serialPort"/>
+  </m2:Device>
+</m2:DeviceCapability>
+```
+
+
+###Windows 10
+```xml
+<DeviceCapability Name="serialcommunication">
+  <Device Id="any">
+    <Function Type="name:serialPort"/>
+  </Device>
+</DeviceCapability>
+```

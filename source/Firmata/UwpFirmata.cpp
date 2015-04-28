@@ -1,6 +1,6 @@
 
 #include "pch.h"
-#include "UapFirmata.h"
+#include "UwpFirmata.h"
 
 #include "Firmata.h"
 #include <cstdlib>
@@ -19,7 +19,7 @@ namespace {
 //******************************************************************************
 
 
-UapFirmata::UapFirmata(
+UwpFirmata::UwpFirmata(
 	void
 	)
 {
@@ -29,9 +29,9 @@ UapFirmata::UapFirmata(
 	_blobStarted = false;
 	_blobPosition = 0;
 
-	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UapFirmata::digitalInvoke, this, _1, _2 ) ) );
-	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UapFirmata::analogInvoke, this, _1, _2 ) ) );
-	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UapFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
+	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::digitalInvoke, this, _1, _2 ) ) );
+	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::analogInvoke, this, _1, _2 ) ) );
+	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UwpFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
 }
 
 
@@ -41,7 +41,7 @@ UapFirmata::UapFirmata(
 
 
 void
-UapFirmata::begin(
+UwpFirmata::begin(
 	Microsoft::Maker::Serial::IStream ^s_
 	)
 {
@@ -49,7 +49,7 @@ UapFirmata::begin(
 }
 
 void
-UapFirmata::startListening(
+UwpFirmata::startListening(
 	void
 	)
 {
@@ -59,7 +59,7 @@ UapFirmata::startListening(
 
 
 void
-UapFirmata::finish(
+UwpFirmata::finish(
 	void
 	)
 {
@@ -70,7 +70,7 @@ UapFirmata::finish(
 
 
 void
-UapFirmata::printVersion(
+UwpFirmata::printVersion(
 	void
 	)
 {
@@ -79,7 +79,7 @@ UapFirmata::printVersion(
 
 
 void
-UapFirmata::printFirmwareVersion(
+UwpFirmata::printFirmwareVersion(
 	void
 	)
 {
@@ -88,7 +88,7 @@ UapFirmata::printFirmwareVersion(
 
 
 void
-UapFirmata::setFirmwareNameAndVersion(
+UwpFirmata::setFirmwareNameAndVersion(
 	String ^name_,
 	uint8_t major_,
 	uint8_t minor_
@@ -101,7 +101,7 @@ UapFirmata::setFirmwareNameAndVersion(
 
 
 int
-UapFirmata::available(
+UwpFirmata::available(
 	void
 	)
 {
@@ -110,7 +110,7 @@ UapFirmata::available(
 
 
 void
-UapFirmata::processInput(
+UwpFirmata::processInput(
 	void
 	)
 {
@@ -119,7 +119,7 @@ UapFirmata::processInput(
 
 
 void
-UapFirmata::sendAnalog(
+UwpFirmata::sendAnalog(
 	uint8_t pin_,
 	int value_
 	)
@@ -129,7 +129,7 @@ UapFirmata::sendAnalog(
 
 
 void
-UapFirmata::sendDigitalPort(
+UwpFirmata::sendDigitalPort(
 	uint8_t portNumber_,
 	int portData_
 	)
@@ -139,7 +139,7 @@ UapFirmata::sendDigitalPort(
 
 
 void
-UapFirmata::setDigitalReadEnabled(
+UwpFirmata::setDigitalReadEnabled(
 	uint8_t portNumber,
 	int portData
 	)
@@ -150,7 +150,7 @@ UapFirmata::setDigitalReadEnabled(
 
 
 void
-UapFirmata::sendString(
+UwpFirmata::sendString(
 	String ^string_
 	)
 {
@@ -161,7 +161,7 @@ UapFirmata::sendString(
 
 
 void
-UapFirmata::sendString(
+UwpFirmata::sendString(
 	uint8_t command_,
 	String ^string_
 	)
@@ -173,7 +173,7 @@ UapFirmata::sendString(
 
 
 bool
-UapFirmata::beginSysex(
+UwpFirmata::beginSysex(
 	uint8_t command_
 	)
 {
@@ -185,7 +185,7 @@ UapFirmata::beginSysex(
 
 
 bool
-UapFirmata::appendSysex(
+UwpFirmata::appendSysex(
 	uint8_t byte_
 	)
 {
@@ -200,7 +200,7 @@ UapFirmata::appendSysex(
 
 
 bool
-UapFirmata::endSysex(
+UwpFirmata::endSysex(
 	void
 	)
 {
@@ -216,7 +216,7 @@ UapFirmata::endSysex(
 
 
 bool
-UapFirmata::beginBlob(
+UwpFirmata::beginBlob(
 	void
 	)
 {
@@ -229,7 +229,7 @@ UapFirmata::beginBlob(
 
 
 bool
-UapFirmata::appendBlob(
+UwpFirmata::appendBlob(
 	uint8_t byte_
 	)
 {
@@ -248,7 +248,7 @@ UapFirmata::appendBlob(
 
 
 bool
-UapFirmata::endBlob(
+UwpFirmata::endBlob(
 	void
 	)
 {
@@ -268,7 +268,7 @@ UapFirmata::endBlob(
 
 
 void
-UapFirmata::write(
+UwpFirmata::write(
 	uint8_t c_
 	)
 {
@@ -277,7 +277,7 @@ UapFirmata::write(
 
 
 void
-UapFirmata::enableI2c(
+UwpFirmata::enableI2c(
 	uint16_t i2cReadDelayMicros_
 	)
 {
@@ -289,7 +289,7 @@ UapFirmata::enableI2c(
 
 
 void
-UapFirmata::writeI2c(
+UwpFirmata::writeI2c(
 	uint8_t address_,
 	Platform::String ^message_
 	)
@@ -303,7 +303,7 @@ UapFirmata::writeI2c(
 
 
 void
-UapFirmata::readI2c(
+UwpFirmata::readI2c(
 	uint8_t address_,
 	size_t numBytes_,
 	uint8_t reg_,
@@ -317,7 +317,7 @@ UapFirmata::readI2c(
 
 
 void
-UapFirmata::stopI2c(
+UwpFirmata::stopI2c(
 	uint8_t address_
 	)
 {
@@ -330,7 +330,7 @@ UapFirmata::stopI2c(
 //******************************************************************************
 
 void
-UapFirmata::sendI2cSysex(
+UwpFirmata::sendI2cSysex(
 	const uint8_t address_,
 	const uint8_t rw_mask_,
 	const uint8_t reg_,
@@ -357,7 +357,7 @@ UapFirmata::sendI2cSysex(
 
 
 void
-UapFirmata::inputThread(
+UwpFirmata::inputThread(
 	void
 	)
 {
@@ -382,7 +382,7 @@ UapFirmata::inputThread(
 
 
 void
-UapFirmata::stopThreads(
+UwpFirmata::stopThreads(
 	void
 	)
 {

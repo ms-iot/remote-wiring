@@ -13,7 +13,7 @@ using namespace Microsoft::Maker::RemoteWiring;
 RemoteDevice::RemoteDevice(
 	Serial::IStream ^serial_connection_
 	) :
-	_firmata( ref new Firmata::UapFirmata ),
+	_firmata( ref new Firmata::UwpFirmata ),
 	_twoWire( nullptr )
 {
 	initialize();
@@ -22,7 +22,7 @@ RemoteDevice::RemoteDevice(
 }
 
 RemoteDevice::RemoteDevice(
-	Firmata::UapFirmata ^firmata_
+	Firmata::UwpFirmata ^firmata_
 	) :
 	_firmata( firmata_ ),
 	_twoWire( nullptr )
@@ -223,8 +223,8 @@ RemoteDevice::initialize(
 	void
 	)
 {
-	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UapFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
-	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UapFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
+	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
 
 	//TODO: Initialize from Firmata, I have a good idea how to do this, JDF
 	for( int i = 0; i < sizeof( _digital_port ); ++i ) { _digital_port[ i ] = 0; }

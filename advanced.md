@@ -21,14 +21,14 @@ Every Sysex command must have a unique command byte which will allow the Arduino
 
 ##Implementation
 
-In our example, we will use 0x42 as our command byte. We start by defining our command byte in both the StandardFirmata sketch as well as the UAP application using Windows Remote Arduino.
+In our example, we will use 0x42 as our command byte. We start by defining our command byte in both the StandardFirmata sketch as well as the UWP application using the Windows Remote Arduino library.
 
 ####StandardFirmata
 ```c++
 #define ALL_PINS_COMMAND 0x42
 ```
 
-####UAP Application
+####UWP Application
 ```c#
 const byte ALL_PINS_COMMAND = 0x42;
 ```
@@ -39,14 +39,14 @@ We will bypass the RemoteWiring layer and use the Firmata layer directly to send
 
 ####Note:
 
-Whenever you construct the `UapFirmata` object yourself, you **must** call `startListening()` in order to enable any inputs. This is done so that you can define your own behaviors, as some projects may not care about inputs, or may need to process inputs themselves. When the `UapFirmata` object is constructed for you (as in the basic examples) this function is called for you.
+Whenever you construct the `UwpFirmata` object yourself, you **must** call `startListening()` in order to enable any inputs. This is done so that you can define your own behaviors, as some projects may not care about inputs, or may need to process inputs themselves. When the `UwpFirmata` object is constructed for you (as in the basic examples) this function is called for you.
 
-**You will not receive any events, I2C replies, or valid data returned from digitalRead() or analogRead() if you do not call `startListening()` on the `UapFirmata` object**
+**You will not receive any events, I2C replies, or valid data returned from digitalRead() or analogRead() if you do not call `startListening()` on the `UwpFirmata` object**
 
 ```c#
 //member variables
 IStream bluetooth;
-UapFirmata firmata;
+UwpFirmata firmata;
 RemoteDevice arduino;
 
 //MyObject constructor
@@ -56,7 +56,7 @@ public MyObject()
 	bt = new BluetoothSerial();
 	
 	//construct the firmata client
-	firmata = new UapFirmata();
+	firmata = new UwpFirmata();
 	
 	//last, construct the RemoteWiring layer by passing in our Firmata layer.
 	arduino = new RemoteDevice( firmata );

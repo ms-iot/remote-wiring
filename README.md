@@ -29,7 +29,7 @@ Arduinos are a series of open source microcontrollers built on an established pl
 However, devices like an Arduino are fundamentally limited by the single-threaded nature of a microcontroller. Remote Arduino brings together all of the physical control of an Arduino and the supercharged software abilities of Windows devices such as multi-threading, native file systems, simple internet access, and more.
 
 ###Windows 10
-Windows 10 introduces the concept of a [Universal Application Platform (UAP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
+Windows 10 introduces the concept of a [Universal Windows Platform (UWP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
 
 #Structure
 The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
@@ -47,8 +47,10 @@ For example, the Firmata layer translates the requests of the RemoteWiring layer
 The main interface class of the RemoteWiring layer is RemoteDevice, and it is the main API entry point that should be used in most cases. It offers an interface that is nearly identical to what you will find in the Arduino Wiring API, and should therefore be familiar if you have written Arduino sketches yourself. However, It is safe to say that all calls through this layer are directed to the Firmata layer below it, so it is only necessary to bypass or extend this layer when very advanced behaviors are desired for a project!
 
 ###Firmata
-The implementation of Firmata is taken directly from the [Firmata repository](https://github.com/firmata/arduino), with absolute minimal changes (i.e. removing arduino/hardware dependencies), and is wrapped by a transparent [Windows Runtime Component](https://msdn.microsoft.com/en-us/library/hh441572.aspx) library class named UapFirmata.
+The implementation of Firmata is taken directly from the [Firmata repository](https://github.com/firmata/arduino), with absolute minimal changes (i.e. removing arduino/hardware dependencies), and is wrapped by a transparent [Windows Runtime Component](https://msdn.microsoft.com/en-us/library/hh441572.aspx) library class named UwpFirmata.
 The wrapper does not change or add functionality, it only provides parameter smoothing (i.e. `char *` -> `String`) and paradigm translation (i.e. `callbacks` -> `events`). This layer is completely independent from the RemoteWiring layer above it, so it can be used as a fully-functional Firmata implementation!
+
+One advantage UwpFirmata provides through the Windows operating system is the ability to read inputs on a background thread, rather than being constricted to a single thread of execution. In most cases, this thread is created and managed completely by the library. However, if you choose to construct the Firmata layer (UwpFirmata object) yourself, you can choose to enable this feature or not. If your project does not require reading inputs from the Arduino (or if you want to handle them yourself), you may be interested in heading to the [advanced usage](advanced.md) section for more information!
 
 ###Serial
 Serial is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
@@ -208,17 +210,6 @@ public void MyAnalogPinUpdateCallback( byte pin, UInt16 value )
 
 ```
 
-##Enabling Bluetooth Capabilities
-In order to invoke the bluetooth capabilities of a WinRT application, you will need to open the package.appxmanifest file of your project by right-clicking and selecting the "View Code" option. Then find the <Capabilities> tag and paste the following as a child node.
-
-###Windows 10
-```xml
-<DeviceCapability Name="bluetooth.rfcomm">
-  <Device Id="any">
-    <Function Type="name:serialPort"/>
-  </Device>
-</DeviceCapability>
-```
 
 ##Advanced Usage
 Please refer to the [Advanced Usage](advanced.md) documentation.

@@ -9,11 +9,11 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="..\..\source\Firmata\Firmata.cpp" />
-    <ClCompile Include="..\..\source\Firmata\UapFirmata.cpp" />
+    <ClCompile Include="..\..\source\Firmata\UwpFirmata.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\..\source\Firmata\Firmata.h" />
-    <ClInclude Include="..\..\source\Firmata\UapFirmata.h" />
+    <ClInclude Include="..\..\source\Firmata\UwpFirmata.h" />
   </ItemGroup>
 </Project>
