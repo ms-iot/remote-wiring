@@ -101,7 +101,7 @@ Manually compiling a WinRT component library produces .winmd and .dll files whic
 
  ![Open the solution file](https://github.com/ms-iot/content/images/remote-wiring/compile_01.png)
 
-4. Select the correct build target. If you are planning to deploy your application to Raspberry Pi2 or Windows Phone, you'll want to select ARM. Otherwise if you are targeting a PC platform or MinnowBoardMax, select either x86 or x64 (x86 for MBM).
+4. Select the correct build target. If you are planning to deploy your application to Raspberry Pi2 or Windows Phone, you'll want to select ARM. Otherwise if you are targeting a PC platform select either x86 or x64. If you are targeting MinnowBoardMax, select x86.
 
  ![Select build target](https://github.com/ms-iot/content/images/remote-wiring/compile_02.png)
 

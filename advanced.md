@@ -140,7 +140,7 @@ Therefore, Firmata itself uses ports to skip dealing with things as 'pins' and s
 
 there is a simple math function to convert a pin into a port, which works only because of integer division:
  `port = pin / 8;`
-therefore, pins 0-7 are port 0. pins 8-15 are port 1, and so on. You look to the bit position in the port value to determine the value of an individual pin. Essentially,
+therefore, pins 0-7 are port 0. pins 8-15 are port 1, and so on. You look to the bit position (index) in the port value to determine the value of an individual pin. Essentially,
  `pin = ( port * 8 ) + index;`
 therefore, to set only pin 2 `HIGH`, and all other pins of port 0 `LOW`, we would send the binary value 00000100 ( hex: 0x04 ) to port 0, because the bit in position 2 is set.
 

@@ -55,7 +55,7 @@ One advantage UwpFirmata provides through the Windows operating system is the ab
 ###Serial
 Serial is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10. There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
 
-- `begin(int, char)` -> `void` -- initializes the stream
+- `begin(int, SerialConfig)` -> `void` -- initializes the stream, the SerialConfig is important when using USB. Default for Arduino is SERIAL_8N1
 - `end(void)` -> `void` -- finalizes the stream
 - `available(void)` -> `int` -- gets the number of bytes in the stream
 - `read(void)` -> `short` -- reads a single character from the incoming stream
@@ -124,11 +124,11 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 		//always begin your IStream
 		bt.begin( 115200, 0 );
 
-        arduino->pinMode( 7, PinMode.OUTPUT );
-        arduino->pinMode( 9, PinMode.INPUT );
+        arduino.pinMode( 7, PinMode.OUTPUT );
+        arduino.pinMode( 9, PinMode.INPUT );
 
-        arduino->digitalWrite( 7, PinState.HIGH );
-        UInt16 val = arduino->analogRead( 9 );
+        arduino.digitalWrite( 7, PinState.HIGH );
+        UInt16 val = arduino.analogRead( 9 );
 ```
 
 #####C++ Example:

@@ -23,4 +23,4 @@ Some Arduino devices, such as the Uno, only have a single `Serial` line to commu
  ![Send and Receive]({{site.baseurl}}/images/remote-wiring/samples/basic/step03_2.jpg)
  ![Send and Receive]({{site.baseurl}}/images/remote-wiring/samples/basic/step03_3.jpg)
  
-That's it! You can now send and receive Bluetooth messages automatically through StandardFirmata or by calling `Serial.begin( 115200 );` in your own code!
+That's it! You can now send and receive Bluetooth messages automatically through StandardFirmata or by calling `Serial.begin( 115200 );` in your own (unrelated) sketches!
