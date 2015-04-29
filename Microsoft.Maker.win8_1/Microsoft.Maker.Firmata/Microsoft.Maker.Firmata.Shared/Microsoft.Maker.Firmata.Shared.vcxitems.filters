@@ -2,14 +2,14 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UwpFirmata.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata\Firmata.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UwpFirmata.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata\Firmata.cpp" />
   </ItemGroup>
 </Project>
