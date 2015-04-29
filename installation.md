@@ -205,7 +205,7 @@ For **Windows 8.1**, you will need to add the following namespace to the top of 
 `xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest"`
 
 ##Enabling Bluetooth Capabilities
-You will need to add one of the following XML blocks to your manifest file in order to invoke the Bluetooth capabilities of a WinRT application, depending on which OS version you are targetting.
+You will need to add one of the following XML blocks to your manifest file, inside the <Capabilities> tag, in order to invoke the Bluetooth/USB capabilities of a WinRT application, depending on which OS version you are targetting.
 
 ###Windows 10
 ```xml

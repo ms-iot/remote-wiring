@@ -80,15 +80,25 @@ Windows Remote Arduino uses the [Firmata protocol](https://github.com/firmata/pr
 6. In the Arduino IDE, navigate to *File > Examples > Firmata > StandardFirmata*
 7. Press “Upload” to deploy the StandardFirmata sketch to the Arduino device.
 
-That’s it! Your Arduino will now run the StandardFirmata sketch forever unless reprogrammed with a different sketch. You can now optionally disconnect your Arduino from the computer and power it in any way you choose. If you wish to use the recommended Bluetooth pairing between your devices, you will need to hook up a Bluetooth device to the Arduino. We recommend the [SparkFun Bluetooth Mate Silver](https://www.sparkfun.com/products/12576).
+That’s it! Your Arduino will now run the StandardFirmata sketch forever unless reprogrammed with a different sketch. You can now optionally disconnect your Arduino from the computer and power it in any way you choose. If you wish to use the recommended Bluetooth pairing between your devices, you will need to [hook up a Bluetooth device to the Arduino](bluetooth.md). We recommend the [SparkFun Bluetooth Mate Silver](https://www.sparkfun.com/products/12576).
 
-####Note:
+####Notes on Serial Commuinication
 
-StandardFirmata uses the Serial lines to talk to a Bluetooth device or over USB. By default, it uses a baud rate of 57,600 bps. Depending on the configuration of your Bluetooth device, you may need to modify that rate. It can be found in the `setup` method and looks like this:
+Some hardware setups may require additional considerations when it comes to setting up your Bluetooth device over the serial pins 0 and 1.
 
-`Firmata.begin(57600);`
+1. StandardFirmata uses the Serial lines to talk to a Bluetooth device or over USB. By default, it uses a baud rate of 57,600 bps. Depending on the configuration of your Bluetooth device, you may need to modify that rate. It can be found in the `setup` method and looks like this:
 
-Simply change the `begin` parameter to match the configuration of your Bluetooth device. The most common configurations are 1152000, 57600, and 9600. The recommended SparkFun Bluetooth Mate devices use 115200 by default. If you are not sure of the default baud rate of your Bluetooth device, check the device documentation.
+ `Firmata.begin(57600);`
+
+ Simply change the `begin` parameter to match the configuration of your Bluetooth device. The most common configurations are 1152000, 57600, and 9600. The recommended SparkFun Bluetooth Mate devices use 115200 by default. If you are not sure of the default baud rate of your Bluetooth device, check the device documentation.
+ 
+2. Many Arduino devices, such as the Leonardo and the Yun, use `Serial1` (Rather than just `Serial`) for serial communications over pins 0 and 1. If you are using one of these devices, you will need to change the serial initialization procedure. You will want to remove the line `Firmata.begin(57600);` and replace it with the code below:
+
+ ```
+  Serial1.begin( 57600 );	//or your baud rate here, it will be 115200 if using the Bluetooth Mate Silver or Gold
+  while( !Serial1 );
+  Firmata.begin( Serial1 );
+ ```
 
 ##Project Setup
 

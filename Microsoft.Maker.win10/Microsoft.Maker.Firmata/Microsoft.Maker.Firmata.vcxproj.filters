@@ -8,12 +8,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="..\..\source\Firmata\Firmata.cpp" />
     <ClCompile Include="..\..\source\Firmata\UwpFirmata.cpp" />
+    <ClCompile Include="..\..\source\Firmata\Firmata.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="..\..\source\Firmata\Firmata.h" />
     <ClInclude Include="..\..\source\Firmata\UwpFirmata.h" />
+    <ClInclude Include="..\..\source\Firmata\Firmata.h" />
   </ItemGroup>
 </Project>
