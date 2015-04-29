@@ -1,7 +1,6 @@
 ﻿
 #include "pch.h"
 #include "BluetoothSerial.h"
-#include <pplawait.h>
 #include <chrono>
 #include <thread>
 

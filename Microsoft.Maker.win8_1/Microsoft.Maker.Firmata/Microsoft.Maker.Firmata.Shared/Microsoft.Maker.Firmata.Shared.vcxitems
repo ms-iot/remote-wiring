@@ -15,12 +15,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UAPFirmataClient.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UwpFirmata.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\Firmata.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UAPFirmataClient.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Firmata\UwpFirmata.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
