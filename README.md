@@ -92,19 +92,9 @@ Simply change the `begin` parameter to match the configuration of your Bluetooth
 
 ##Project Setup
 
-Typically, you will want to add the Windows Remote Arduino library into your own Maker projects. The easiest way to do this is by installing the NuGet package into your projects! 
+Typically, you will want to add the Windows Remote Arduino library into your own Maker projects. The easiest way to do this is by installing the NuGet package into your projects. NuGet is a quick and easy way to automatically install the packages and setup dependencies. Unfortunately, we do not yet have support for NuGet in Windows 10.
 
-Simply open the [NuGet Package Manager Console](https://docs.nuget.org/consume/package-manager-console) and type the following command:
-
-`Install-Package Windows.Remote.Arduino`
-
-The necessary projects and any dependencies will automatically be downloaded and installed into your project!
-
-[What is NuGet?](http://blogs.msdn.com/b/davidebb/archive/2010/10/05/introducing-nupack-the-smart-way-to-bring-bits-into-your-projects.aspx)
-
-[How do I use the NuGet Package Manager?](https://docs.nuget.org/consume/package-manager-console)
-
-However, if you'd prefer to manually download the source code and compile it yourself, either as a separate project or included in your solution, refer to the [manual installation instructions](installation.md)
+For now, please refer to the [manual installation instructions](installation.md)
 
 
 #Usage

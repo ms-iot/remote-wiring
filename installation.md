@@ -64,16 +64,20 @@ NuGet is a quick and easy way to automatically install the packages and setup de
 8. Right-click on "References" in your project. Select *Add Reference*
 
  ![Add Reference](https://github.com/ms-iot/content/images/remote-wiring/project_05.png)
+ 
+9. Under the "Windows Universal" tab, choose the "Extensions" sub-menu and select the *Microsoft Visual C++ AppLocal Runtime Package* version 14.0.
 
-9. Under the "Projects" tab, select all three of the Microsoft.Maker projects
+ ![AppLocal package](https://github.com/ms-iot/content/images/remote-wiring/applocal.png)
+
+10. Under the "Projects" tab, select all three of the Microsoft.Maker projects
 
  ![Project References](https://github.com/ms-iot/content/images/remote-wiring/project_06.png)
 
-10. Rebuild your solution by selecting *Build -> Rebuild All*
+11. Rebuild your solution by selecting *Build -> Rebuild All*
 
  ![Rebuild All](https://github.com/ms-iot/content/images/remote-wiring/compile_03.png)
  
-11. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
+12. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
 ###Step 3: Have fun!!
 
@@ -126,56 +130,60 @@ Manually compiling a WinRT component library produces .winmd and .dll files whic
 1. Locate the "References" item in the Solution Explorer in your new project. Right-click and select "Add Reference..."
 
  ![Add Reference](https://github.com/ms-iot/content/images/remote-wiring/ref_00.png)
+ 
+2. Under the "Windows Universal" tab, choose the "Extensions" sub-menu and select the *Microsoft Visual C++ AppLocal Runtime Package* version 14.0.
 
-2. Select the "Browse" tab on the left, and then click the "Browse..." button at the bottom.
+ ![AppLocal package](https://github.com/ms-iot/content/images/remote-wiring/applocal.png)
+
+3. Select the "Browse" tab on the left, and then click the "Browse..." button at the bottom.
 
  ![Browse](https://github.com/ms-iot/content/images/remote-wiring/ref_01.png)
 
-3. Locate the directory where you have stored the Windows Remote Arduino repository and open the appropriate project folder.
+4. Locate the directory where you have stored the Windows Remote Arduino repository and open the appropriate project folder.
   * If you compiled the library as "ARM" you will use the "ARM" folder as I have below, and then "Debug" inside "ARM".
   * Similarly, x64 can be found in the "x64\Debug" folder.
   * x86 will be in simply "Debug" as you can see in the screenshot below.
 
  ![Open debug folder](https://github.com/ms-iot/content/images/remote-wiring/ref_02.png)
 
-4. Notice that I am inside the "ARM\Debug" directory, as I am compiling for ARM platforms like Windows Phone 10. We will start by opening the "Microsoft.Maker.Serial" folder.
+5. Notice that I am inside the "ARM\Debug" directory, as I am compiling for ARM platforms like Windows Phone 10. We will start by opening the "Microsoft.Maker.Serial" folder.
 
  ![Open the Serial folder](https://github.com/ms-iot/content/images/remote-wiring/ref_03.png)
 
-5. Select the WinMD file and press "Add".
+6. Select the WinMD file and press "Add".
 
  ![Add the WinMD](https://github.com/ms-iot/content/images/remote-wiring/ref_04.png)
 
-6. Repeat steps 3 - 5 for all three WinMD files located in their respective folders. *You may find additional WinMD files in other project folders, as they reference other projects. Only reference the correct WinMD for each directory.*
+7. Repeat steps 3 - 5 for all three WinMD files located in their respective folders. *You may find additional WinMD files in other project folders, as they reference other projects. Only reference the correct WinMD for each directory.*
 
  ![Repeat previous steps for all three references](https://github.com/ms-iot/content/images/remote-wiring/ref_05.png)
 
-7. **Steps 7 - 11 will be automated in the future, but are a necessary for the time being.**
+8. **Steps 8 - 12 will be automated in the future, but are a necessary for the time being.**
 
  For now, we must manually 'connect' the WinMD file with it's respective .dll file. Right-click on the project file (not the solution) and select "Unload Project".
 
  ![Unload Project](https://github.com/ms-iot/content/images/remote-wiring/ref_06.png)
 
-8. Select the edit .csproj option for your project name.
+9. Select the edit .csproj option for your project name.
 
  ![Edit csproj](https://github.com/ms-iot/content/images/remote-wiring/ref_07.png)
 
-9. Near the bottom of this XML file, locate the Reference section and specifically the three `<Reference>` tags for the items we just added in steps 3 - 6.
+10. Near the bottom of this XML file, locate the Reference section and specifically the three `<Reference>` tags for the items we just added in steps 3 - 6.
 
  ![Locate Reference tags](https://github.com/ms-iot/content/images/remote-wiring/ref_08.png)
 
-10. You must add two tags to each of these `<Reference>` tags below the `<HintPath>` tag.<br/>
+11. You must add two tags to each of these `<Reference>` tags below the `<HintPath>` tag.<br/>
  `<IsWinMDFile>true</IsWinMDFile>`<br/>
  `<Implementation>%PROJECT%.dll</Implementation>`<br/>
  Where *%PROJECT%* is the name of the project appropriate for that `<Reference>` tag. I have added all three here (although only one is highlighted). So you can add the text to match exactly what I have in the screenshot below. It does not matter where you have installed your projects, the `<HintPath>` tag takes care of that for us!
 
  ![Additional Tags](https://github.com/ms-iot/content/images/remote-wiring/ref_09.png)
 
-11. Right-click on the project again and select "Reload Project". If you are prompted to save, select yes!
+12. Right-click on the project again and select "Reload Project". If you are prompted to save, select yes!
 
  ![Reload Project](https://github.com/ms-iot/content/images/remote-wiring/ref_10.png)
  
-12. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
+13. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
 
 ###Step 4: Have fun!
@@ -199,16 +207,6 @@ For **Windows 8.1**, you will need to add the following namespace to the top of 
 ##Enabling Bluetooth Capabilities
 You will need to add one of the following XML blocks to your manifest file in order to invoke the Bluetooth capabilities of a WinRT application, depending on which OS version you are targetting.
 
-###Windows 8.1
-```xml
-<m2:DeviceCapability Name="bluetooth.rfcomm">
-  <m2:Device Id="any">
-    <m2:Function Type="name:serialPort"/>
-  </m2:Device>
-</m2:DeviceCapability>
-```
-
-
 ###Windows 10
 ```xml
 <DeviceCapability Name="bluetooth.rfcomm">
@@ -218,18 +216,17 @@ You will need to add one of the following XML blocks to your manifest file in or
 </DeviceCapability>
 ```
 
-##Enabling USB Capabilities
-You will need to add one of the following XML blocks to your manifest file in order to invoke the USB capabilities of a WinRT application, depending on which OS version you are targetting.
-
 ###Windows 8.1
 ```xml
-<m2:DeviceCapability Name="serialcommunication">
+<m2:DeviceCapability Name="bluetooth.rfcomm">
   <m2:Device Id="any">
     <m2:Function Type="name:serialPort"/>
   </m2:Device>
 </m2:DeviceCapability>
 ```
 
+##Enabling USB Capabilities
+You will need to add one of the following XML blocks to your manifest file in order to invoke the USB capabilities of a WinRT application, depending on which OS version you are targetting.
 
 ###Windows 10
 ```xml
@@ -238,4 +235,13 @@ You will need to add one of the following XML blocks to your manifest file in or
     <Function Type="name:serialPort"/>
   </Device>
 </DeviceCapability>
+```
+
+###Windows 8.1
+```xml
+<m2:DeviceCapability Name="serialcommunication">
+  <m2:Device Id="any">
+    <m2:Function Type="name:serialPort"/>
+  </m2:Device>
+</m2:DeviceCapability>
 ```
