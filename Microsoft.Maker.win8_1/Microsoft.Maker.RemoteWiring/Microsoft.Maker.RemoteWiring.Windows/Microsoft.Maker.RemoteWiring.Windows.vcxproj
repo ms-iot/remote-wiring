@@ -27,14 +27,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Maker.Firmata">
-      <HintPath>..\..\Debug\Microsoft.Maker.Firmata.Windows\Microsoft.Maker.Firmata.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="Microsoft.Maker.Serial">
-      <HintPath>..\..\Debug\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
+    <ProjectReference Include="..\..\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Windows\Microsoft.Maker.Firmata.Windows.vcxproj">
+      <Project>{8c570513-5fb3-4586-a757-b910e56b66a9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj">
+      <Project>{02438027-2444-49cb-87bf-ac4d4df8ef0f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{67adac13-ba28-4cb1-a706-17b0301171f1}</ProjectGuid>

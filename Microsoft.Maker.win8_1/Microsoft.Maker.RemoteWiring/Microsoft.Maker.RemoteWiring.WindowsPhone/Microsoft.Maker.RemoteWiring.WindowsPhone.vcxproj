@@ -19,14 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Maker.Firmata">
-      <HintPath>..\..\Debug\Microsoft.Maker.Firmata.WindowsPhone\Microsoft.Maker.Firmata.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="Microsoft.Maker.Serial">
-      <HintPath>..\..\Debug\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
+    <ProjectReference Include="..\..\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.WindowsPhone\Microsoft.Maker.Firmata.WindowsPhone.vcxproj">
+      <Project>{83a94c48-af35-4fd9-b6c2-b0c12254abff}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj">
+      <Project>{e26ce8ba-b9dc-45f6-8d7d-d019a42ade3f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2b16a0fe-ea4f-411d-b25e-2ff9605c875b}</ProjectGuid>

@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\BluetoothSerial.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\ISerial.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\IStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)pch.cpp">

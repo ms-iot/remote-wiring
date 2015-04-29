@@ -15,7 +15,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\BluetoothSerial.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\ISerial.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\IStream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
   </ItemGroup>
   <ItemGroup>
