@@ -53,14 +53,29 @@ public enum class PinState
 	HIGH = 0x01,
 };
 
-public delegate void DigitalPinUpdatedCallback( byte pin, PinState state );
-public delegate void AnalogPinUpdatedCallback( byte pin, uint16_t value );
+public delegate void DigitalPinUpdatedCallback( uint8_t pin, PinState state );
+public delegate void AnalogPinUpdatedCallback( uint8_t pin, uint16_t value );
 
 public ref class RemoteDevice sealed {
+
+	//singleton reference for I2C
+	I2c::TwoWire ^_twoWire;
 
 public:
 	event DigitalPinUpdatedCallback ^ DigitalPinUpdatedEvent;
 	event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
+
+	property I2c::TwoWire ^ I2c
+	{
+		Microsoft::Maker::RemoteWiring::I2c::TwoWire ^ get()
+		{
+			if( _twoWire == nullptr )
+			{
+				_twoWire = ref new Microsoft::Maker::RemoteWiring::I2c::TwoWire( _firmata );
+			}
+			return _twoWire;
+		}
+	};
 
 	[Windows::Foundation::Metadata::DefaultOverload]
 	RemoteDevice(
@@ -85,7 +100,7 @@ public:
 	///</summary>
 	uint16_t
 	analogRead(
-		byte pin_
+		uint8_t pin_
 	);
 
 	///<summary>
@@ -93,7 +108,7 @@ public:
 	///</summary>
 	void
 	analogWrite(
-		byte pin_,
+		uint8_t pin_,
 		uint16_t value_
 	);
 
@@ -102,7 +117,7 @@ public:
 	///</summary>
 	PinState
 	digitalRead(
-		byte pin_
+		uint8_t pin_
 	);
 
 	///<summary>
@@ -110,7 +125,7 @@ public:
 	///</summary>
 	void
 	digitalWrite(
-		byte pin_,
+		uint8_t pin_,
 		PinState state_
 	);
 
@@ -119,7 +134,7 @@ public:
 	///</summary>
 	void
 	pinMode(
-		byte pin_,
+		uint8_t pin_,
 		PinMode mode_
 	);
 
@@ -128,13 +143,13 @@ public:
 	///</summary>
 	PinMode
 	getPinMode(
-		byte pin_
+		uint8_t pin_
 	);
 
 	///<summary>
 	///singleton pattern returns a current instance of TwoWire for I2C communication
 	///</summary>
-	inline
+	/*inline
 	I2c::TwoWire ^
 	getI2c(
 		void
@@ -145,7 +160,7 @@ public:
 			_twoWire = ref new I2c::TwoWire( _firmata );
 		}
 		return _twoWire;
-	}
+	}*/
 
 
 private:
@@ -153,9 +168,6 @@ private:
 	static const int MAX_PORTS = 16;
 	static const int MAX_PINS = 128;
 	static const int ANALOG_PINS = 6;
-
-	//singleton reference for I2C
-	I2c::TwoWire ^_twoWire;
 
 	//a reference to the UAP firmata interface
 	Firmata::UwpFirmata ^_firmata;
@@ -168,13 +180,13 @@ private:
 	void onAnalogReport( Firmata::CallbackEventArgs ^argv );
 
 	//maps the given pin number to the correct port and mask
-	void getPinMap( byte, int *, byte * );
+	void getPinMap( uint8_t, int *, uint8_t * );
 
 	//state-tracking cache variables
-	byte volatile _subscribed_ports[MAX_PORTS];
-	byte volatile _digital_port[MAX_PORTS];
+	uint8_t volatile _subscribed_ports[MAX_PORTS];
+	uint8_t volatile _digital_port[MAX_PORTS];
 	uint16 volatile _analog_pins[ANALOG_PINS];
-	byte _pin_mode[MAX_PINS];
+	uint8_t _pin_mode[MAX_PINS];
 };
 
 } // namespace Wiring
