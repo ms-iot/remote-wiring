@@ -30,7 +30,7 @@ using namespace Microsoft::Maker;
 using namespace Microsoft::Maker::RemoteWiring;
 
 //******************************************************************************
-//* Constructors
+//* Constructors / Destructors
 //******************************************************************************
 
 RemoteDevice::RemoteDevice(
@@ -51,6 +51,11 @@ RemoteDevice::RemoteDevice(
 	_twoWire( nullptr )
 {
 	initialize();
+}
+
+RemoteDevice::~RemoteDevice()
+{
+	_firmata->finish();
 }
 
 
@@ -176,15 +181,6 @@ RemoteDevice::pinMode(
 
 	//finally, update the cached pin mode
 	_pin_mode[ pin_ ] = static_cast<uint8_t>( mode_ );
-}
-
-
-void
-RemoteDevice::finish(
-	void
-	)
-{
-	_firmata->finish();
 }
 
 

@@ -87,13 +87,7 @@ public:
 		Firmata::UwpFirmata ^firmata_
 	);
 
-
-	///<summary>
-	///Perform a clean shutdown
-	///</summary>
-	void
-		finish(
-	);
+	virtual ~RemoteDevice();
 
 	///<summary>
 	///reads analog data stored in the cache
@@ -139,28 +133,14 @@ public:
 	);
 
 	///<summary>
-	///retrieves the mode of the given pin from the cache
+	/// Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
+	/// This is not a function you will find in the Arduino API, but is an extremely helpful function
+	/// that allows the RemoteDevice class to maintain consistency with your apps.
 	///</summary>
 	PinMode
 	getPinMode(
 		uint8_t pin_
 	);
-
-	///<summary>
-	///singleton pattern returns a current instance of TwoWire for I2C communication
-	///</summary>
-	/*inline
-	I2c::TwoWire ^
-	getI2c(
-		void
-	)
-	{
-		if( _twoWire == nullptr )
-		{
-			_twoWire = ref new I2c::TwoWire( _firmata );
-		}
-		return _twoWire;
-	}*/
 
 
 private:
@@ -185,7 +165,7 @@ private:
 	//state-tracking cache variables
 	uint8_t volatile _subscribed_ports[MAX_PORTS];
 	uint8_t volatile _digital_port[MAX_PORTS];
-	uint16 volatile _analog_pins[ANALOG_PINS];
+	uint16_t volatile _analog_pins[ANALOG_PINS];
 	uint8_t _pin_mode[MAX_PINS];
 };
 
