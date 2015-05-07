@@ -195,7 +195,7 @@ RemoteDevice::onDigitalReport(
 	)
 {
 	uint8_t port = args->getPort();
-	uint8_t port_val = args->getValue();
+	uint8_t port_val = static_cast<uint8_t>(args->getValue());
 
 	//output_state will only set bits which correspond to output pins that are HIGH
 	uint8_t output_state = ~_subscribed_ports[ port ] & _digital_port[ port ];

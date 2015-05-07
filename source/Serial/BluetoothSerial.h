@@ -38,7 +38,8 @@ public:
 	event RemoteWiringConnectionCallback^ ConnectionFailed;
 	event RemoteWiringConnectionCallback^ ConnectionLost;
 
-	BluetoothSerial();
+    [Windows::Foundation::Metadata::DefaultOverload]
+    BluetoothSerial();
 	BluetoothSerial( Platform::String ^deviceIdentifier_ );
 	BluetoothSerial( Windows::Devices::Enumeration::DeviceInformation ^device_ );
 
