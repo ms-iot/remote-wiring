@@ -1,5 +1,3 @@
-﻿#pragma once
-
 /*
     Copyright(c) Microsoft Open Technologies, Inc. All rights reserved.
 
@@ -24,7 +22,7 @@
     THE SOFTWARE.
 */
 
-
+#pragma once
 #include "IStream.h"
 
 namespace Microsoft {
