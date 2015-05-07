@@ -22,7 +22,6 @@
     THE SOFTWARE.
 */
 
-﻿
 #include "pch.h"
 #include "BluetoothSerial.h"
 #include <chrono>
