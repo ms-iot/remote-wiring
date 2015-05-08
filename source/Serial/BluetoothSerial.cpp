@@ -280,30 +280,31 @@ BluetoothSerial::begin(
 	// Ensure known good state
 	end();
 
-	/*
-	 * there are several scenarios here which may involve blocking operations for proper error handling and etc. we need to absolutely guarantee that this can never
-	 * execute on the main thread.
-	 */
-	std::thread thr( [ this ] {
-		//if a device was specified, attempt to connectAsync to that device and bounce
-		if( _device != nullptr )
+	if ( _device != nullptr )
+	{
+		connectAsync( _device )
+		.then([this]( Concurrency::task<void> t )
 		{
-			if( !connectAsync( _device ).get() )
+			try
+			{
+				t.get();
+			}
+			catch (...)
 			{
 				ConnectionFailed();
 			}
-			return;
-		}
-
+		});
+	}
+	else
+	{
 		//otherwise, we first need to get a list of all possible devices
 		Concurrency::create_task( listAvailableDevicesAsync() )
-			.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
+		.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
 		{
 			if( !devices->Size )
 			{
 				//no devices found
-				ConnectionFailed();
-				return;
+				throw 0;
 			}
 			_devices = devices;
 
@@ -314,64 +315,65 @@ BluetoothSerial::begin(
 				{
 					if( device->Id->Equals( _deviceIdentifier ) || device->Name->Equals( _deviceIdentifier ) )
 					{
-						if( !connectAsync( device ).get() )
-						{
-							ConnectionFailed();
-						}
-						return;
+						return connectAsync( device );
 					}
 				}
 
 				//if we've exhausted the list and found nothing that matches the identifier, we've failed to connectAsync.
-				ConnectionFailed();
-				return;
+				throw 0;
 			}
 
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
+
+			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
+			auto t = Concurrency::task_from_exception<void>(0);
 			for each( auto device in _devices )
 			{
-				if( connectAsync( device ).get() )
-				{
-					return;
-				}
+				t = t.then([this,device] (Concurrency::task<void> t) {
+					try
+					{
+						t.get();
+						return Concurrency::task_from_result();
+					}
+					catch (...)
+					{
+						return connectAsync( device );
+					}
+				});
 			}
-
-			ConnectionFailed();
-		} );
-	} );
-	thr.detach();
+			return t;
+		}).then( [this] ( Concurrency::task<void> t )
+		{
+			try
+			{
+				t.get();
+			} catch (...) {
+				ConnectionFailed();
+			}
+		});
+	}
 }
 
 
 
-Concurrency::task<bool>
+Concurrency::task<void>
 BluetoothSerial::connectAsync(
 	Windows::Devices::Enumeration::DeviceInformation ^device_
 	)
 {
 	return Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
-
-		.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
+	.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
 	{
 		_device_service = device_service_;
 		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
 
 		// Connect the socket
-		auto task = _stream_socket->ConnectAsync(
+		return Concurrency::create_task( _stream_socket->ConnectAsync(
 			_device_service->ConnectionHostName,
 			_device_service->ConnectionServiceName,
-			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication );
-
-		//we need to wait for the above IAsyncAction to complete, creating a task and calling .wait() throws an uncatchable exception on failure.
-		while( task->Status == Windows::Foundation::AsyncStatus::Started )
-		{
-			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-		}
-		if( task->Status == Windows::Foundation::AsyncStatus::Error )
-		{
-			return false;
-		}
-
+			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) );
+	} ).then( [ this ]( )
+	{
 		_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
 		if( _synchronous_mode )
 		{
@@ -382,27 +384,10 @@ BluetoothSerial::connectAsync(
 		}
 
 		_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
-		return true;
-	} )
 
-		.then( [ this ]( Concurrency::task<bool> t )
-	{
-		try
-		{
-			//if anything in our task chain threw an exception, get() will receive it.
-			bool success = t.get();
-			if( success )
-			{
-				// Set connection ready flag
-				InterlockedOr( &_connection_ready, true );
-				ConnectionEstablished();
-			}
-			return success;
-		}
-		catch( ... )
-		{
-			return false;
-		}
+		// Set connection ready flag
+		InterlockedOr( &_connection_ready, true );
+		ConnectionEstablished();
 	} );
 }
 

@@ -111,7 +111,7 @@ private:
 		bool synchronous_mode_
 	);
 
-	Concurrency::task<bool>
+	Concurrency::task<void>
 	connectAsync(
 		Windows::Devices::Enumeration::DeviceInformation ^device_
 	);
