@@ -289,9 +289,13 @@ BluetoothSerial::begin(
 			{
 				t.get();
 			}
-			catch (...)
+			catch( Platform::Exception ^e )
 			{
-				ConnectionFailed();
+				ConnectionFailed( e );
+			}
+			catch( ... )
+			{
+				ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
 			}
 		});
 	}
@@ -304,7 +308,7 @@ BluetoothSerial::begin(
 			if( !devices->Size )
 			{
 				//no devices found
-				throw 0;
+				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No bluetooth devices found." ) );
 			}
 			_devices = devices;
 
@@ -320,7 +324,7 @@ BluetoothSerial::begin(
 				}
 
 				//if we've exhausted the list and found nothing that matches the identifier, we've failed to connectAsync.
-				throw 0;
+				throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No bluetooth devices found matching the specified identifier." ) );
 			}
 
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
@@ -347,8 +351,14 @@ BluetoothSerial::begin(
 			try
 			{
 				t.get();
-			} catch (...) {
-				ConnectionFailed();
+			}
+			catch( Platform::Exception ^e )
+			{
+				ConnectionFailed( e );
+			}
+			catch( ... )
+			{
+				ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
 			}
 		});
 	}

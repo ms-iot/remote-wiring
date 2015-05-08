@@ -125,7 +125,7 @@ UsbSerial::begin(
 		if( !devices_->Size )
 		{
 			//no devices found
-			ConnectionFailed();
+			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No USB devices found." ) );
 			return;
 		}
 		_deviceIdentifier = nullptr;
@@ -152,7 +152,7 @@ UsbSerial::begin(
 		if( _deviceIdentifier == nullptr )
 		{
 			//Requested device not found
-			ConnectionFailed();
+			throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No USB devices found matching the specified identifier." ) );
 			return;
 		}
 		Concurrency::create_task( Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync( _deviceIdentifier ) )
@@ -160,7 +160,7 @@ UsbSerial::begin(
 		{
 			if( device_ == nullptr )
 			{
-				ConnectionFailed();
+				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the SerialDevice from the specified identifiers." ) );
 				return;
 			}
 			_device = device_;
@@ -308,10 +308,13 @@ UsbSerial::begin(
 				InterlockedOr( &_connection_ready, true );
 				ConnectionEstablished();
 			}
+			catch( Platform::Exception ^e )
+			{
+				ConnectionFailed( e );
+			}
 			catch( ... )
 			{
-				ConnectionFailed();
-				return;
+				ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
 			}
 		} );
 	} )
@@ -322,10 +325,13 @@ UsbSerial::begin(
 			//if anything in our task chain threw an exception, get() will receive it.
 			return t.get();
 		}
+		catch( Platform::Exception ^e )
+		{
+			ConnectionFailed( e );
+		}
 		catch( ... )
 		{
-			ConnectionFailed();
-			return;
+			ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
 		}
 	} );
 }

@@ -34,8 +34,8 @@ public ref class UsbSerial sealed : public IStream
 {
 public:
 	event RemoteWiringConnectionCallback^ ConnectionEstablished;
-	event RemoteWiringConnectionCallback^ ConnectionFailed;
 	event RemoteWiringConnectionCallback^ ConnectionLost;
+	event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
 
     virtual
     uint16_t

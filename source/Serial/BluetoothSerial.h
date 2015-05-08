@@ -33,8 +33,8 @@ public ref class BluetoothSerial sealed : public IStream
 {
 public:
 	event RemoteWiringConnectionCallback^ ConnectionEstablished;
-	event RemoteWiringConnectionCallback^ ConnectionFailed;
 	event RemoteWiringConnectionCallback^ ConnectionLost;
+	event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
     BluetoothSerial();
