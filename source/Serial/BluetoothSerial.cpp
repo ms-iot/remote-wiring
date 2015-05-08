@@ -24,8 +24,6 @@
 
 #include "pch.h"
 #include "BluetoothSerial.h"
-#include <chrono>
-#include <thread>
 
 using namespace Windows::Devices::Enumeration;
 using namespace Windows::Devices::Bluetooth::Rfcomm;
@@ -33,69 +31,6 @@ using namespace Windows::Networking::Sockets;
 using namespace Windows::Storage::Streams;
 using namespace Concurrency;
 using namespace Microsoft::Maker::Serial;
-
-namespace {
-	// Connection code taken from:
-	// https://msdn.microsoft.com/en-us/library/windows/apps/xaml/dn264586.aspx
-
-	// This App requires a connection that is encrypted but does not care about
-	// whether its authenticated.
-	bool SupportsProtection( RfcommDeviceService^ service )
-	{
-		switch( service->ProtectionLevel )
-		{
-		case SocketProtectionLevel::PlainSocket:
-			if( ( SocketProtectionLevel::BluetoothEncryptionWithAuthentication == service->MaxProtectionLevel )
-				|| ( service->MaxProtectionLevel == SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) )
-			{
-				// The connection can be upgraded when opening the socket so the
-				// App may offer UI here to notify the user that Windows may
-				// prompt for a PIN exchange.
-				return true;
-			}
-			else
-			{
-				// The connection cannot be upgraded so an App may offer UI here
-				// to explain why a connection won’t be made.
-				return false;
-			}
-		case SocketProtectionLevel::BluetoothEncryptionWithAuthentication:
-			return true;
-		case SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication:
-			return true;
-		}
-		return false;
-	}
-
-	// This App relies on CRC32 checking available in version 2.0 of the service.
-	bool IsCompatibleVersion( RfcommDeviceService^ service )
-	{
-		const uint32_t SERVICE_VERSION_ATTRIBUTE_ID = 0x0300;
-		const byte SERVICE_VERSION_ATTRIBUTE_TYPE = 0x0A;   // UINT32
-		const uint32_t MINIMUM_SERVICE_VERSION = 0x0200;
-
-		create_task( service->GetSdpRawAttributesAsync(
-			Windows::Devices::Bluetooth::BluetoothCacheMode::Uncached ) )
-			.then( [ & ]( Windows::Foundation::Collections::IMapView<uint32_t, Windows::Storage::Streams::IBuffer ^> ^attributes_ ) {
-			Windows::Storage::Streams::DataReader ^reader = DataReader::FromBuffer( attributes_->Lookup( SERVICE_VERSION_ATTRIBUTE_ID ) );
-
-			// The first byte contains the attribute's type
-			byte attributeType = reader->ReadByte();
-			if( attributeType == SERVICE_VERSION_ATTRIBUTE_TYPE )
-			{
-				// The remainder is the data
-				uint32_t version = reader->ReadUInt32();
-				return version >= MINIMUM_SERVICE_VERSION;
-			}
-
-			return true;
-		} );
-
-		return true; // bug, returns erroneous result
-	}
-}  // namespace
-
-
 
 //******************************************************************************
 //* Constructors
@@ -206,10 +141,13 @@ BluetoothSerial::end(
 	delete( _tx ); //_tx->Close();
 	_tx = nullptr;
 	delete( _stream_socket ); //_socket->Close();
+	_current_load_operation = nullptr;
+	_current_store_operation = nullptr;
 	_stream_socket = nullptr;
 	_device_service = nullptr;
 	_service_id = nullptr;
 	_service_provider = nullptr;
+	_devices = nullptr;
 }
 
 
@@ -228,17 +166,17 @@ BluetoothSerial::read(
 	if( connectionReady() &&
 		_synchronous_mode &&
 		!_rx->UnconsumedBufferLength &&
-		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
+		_current_load_operation->Status != Windows::Foundation::AsyncStatus::Started )
 	{
 		//attempt to detect disconnection
-		if( currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error )
+		if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
 		{
 			InterlockedAnd( &_connection_ready, false );
 			ConnectionLost();
 			return -1;
 		}
-		currentLoadOperation->Close();
-		currentLoadOperation = _rx->LoadAsync( 100 );
+		_current_load_operation->Close();
+		_current_load_operation = _rx->LoadAsync( 100 );
 	}
 
 	return c;
@@ -252,7 +190,7 @@ BluetoothSerial::write(
 	// Check to see if connection is ready
 	if( !connectionReady() ) { return 0; }
 
-	if( ( currentStoreOperation != nullptr ) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error )
+	if( ( _current_store_operation != nullptr ) && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
 	{
 		InterlockedAnd( &_connection_ready, false );
 		ConnectionLost();
@@ -260,7 +198,7 @@ BluetoothSerial::write(
 	}
 
 	_tx->WriteByte( c_ );
-	currentStoreOperation = _tx->StoreAsync();
+	_current_store_operation = _tx->StoreAsync();
 	return 1;
 }
 
@@ -291,11 +229,11 @@ BluetoothSerial::begin(
 			}
 			catch( Platform::Exception ^e )
 			{
-				ConnectionFailed( e );
+				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
 			}
 			catch( ... )
 			{
-				ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
+				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) );
 			}
 		});
 	}
@@ -315,20 +253,19 @@ BluetoothSerial::begin(
 			//if a device identifier is specified, we will attempt to match one of the devices in the collection to the identifier.
 			if( _deviceIdentifier != nullptr )
 			{
-				for each( auto device in _devices )
+				Windows::Devices::Enumeration::DeviceInformation ^device = identifyDevice( devices );
+				if( device != nullptr )
 				{
-					if( device->Id->Equals( _deviceIdentifier ) || device->Name->Equals( _deviceIdentifier ) )
-					{
-						return connectAsync( device );
-					}
+					return connectAsync( device );
 				}
-
-				//if we've exhausted the list and found nothing that matches the identifier, we've failed to connectAsync.
-				throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No bluetooth devices found matching the specified identifier." ) );
+				else
+				{
+					//if we searched and found nothing that matches the identifier, we've failed to connect.
+					throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No bluetooth devices found matching the specified identifier." ) );
+				}
 			}
 
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
-
 			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
 			auto t = Concurrency::task_from_exception<void>(0);
 			for each( auto device in _devices )
@@ -354,11 +291,11 @@ BluetoothSerial::begin(
 			}
 			catch( Platform::Exception ^e )
 			{
-				ConnectionFailed( e );
+				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
 			}
 			catch( ... )
 			{
-				ConnectionFailed( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) ) );
+				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) );
 			}
 		});
 	}
@@ -389,8 +326,8 @@ BluetoothSerial::connectAsync(
 		{
 			//partial mode will allow for better async reads
 			_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-			currentLoadOperation = _rx->LoadAsync( 100 );
-			currentStoreOperation = nullptr;
+			_current_load_operation = _rx->LoadAsync( 100 );
+			_current_store_operation = nullptr;
 		}
 
 		_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
@@ -422,4 +359,21 @@ BluetoothSerial::loadAsync(
 {
 	//TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
 	return _rx->LoadAsync( count_ );
+}
+
+
+
+Windows::Devices::Enumeration::DeviceInformation ^
+BluetoothSerial::identifyDevice(
+	Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+	)
+{
+	for each( const auto device in devices_ )
+	{
+		if( device->Id->Equals( _deviceIdentifier->ToString() ) || device->Name->Equals( _deviceIdentifier ) )
+		{
+			return device;
+		}
+	}
+	return nullptr;
 }

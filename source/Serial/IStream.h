@@ -59,7 +59,7 @@ public enum class SerialConfig {
 };
 
 public delegate void RemoteWiringConnectionCallback();
-public delegate void RemoteWiringConnectionFailedCallback( Platform::Exception ^exception );
+public delegate void RemoteWiringConnectionFailedCallback( Platform::String ^message );
 
 public interface struct IStream
 {
