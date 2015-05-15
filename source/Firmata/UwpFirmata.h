@@ -25,6 +25,8 @@
 #pragma once
 
 #include <cstdint>
+#include <thread>
+#include <atomic>
 
 using namespace Platform;
 using namespace Concurrency;
