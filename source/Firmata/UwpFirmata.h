@@ -378,9 +378,9 @@ public:
 	  //common buffer
 	  uint8_t *_dataBuffer;
 
-	  //threading state member variables
-	  volatile bool inputThreadRunning;
-	  volatile bool inputThreadExited;
+	  //member variables to hold the current input thread & communications
+	  std::thread _inputThread;
+	  std::atomic<bool> _inputThreadShouldExit;
 
 	  //input-thread related functions
 	  void inputThread(void);
