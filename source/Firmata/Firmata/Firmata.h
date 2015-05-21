@@ -95,7 +95,7 @@
 extern "C" {
   typedef std::function<void( byte, int )> callbackFunction;
   typedef std::function<void( void )> systemResetCallbackFunction;
-  typedef std::function<void( char * )> stringCallbackFunction;
+  typedef std::function<void( uint8_t * )> stringCallbackFunction;
   typedef std::function<void( byte command, byte argc, byte *argv )> sysexCallbackFunction;
 }
 
