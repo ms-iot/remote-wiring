@@ -267,7 +267,7 @@ BluetoothSerial::begin(
 
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
 			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
-			auto t = Concurrency::task_from_exception<void>(0);
+			auto t = Concurrency::task_from_exception<void>( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"ERROR! Hacking too much time!" ) ) );
 			for each( auto device in _devices )
 			{
 				t = t.then([this,device] (Concurrency::task<void> t) {
