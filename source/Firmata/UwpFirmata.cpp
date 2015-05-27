@@ -77,8 +77,15 @@ UwpFirmata::startListening(
 	void
 	)
 {
-	//initialize the input thread
-	create_async( [ this ]() -> void { inputThread(); } );
+	//is a thread currently running?
+	if (_inputThread.joinable())
+		return;
+
+	//prepare communications
+	_inputThreadShouldExit = false;
+
+	//initialize the new input thread
+	_inputThread = std::thread( [ this ]() -> void { inputThread(); } );
 }
 
 
@@ -88,7 +95,8 @@ UwpFirmata::finish(
 	)
 {
 	stopThreads();
-	while( !inputThreadExited );
+	if (_inputThread.joinable())
+		_inputThread.join();
 	return ::RawFirmata.finish();
 }
 
@@ -385,12 +393,8 @@ UwpFirmata::inputThread(
 	void
 	)
 {
-	if( inputThreadRunning ) return;
-
 	//set state-tracking member variables and begin processing input
-	inputThreadRunning = true;
-	inputThreadExited = false;
-	while( inputThreadRunning )
+	while( !_inputThreadShouldExit )
 	{
 		try
 		{
@@ -401,7 +405,6 @@ UwpFirmata::inputThread(
 			OutputDebugString( e->Message->Begin() );
 		}
 	}
-	inputThreadExited = true;
 }
 
 
@@ -410,5 +413,5 @@ UwpFirmata::stopThreads(
 	void
 	)
 {
-	inputThreadRunning = false;
+	_inputThreadShouldExit = true;
 }
