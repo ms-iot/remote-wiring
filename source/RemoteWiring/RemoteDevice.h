@@ -55,6 +55,8 @@ public enum class PinState
 
 public delegate void DigitalPinUpdatedCallback( uint8_t pin, PinState state );
 public delegate void AnalogPinUpdatedCallback( uint8_t pin, uint16_t value );
+public delegate void SysexMessageReceivedCallback( uint8_t command, Platform::String ^message );
+public delegate void StringMessageReceivedCallback( Platform::String ^message );
 
 public ref class RemoteDevice sealed {
 
@@ -64,6 +66,8 @@ public ref class RemoteDevice sealed {
 public:
 	event DigitalPinUpdatedCallback ^ DigitalPinUpdatedEvent;
 	event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
+	event SysexMessageReceivedCallback ^ SysexMessageReceivedEvent;
+	event StringMessageReceivedCallback ^ StringMessageReceivedEvent;
 
 	property I2c::TwoWire ^ I2c
 	{
@@ -158,6 +162,8 @@ private:
 	//reporting callbacks
 	void onDigitalReport( Firmata::CallbackEventArgs ^argv );
 	void onAnalogReport( Firmata::CallbackEventArgs ^argv );
+	void onSysexMessage( Firmata::SysexCallbackEventArgs ^argv );
+	void onStringMessage( Firmata::StringCallbackEventArgs ^argv );
 
 	//maps the given pin number to the correct port and mask
 	void getPinMap( uint8_t, int *, uint8_t * );

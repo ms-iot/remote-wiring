@@ -43,8 +43,7 @@ UsbSerial::UsbSerial(
 	_baud( 9600 ),
 	_config( SerialConfig::SERIAL_8N1 ),
 	_connection_ready( 0 ),
-	_device( nullptr ),
-	_deviceInfo( deviceInfo_ ),
+	_device( deviceInfo_ ),
 	_vid( nullptr ),
 	_pid( nullptr ),
 	_rx( nullptr ),
@@ -59,7 +58,6 @@ UsbSerial::UsbSerial(
 	_config( SerialConfig::SERIAL_8N1 ),
 	_connection_ready( 0 ),
 	_device( nullptr ),
-	_deviceInfo( nullptr ),
 	_vid( vid_ ),
 	_pid( nullptr ),
 	_rx( nullptr ),
@@ -75,7 +73,6 @@ UsbSerial::UsbSerial(
 	_config( SerialConfig::SERIAL_8N1 ),
 	_connection_ready( 0 ),
 	_device( nullptr ),
-	_deviceInfo( nullptr ),
 	_vid( vid_ ),
 	_pid( pid_ ),
 	_rx( nullptr ),
@@ -118,215 +115,242 @@ UsbSerial::begin(
 	// Ensure known good state
 	end();
 
-	// Identify all paired serial devices
-	Concurrency::create_task( listAvailableDevicesAsync() )
-		.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices_ ) {
-		// Ensure at least one device satisfies query
-		if( !devices_->Size )
+	if( _device != nullptr )
+	{
+		connectAsync( _device )
+			.then( [ this ]( Concurrency::task<void> t )
 		{
-			//no devices found
-			ConnectionFailed();
-			return;
-		}
-		_deviceIdentifier = nullptr;
-		for( unsigned int i = 0; i < devices_->Size; ++i )
+			try
+			{
+				t.get();
+			}
+			catch( Platform::Exception ^e )
+			{
+				ConnectionFailed( ref new Platform::String( L"UsbSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
+			}
+			catch( ... )
+			{
+				ConnectionFailed( ref new Platform::String( L"UsbSerial::connectAsync failed with a non-Platform::Exception type." ) );
+			}
+		} );
+	}
+	else
+	{
+		//otherwise, we first need to get a list of all possible devices
+		Concurrency::create_task( listAvailableDevicesAsync() )
+			.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
 		{
-			if( _deviceInfo == nullptr && _vid != nullptr && std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _vid->Data() ) )
+			if( !devices->Size )
 			{
-				continue;
+				//no devices found
+				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No USB devices found." ) );
 			}
-			if( _deviceInfo == nullptr && _pid != nullptr && std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _pid->Data() ) )
+			_devices = devices;
+
+			//if at least a VID was specified, we will attempt to match one of the devices in the collection
+			if( _vid != nullptr )
 			{
-				continue;
-			}
-			if( _deviceInfo != nullptr ) {
-				_deviceIdentifier = _deviceInfo->Id;
-				break;
-			}
-			else
-			{
-				_deviceIdentifier = devices_->GetAt( i )->Id;
-				break;
-			}
-		}
-		if( _deviceIdentifier == nullptr )
-		{
-			//Requested device not found
-			ConnectionFailed();
-			return;
-		}
-		Concurrency::create_task( Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync( _deviceIdentifier ) )
-			.then( [ this ]( Windows::Devices::SerialCommunication::SerialDevice ^device_ )
-		{
-			if( device_ == nullptr )
-			{
-				ConnectionFailed();
-				return;
-			}
-			_device = device_;
-			_device->Handshake = SerialHandshake::None;
-			_device->BaudRate = _baud;
-			switch( _config ) {
-			case SerialConfig::SERIAL_5E1:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_5E2:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_5N1:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_5N2:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_5O1:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_5O2:
-				_device->DataBits = 5;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_6E1:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_6E2:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_6N1:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_6N2:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_6O1:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_6O2:
-				_device->DataBits = 6;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_7E1:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_7E2:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_7N1:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_7N2:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_7O1:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_7O2:
-				_device->DataBits = 7;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_8E1:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_8E2:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::Even;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_8N1:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_8N2:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::None;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
-			case SerialConfig::SERIAL_8O1:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::One;
-				break;
-			case SerialConfig::SERIAL_8O2:
-				_device->DataBits = 8;
-				_device->Parity = SerialParity::Odd;
-				_device->StopBits = SerialStopBitCount::Two;
-				break;
+				Windows::Devices::Enumeration::DeviceInformation ^device = identifyDevice( devices );
+				if( device != nullptr )
+				{
+					return connectAsync( device );
+				}
+				else
+				{
+					//Requested device not found
+					throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No USB devices found matching the specified identifier." ) );
+				}
 			}
 
-			_rx = ref new Windows::Storage::Streams::DataReader( device_->InputStream );
-			if( _synchronous_mode ) {
-				_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-				currentLoadOperation = _rx->LoadAsync( 100 );
-				currentStoreOperation = nullptr;
+			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
+			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
+			auto t = Concurrency::task_from_exception<void>( 0 );
+			for each( auto device in _devices )
+			{
+				t = t.then( [ this, device ]( Concurrency::task<void> t ) {
+					try
+					{
+						t.get();
+						return Concurrency::task_from_result();
+					}
+					catch( ... )
+					{
+						return connectAsync( device );
+					}
+				} );
 			}
-
-			_tx = ref new Windows::Storage::Streams::DataWriter( device_->OutputStream );
-		} ).then( [ this ]( Concurrency::task<void> t )
+			return t;
+		} )
+			.then( [ this ]( Concurrency::task<void> t )
 		{
 			try
 			{
 				//if anything in our task chain threw an exception, get() will receive it.
-				t.get();
-
-				//if no exception was thrown, connection was successful. set connection ready flag
-				InterlockedOr( &_connection_ready, true );
-				ConnectionEstablished();
+				return t.get();
+			}
+			catch( Platform::Exception ^e )
+			{
+				ConnectionFailed( ref new Platform::String( L"UsbSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
 			}
 			catch( ... )
 			{
-				ConnectionFailed();
-				return;
+				ConnectionFailed( ref new Platform::String( L"UsbSerial::connectAsync failed with a non-Platform::Exception type." ) );
 			}
 		} );
-	} )
-		.then( [ this ]( Concurrency::task<void> t )
+	}
+}
+
+
+Concurrency::task<void>
+UsbSerial::connectAsync(
+	Windows::Devices::Enumeration::DeviceInformation ^device_
+	)
+{
+	return Concurrency::create_task( Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync( device_->Id ) )
+		.then( [ this ]( Windows::Devices::SerialCommunication::SerialDevice ^serial_device_ )
 	{
-		try
+		if( serial_device_ == nullptr )
 		{
-			//if anything in our task chain threw an exception, get() will receive it.
-			return t.get();
+			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the SerialDevice from the specified identifiers." ) );
 		}
-		catch( ... )
-		{
-			ConnectionFailed();
-			return;
+
+		serial_device_->Handshake = SerialHandshake::None;
+		serial_device_->BaudRate = _baud;
+		switch( _config ) {
+		case SerialConfig::SERIAL_5E1:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_5E2:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_5N1:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_5N2:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_5O1:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_5O2:
+			serial_device_->DataBits = 5;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_6E1:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_6E2:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_6N1:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_6N2:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_6O1:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_6O2:
+			serial_device_->DataBits = 6;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_7E1:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_7E2:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_7N1:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_7N2:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_7O1:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_7O2:
+			serial_device_->DataBits = 7;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_8E1:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_8E2:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::Even;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_8N1:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_8N2:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::None;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
+		case SerialConfig::SERIAL_8O1:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::One;
+			break;
+		case SerialConfig::SERIAL_8O2:
+			serial_device_->DataBits = 8;
+			serial_device_->Parity = SerialParity::Odd;
+			serial_device_->StopBits = SerialStopBitCount::Two;
+			break;
 		}
+
+		_rx = ref new Windows::Storage::Streams::DataReader( serial_device_->InputStream );
+		if( _synchronous_mode ) {
+			_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
+			_current_load_operation = _rx->LoadAsync( 100 );
+			_current_store_operation = nullptr;
+		}
+
+		_tx = ref new Windows::Storage::Streams::DataWriter( serial_device_->OutputStream );
+
+		//if no exception was thrown, connection was successful. set connection ready flag
+		InterlockedOr( &_connection_ready, true );
+		ConnectionEstablished();
 	} );
 }
 
@@ -356,7 +380,10 @@ UsbSerial::end(
 	delete( _tx ); //_tx->Close();
 	_tx = nullptr;
 	delete( _device );
+	_current_load_operation = nullptr;
+	_current_store_operation = nullptr;
 	_device = nullptr;
+	_devices = nullptr;
 }
 
 
@@ -395,17 +422,17 @@ UsbSerial::read(
 	if( connectionReady() &&
 		_synchronous_mode &&
 		!_rx->UnconsumedBufferLength &&
-		currentLoadOperation->Status != Windows::Foundation::AsyncStatus::Started )
+		_current_load_operation->Status != Windows::Foundation::AsyncStatus::Started )
 	{
 		//attempt to detect disconnection
-		if( currentLoadOperation->Status == Windows::Foundation::AsyncStatus::Error )
+		if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
 		{
 			InterlockedAnd( &_connection_ready, false );
 			ConnectionLost();
 			return -1;
 		}
-		currentLoadOperation->Close();
-		currentLoadOperation = _rx->LoadAsync( 100 );
+		_current_load_operation->Close();
+		_current_load_operation = _rx->LoadAsync( 100 );
 	}
 
 	return c;
@@ -418,7 +445,7 @@ UsbSerial::write(
 	// Check to see if connection is ready
 	if( !connectionReady() ) { return 0; }
 
-	if( ( currentStoreOperation != nullptr ) && currentStoreOperation->Status == Windows::Foundation::AsyncStatus::Error )
+	if( ( _current_store_operation != nullptr ) && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
 	{
 		InterlockedAnd( &_connection_ready, false );
 		ConnectionLost();
@@ -426,6 +453,32 @@ UsbSerial::write(
 	}
 
 	_tx->WriteByte( c_ );
-	currentStoreOperation = _tx->StoreAsync();
+	_current_store_operation = _tx->StoreAsync();
 	return 1;
+}
+
+
+Windows::Devices::Enumeration::DeviceInformation ^
+UsbSerial::identifyDevice(
+	Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+	)
+{
+	for( unsigned int i = 0; i < devices_->Size; ++i )
+	{
+		//if the vid doesn't match, move to the next device
+		if( std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _vid->Data() ) )
+		{
+			continue;
+		}
+		
+		//if the pid doesn't match, move to the next device
+		if( std::string::npos == std::wstring( devices_->GetAt( i )->Id->Data() ).find( _pid->Data() ) )
+		{
+			continue;
+		}
+
+		//if both match, we've identified the device;
+		return devices_->GetAt( i );
+	}
+	return nullptr;
 }

@@ -232,6 +232,24 @@ RemoteDevice::onAnalogReport(
 }
 
 
+void
+RemoteDevice::onSysexMessage(
+	Firmata::SysexCallbackEventArgs ^argv
+	)
+{
+	SysexMessageReceivedEvent( argv->getCommand(), argv->getSysexString() );
+}
+
+
+void
+RemoteDevice::onStringMessage(
+	Firmata::StringCallbackEventArgs ^argv
+	)
+{
+	StringMessageReceivedEvent( argv->getString() );
+}
+
+
 //******************************************************************************
 //* Private Methods
 //******************************************************************************
@@ -244,6 +262,8 @@ RemoteDevice::initialize(
 {
 	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
 	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+	_firmata->SysexEvent += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
+	_firmata->StringEvent += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
 
 	//TODO: Initialize from Firmata, I have a good idea how to do this, JDF
 	for( int i = 0; i < sizeof( _digital_port ); ++i ) { _digital_port[ i ] = 0; }

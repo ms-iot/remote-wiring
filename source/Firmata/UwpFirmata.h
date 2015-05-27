@@ -25,6 +25,8 @@
 #pragma once
 
 #include <cstdint>
+#include <thread>
+#include <atomic>
 
 using namespace Platform;
 using namespace Concurrency;
@@ -364,6 +366,24 @@ public:
 		}
 	}
 
+
+	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	static inline
+	void
+	stringInvoke(
+		UwpFirmata ^caller,
+		uint8_t *string_data
+	)
+	{
+		size_t len = strlen( reinterpret_cast<char *>( string_data ) ) + 1;
+		size_t wlen = len * sizeof( wchar_t );
+		wchar_t *wstr_data = (wchar_t *) malloc( wlen );
+
+		size_t c;
+		mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>( string_data ), len + 1 );
+		caller->StringEvent( caller, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
+	}
+
   private:
 	//sysex-building
 	  uint8_t _sysCommand;
@@ -378,9 +398,9 @@ public:
 	  //common buffer
 	  uint8_t *_dataBuffer;
 
-	  //threading state member variables
-	  volatile bool inputThreadRunning;
-	  volatile bool inputThreadExited;
+	  //member variables to hold the current input thread & communications
+	  std::thread _inputThread;
+	  std::atomic<bool> _inputThreadShouldExit;
 
 	  //input-thread related functions
 	  void inputThread(void);

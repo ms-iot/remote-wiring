@@ -212,7 +212,7 @@ FirmataClass::processSysexMessage(
 			{
 				storedInputData[ j ] = '\0';
 			}
-			currentStringCallback( (char *)&storedInputData[ 0 ] );
+			currentStringCallback( (uint8_t *)&storedInputData[ 0 ] );
 		}
 		break;
 	default:
