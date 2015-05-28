@@ -34,8 +34,8 @@ public ref class UsbSerial sealed : public IStream
 {
 public:
 	event RemoteWiringConnectionCallback^ ConnectionEstablished;
-	event RemoteWiringConnectionCallback^ ConnectionFailed;
 	event RemoteWiringConnectionCallback^ ConnectionLost;
+	event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
 
     virtual
     uint16_t
@@ -93,16 +93,17 @@ public:
     );
 
 private:
-    Windows::Devices::SerialCommunication::SerialDevice ^_device;
-	Windows::Devices::Enumeration::DeviceInformation ^_deviceInfo;
-    Windows::Storage::Streams::DataReader ^_rx;
-    Windows::Storage::Streams::DataWriter ^_tx;
-	Windows::Storage::Streams::DataReaderLoadOperation ^currentLoadOperation;
-	Windows::Storage::Streams::DataWriterStoreOperation ^currentStoreOperation;
-	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
-	Platform::String ^_deviceIdentifier;
+	//optional device-specifiers
+	Windows::Devices::Enumeration::DeviceInformation ^_device;
 	Platform::String ^_vid;
 	Platform::String ^_pid;
+
+	//member variables
+    Windows::Storage::Streams::DataReader ^_rx;
+    Windows::Storage::Streams::DataWriter ^_tx;
+	Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
+	Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
+	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
 	
 	uint32_t _baud;
 	SerialConfig _config;
@@ -114,6 +115,16 @@ private:
     begin (
         bool synchronous_mode_
     );
+
+	Windows::Devices::Enumeration::DeviceInformation ^
+	identifyDevice(
+		Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+	);
+
+	Concurrency::task<void>
+	connectAsync(
+		Windows::Devices::Enumeration::DeviceInformation ^device_
+	);
 
 };
 
