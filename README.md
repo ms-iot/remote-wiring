@@ -152,6 +152,33 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         uint16_t val = arduino->analogRead( 9 );
 ```
 
+###Working with Analog
+
+Analog input pins (A0, A1, A2, etc) have some unique properties which can cause some confusion working with them for the first time. This is mainly due to the contextualization the digital and analog pins when using Firmata. The Arduino IDE #defines special keywords for using these analog pins which basically tries to hide the issue from you, which can cause complications from another device when communicating with an Arduino over Firmata.
+
+Let's consider the `pinMode` function for a moment...
+
+An Arduino Uno has 14 digital pins numbered from 0 to 13. If you want to set the mode of pin 5 to `INPUT`, you would write `pinMode( 5, INPUT );` in the Arduino IDE. If you wanted to do the same thing with analog pin 0, you would write `pinMode( A0, ANALOG );`. First, notice that we used ANALOG instead of INPUT. This is the first discrepancy of analog pins; Setting `A0` to `INPUT` doesn't do what you think it would!
+
+An Arduino only speaks binary. It understands numbers very well, but does not understand words like INPUT or ANALOG. `INPUT`, `OUTPUT`, `HIGH`, `LOW`, and many others are examples of macros defined by the Arduino IDE. These values are mapped to meaningful numbers without your knowledge or intervention. It is taken care of for you for simplicity and makes your code much more readable. However, the same is true for `A0`, therefore both arguments to the function call `pinMode( A0, ANALOG );` are converted to numbers before the code is compiled to run on the Arduino. The value of ANALOG is always the same, but the value of A0 varies depending on the board you are using!
+
+All pins are assigned a number. Analog pins are always numbered higher than the digital pins, so the pin number of A0 is actually different depending on *how many* digital pins your Arduino has. Since an Uno has 14 digital pins numbered from 0 to 13, pin A0 is actually pin 14, A1 is 15, A2 is 16, etc. A Mega has 54 digital pins, so A0 refers to pin 54.
+
+Here is where this gets interesting: when using Remote Arduino, you need to be concious of the actual pin number when using generic functions like `pinMode`. Since we do not (currently) have any knowledge of what board is on the other end, we can't define A0 for you. Therefore, if you want to enable pin A0 for analogRead or analog events, you'll need to create your `RemoteDevice` object (called arduino here) and invoke the function like `arduino.pinMode( 14, PinMode.ANALOG );`
+
+When reading the values, however, the context is clear. Since you cannot be referring to a digital pin when you invoke a function like `analogRead`, A0 is just 0, regardless of which type of board you are using. To be clear, this is not a design decision that this library has taken, this is how Firmata works. We are actively working to improve this in the future. For now, here is an example to help illustrate the issue:
+
+```c#
+	//We know that we have an Arduino Uno connected at the other end, which has 14 digital pins.
+	//We want to read from a photocell connected to pin A4. Since A0 = 14, then A4 = 18
+	
+	byte NUM_DIGITAL_PINS = 14;
+	byte photoPin = 4;
+	
+	arduino.pinMode( photoPin + NUM_DIGITAL_PINS, PinMode.ANALOG );	//sets the mode of A4 to ANALOG, 
+	arduino.analogRead( photoPin );									//reads the value of A4
+```
+
 ###Events
 
 As previously mentioned, the RemoteWiring layer allows interactions with the RemoteDevice class to feel like interacting with the device directly through the Wiring API. However, Windows `events` give us the power to respond immediately to changes reported by the Arduino. [Click here for more information about events.](https://msdn.microsoft.com/en-us/library/hh758286.aspx)
