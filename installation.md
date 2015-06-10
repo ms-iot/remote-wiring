@@ -238,10 +238,5 @@ You will need to add one of the following XML blocks to your manifest file in or
 ```
 
 ###Windows 8.1
-```xml
-<m2:DeviceCapability Name="serialcommunication">
-  <m2:Device Id="any">
-    <m2:Function Type="name:serialPort"/>
-  </m2:Device>
-</m2:DeviceCapability>
-```
+
+Unfortunately, this library does not support USB on Windows 8.1.
