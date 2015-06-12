@@ -25,11 +25,12 @@
 #include "pch.h"
 #include "BluetoothSerial.h"
 
-using namespace Windows::Devices::Enumeration;
+using namespace Concurrency;
 using namespace Windows::Devices::Bluetooth::Rfcomm;
+using namespace Windows::Devices::Enumeration;
 using namespace Windows::Networking::Sockets;
 using namespace Windows::Storage::Streams;
-using namespace Concurrency;
+
 using namespace Microsoft::Maker::Serial;
 
 //******************************************************************************
@@ -37,48 +38,46 @@ using namespace Microsoft::Maker::Serial;
 //******************************************************************************
 
 BluetoothSerial::BluetoothSerial(
-	void
-	) :
-	_connection_ready( 0 ),
-	_device_service( nullptr ),
-	_rx( nullptr ),
-	_service_id( nullptr ),
-	_service_provider( nullptr ),
-	_stream_socket( nullptr ),
-	_tx( nullptr ),
-	_deviceIdentifier( nullptr ),
-	_device( nullptr )
+    Platform::String ^device_name_
+    ) :
+    _connection_ready(false),
+    _current_load_operation(nullptr),
+    _current_store_operation(nullptr),
+    _device(nullptr),
+    _device_collection(nullptr),
+    _device_name(device_name_),
+    _rfcomm_service(nullptr),
+    _rx(nullptr),
+    _stream_socket(nullptr),
+    _tx(nullptr)
 {
 }
 
 BluetoothSerial::BluetoothSerial(
-	Platform::String ^deviceIdentifier_
-	) :
-	_connection_ready( 0 ),
-	_device_service( nullptr ),
-	_rx( nullptr ),
-	_service_id( nullptr ),
-	_service_provider( nullptr ),
-	_stream_socket( nullptr ),
-	_tx( nullptr ),
-	_deviceIdentifier( deviceIdentifier_ ),
-	_device( nullptr )
+    DeviceInformation ^device_
+    ) :
+    _connection_ready(false),
+    _current_load_operation(nullptr),
+    _current_store_operation(nullptr),
+    _device(device_),
+    _device_collection(nullptr),
+    _device_name(nullptr),
+    _rfcomm_service(nullptr),
+    _rx(nullptr),
+    _stream_socket(nullptr),
+    _tx(nullptr)
 {
 }
 
-BluetoothSerial::BluetoothSerial(
-	DeviceInformation ^device_
-	) :
-	_connection_ready( 0 ),
-	_device_service( nullptr ),
-	_rx( nullptr ),
-	_service_id( nullptr ),
-	_service_provider( nullptr ),
-	_stream_socket( nullptr ),
-	_tx( nullptr ),
-	_deviceIdentifier( nullptr ),
-	_device( device_ )
+//******************************************************************************
+//* Destructors
+//******************************************************************************
+BluetoothSerial::~BluetoothSerial(
+    void
+    )
 {
+    ConnectionLost();
+    end();
 }
 
 //******************************************************************************
@@ -87,293 +86,218 @@ BluetoothSerial::BluetoothSerial(
 
 uint16_t
 BluetoothSerial::available(
-	void
-	)
+    void
+    )
 {
-	// Check to see if connection is ready
-	if( !connectionReady() ) { return 0; }
-
-	return _rx->UnconsumedBufferLength;
+    // Check to see if connection is ready
+    if (!connectionReady()) {
+        return 0;
+    }
+    else {
+        return _rx->UnconsumedBufferLength;
+    }
 }
 
-/// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a bluetooth connection. An Advanced Query String is constructed based upon the service id of the desired device. Then build a collection of all paired devices matching the query.
-/// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
+/// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a bluetooth connection.
+/// \warning Must be called from the UI thread
 void
 BluetoothSerial::begin(
-	uint32_t baud_,
-	SerialConfig config_
-	)
+    uint32_t baud_,
+    SerialConfig config_
+    )
 {
-	// Discard incoming parameters inherited from IStream interface.
-	UNREFERENCED_PARAMETER( baud_ );
-	UNREFERENCED_PARAMETER( config_ );
-	begin( true );
+    // Discard incoming parameters inherited from IStream interface.
+    UNREFERENCED_PARAMETER(baud_);
+    UNREFERENCED_PARAMETER(config_);
+
+    // Ensure known good state
+    end();
+
+    // Although this path is not optimal, the behavior (the calls must be made from the UI thread) is mandated by the bluetooth API. The algorithm is a compromise to provide the succint, maintainable code.
+    Concurrency::create_task(listAvailableDevicesAsync())
+        .then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^device_collection_)
+    {
+        // If a friendly name was specified, then identify the associated device
+        if (_device_name) {
+            // Store parameter as a member to ensure the duration of object allocation
+            _device_collection = device_collection_;
+            if (!_device_collection->Size)
+            {
+                throw ref new Platform::Exception(E_UNEXPECTED, L"No Bluetooth devices found or Bluetooth is disabled.");
+            }
+
+            _device = identifyDeviceFromCollection(_device_collection);
+        }
+
+        if (!_device) {
+            throw ref new Platform::Exception(E_UNEXPECTED, L"ERROR! Hacking too much time!");
+        }
+
+        return connectToDeviceAsync(_device);
+    }).then([this](Concurrency::task<void> t)
+    {
+        try
+        {
+            t.get();
+        }
+        catch (Platform::Exception ^e)
+        {
+            ConnectionFailed(L"BluetoothSerial::connectToDeviceAsync failed with a Platform::Exception type. (message: " + e->Message + L")");
+        }
+        catch (...)
+        {
+            ConnectionFailed(L"BluetoothSerial::connectToDeviceAsync failed with a non-Platform::Exception type. (name: " + _device_name + L")");
+        }
+    });
 }
-
-
-void
-BluetoothSerial::beginAsync(
-	void
-	)
-{
-	begin( false );
-}
-
 
 bool
 BluetoothSerial::connectionReady(
-	void
-	)
+    void
+    )
 {
-	return static_cast<bool>( InterlockedAnd( &_connection_ready, true ) );
+    return _connection_ready;
 }
-
 
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
 void
 BluetoothSerial::end(
-	void
-	)
+    void
+    )
 {
-	InterlockedAnd( &_connection_ready, false );
-	delete( _rx ); //_rx->Close();
-	_rx = nullptr;
-	delete( _tx ); //_tx->Close();
-	_tx = nullptr;
-	delete( _stream_socket ); //_socket->Close();
-	_current_load_operation = nullptr;
-	_current_store_operation = nullptr;
-	_stream_socket = nullptr;
-	_device_service = nullptr;
-	_service_id = nullptr;
-	_service_provider = nullptr;
-	_devices = nullptr;
+    _connection_ready = false;
+    _current_load_operation = nullptr;
+    _current_store_operation = nullptr;
+
+    // Reset with respect to dependencies
+    delete(_rx); //_rx->Close();
+    _rx = nullptr;
+    delete(_tx); //_tx->Close();
+    _tx = nullptr;
+    delete(_stream_socket); //_socket->Close();
+    _stream_socket = nullptr;
+    _rfcomm_service = nullptr;
+    _device_collection = nullptr;
 }
 
+/// \details An Advanced Query String is constructed based upon paired bluetooth devices. Then a collection is returned of all devices matching the query.
+/// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
+/// \warning Must be called from UI thread
+Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+BluetoothSerial::listAvailableDevicesAsync(
+    void
+    )
+{
+    // Construct AQS String from service id of desired device
+    Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector(Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort);
+
+    // Identify all paired devices satisfying query
+    return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
+}
 
 uint16_t
 BluetoothSerial::read(
-	void
-	)
+    void
+    )
 {
-	uint16_t c = static_cast<uint16_t>( -1 );
+    uint16_t c = static_cast<uint16_t>(-1);
 
-	if( available() ) {
-		c = _rx->ReadByte();
-	}
+    if ( !connectionReady() ) {
+        return c;
+    }
 
-	// Prefetch buffer
-	if( connectionReady() &&
-		_synchronous_mode &&
-		!_rx->UnconsumedBufferLength &&
-		_current_load_operation->Status != Windows::Foundation::AsyncStatus::Started )
-	{
-		//attempt to detect disconnection
-		if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
-		{
-			InterlockedAnd( &_connection_ready, false );
-			ConnectionLost();
-			return -1;
-		}
-		_current_load_operation->Close();
-		_current_load_operation = _rx->LoadAsync( 100 );
-	}
+    if ( available() ) {
+        c = _rx->ReadByte();
+    }
+    else if ( _current_load_operation->Status != Windows::Foundation::AsyncStatus::Started ) {
+        // Attempt to detect disconnection
+        if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
+        {
+            _connection_ready = false;
+            ConnectionLost();
+            return -1;
+        }
 
-	return c;
+        _current_load_operation = _rx->LoadAsync(100);
+    }
+
+    return c;
 }
 
 uint32_t
 BluetoothSerial::write(
-	uint8_t c_
-	)
+    uint8_t c_
+    )
 {
-	// Check to see if connection is ready
-	if( !connectionReady() ) { return 0; }
+    // Check to see if connection is ready
+    if ( !connectionReady() ) { return 0; }
 
-	if( ( _current_store_operation != nullptr ) && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-	{
-		InterlockedAnd( &_connection_ready, false );
-		ConnectionLost();
-		return 0;
-	}
+    // Attempt to detect disconnection
+    if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+    {
+        _connection_ready = false;
+        ConnectionLost();
+        return 0;
+    }
 
-	_tx->WriteByte( c_ );
-	_current_store_operation = _tx->StoreAsync();
-	return 1;
+    _tx->WriteByte(c_);
+    _current_store_operation = _tx->StoreAsync();
+    return 1;
 }
-
 
 //******************************************************************************
 //* Private Methods
 //******************************************************************************
 
-
-void
-BluetoothSerial::begin(
-	bool synchronous_mode_
-	)
-{
-	_synchronous_mode = synchronous_mode_;
-
-	// Ensure known good state
-	end();
-
-	if ( _device != nullptr )
-	{
-		connectAsync( _device )
-		.then([this]( Concurrency::task<void> t )
-		{
-			try
-			{
-				t.get();
-			}
-			catch( Platform::Exception ^e )
-			{
-				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
-			}
-			catch( ... )
-			{
-				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) );
-			}
-		});
-	}
-	else
-	{
-		//otherwise, we first need to get a list of all possible devices
-		Concurrency::create_task( listAvailableDevicesAsync() )
-		.then( [ this ]( Windows::Devices::Enumeration::DeviceInformationCollection ^devices )
-		{
-			if( !devices->Size )
-			{
-				//no devices found
-				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No bluetooth devices found." ) );
-			}
-			_devices = devices;
-
-			//if a device identifier is specified, we will attempt to match one of the devices in the collection to the identifier.
-			if( _deviceIdentifier != nullptr )
-			{
-				Windows::Devices::Enumeration::DeviceInformation ^device = identifyDevice( devices );
-				if( device != nullptr )
-				{
-					return connectAsync( device );
-				}
-				else
-				{
-					//if we searched and found nothing that matches the identifier, we've failed to connect.
-					throw ref new Platform::Exception( E_INVALIDARG, ref new Platform::String( L"No bluetooth devices found matching the specified identifier." ) );
-				}
-			}
-
-			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
-			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
-			auto t = Concurrency::task_from_exception<void>( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"ERROR! Hacking too much time!" ) ) );
-			for each( auto device in _devices )
-			{
-				t = t.then([this,device] (Concurrency::task<void> t) {
-					try
-					{
-						t.get();
-						return Concurrency::task_from_result();
-					}
-					catch (...)
-					{
-						return connectAsync( device );
-					}
-				});
-			}
-			return t;
-		}).then( [this] ( Concurrency::task<void> t )
-		{
-			try
-			{
-				t.get();
-			}
-			catch( Platform::Exception ^e )
-			{
-				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
-			}
-			catch( ... )
-			{
-				ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) );
-			}
-		});
-	}
-}
-
-
-
 Concurrency::task<void>
-BluetoothSerial::connectAsync(
-	Windows::Devices::Enumeration::DeviceInformation ^device_
-	)
+BluetoothSerial::connectToDeviceAsync(
+    Windows::Devices::Enumeration::DeviceInformation ^device_
+    )
 {
-	return Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
-	.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
-	{
-		_device_service = device_service_;
-		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
+    _device_name = device_->Name;  // Update name in case device was specified directly
+    _stream_socket = ref new StreamSocket();
+    return Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
+        .then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^rfcomm_service_)
+    {
+        // Store parameter as a member to ensure the duration of object allocation
+        _rfcomm_service = rfcomm_service_;
 
-		// Connect the socket
-		return Concurrency::create_task( _stream_socket->ConnectAsync(
-			_device_service->ConnectionHostName,
-			_device_service->ConnectionServiceName,
-			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) );
-	} ).then( [ this ]( )
-	{
-		_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
-		if( _synchronous_mode )
-		{
-			//partial mode will allow for better async reads
-			_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;
-			_current_load_operation = _rx->LoadAsync( 100 );
-			_current_store_operation = nullptr;
-		}
+        // Connect the socket
+        return Concurrency::create_task(_stream_socket->ConnectAsync(
+            _rfcomm_service->ConnectionHostName,
+            _rfcomm_service->ConnectionServiceName,
+            Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
+            .then([this]()
+        {
+            // Enable RX
+            _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
+            _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
+            _current_load_operation = _rx->LoadAsync(100);
 
-		_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
+            // Enable TX
+            _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
+            _current_store_operation = nullptr;
 
-		// Set connection ready flag
-		InterlockedOr( &_connection_ready, true );
-		ConnectionEstablished();
-	} );
+            // Set connection ready flag
+            _connection_ready = true;
+            ConnectionEstablished();
+        });
+    });
 }
-
-
-Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-BluetoothSerial::listAvailableDevicesAsync(
-	void
-	)
-{
-	// Construct AQS String from service id of desired device
-	Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector( Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort );
-
-	// Identify all paired devices satisfying query
-	return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync( device_aqs );
-}
-
-
-Windows::Storage::Streams::DataReaderLoadOperation ^
-BluetoothSerial::loadAsync(
-	unsigned int count_
-	)
-{
-	//TODO: Determine how to return an empty DataReaderLoadOperation when the connection is unavailable or synchronous mode is enabled
-	return _rx->LoadAsync( count_ );
-}
-
-
 
 Windows::Devices::Enumeration::DeviceInformation ^
-BluetoothSerial::identifyDevice(
-	Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
-	)
+BluetoothSerial::identifyDeviceFromCollection(
+    Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+    )
 {
-	for each( const auto device in devices_ )
-	{
-		if( device->Id->Equals( _deviceIdentifier->ToString() ) || device->Name->Equals( _deviceIdentifier ) )
-		{
-			return device;
-		}
-	}
-	return nullptr;
+    for (auto &&device : devices_)
+    {
+        if (device->Id->Equals(_device_name) || device->Name->Equals(_device_name))
+        {
+            return device;
+        }
+    }
+
+    // If we searched and found nothing that matches the identifier, we've failed to connect and cannot recover.
+    throw ref new Platform::Exception(E_INVALIDARG, L"No Bluetooth devices found matching the specified identifier.");
 }
