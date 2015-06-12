@@ -145,7 +145,6 @@ UsbSerial::begin(
 				//no devices found
 				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No USB devices found." ) );
 			}
-			_devices = devices;
 
 			//if at least a VID was specified, we will attempt to match one of the devices in the collection
 			if( _vid != nullptr )
@@ -165,7 +164,7 @@ UsbSerial::begin(
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
 			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
 			auto t = Concurrency::task_from_exception<void>( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"ERROR! Hacking too much time!" ) ) );
-			for each( auto device in _devices )
+			for each( auto device in devices )
 			{
 				t = t.then( [ this, device ]( Concurrency::task<void> t ) {
 					try
@@ -379,11 +378,9 @@ UsbSerial::end(
 	_rx = nullptr;
 	delete( _tx ); //_tx->Close();
 	_tx = nullptr;
-	delete( _device );
 	_current_load_operation = nullptr;
 	_current_store_operation = nullptr;
 	_device = nullptr;
-	_devices = nullptr;
 }
 
 

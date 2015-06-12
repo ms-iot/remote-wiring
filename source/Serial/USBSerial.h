@@ -103,7 +103,6 @@ private:
     Windows::Storage::Streams::DataWriter ^_tx;
 	Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
 	Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
-	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
 	
 	uint32_t _baud;
 	SerialConfig _config;
