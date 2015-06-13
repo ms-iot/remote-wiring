@@ -33,99 +33,96 @@ namespace Serial {
 public ref class UsbSerial sealed : public IStream
 {
 public:
-	event RemoteWiringConnectionCallback^ ConnectionEstablished;
-	event RemoteWiringConnectionCallback^ ConnectionLost;
-	event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
+    event RemoteWiringConnectionCallback^ ConnectionEstablished;
+    event RemoteWiringConnectionCallback^ ConnectionLost;
+    event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
+
+    [Windows::Foundation::Metadata::DefaultOverload]
+    UsbSerial(
+        Platform::String ^vid_
+        );
+
+    UsbSerial(
+        Platform::String ^vid_,
+        Platform::String ^pid_
+        );
+
+    UsbSerial(
+        Windows::Devices::Enumeration::DeviceInformation ^device_
+        );
+
+    virtual
+    ~UsbSerial(
+        void
+        );
 
     virtual
     uint16_t
-    available (
+    available(
         void
-    );
-	UsbSerial(Windows::Devices::Enumeration::DeviceInformation ^deviceInfo_);
-	UsbSerial(Platform::String ^vid_);
-	UsbSerial(Platform::String ^vid_, Platform::String ^pid_);
+        );
 
-	virtual
+    virtual
     void
-    begin (
+    begin(
         uint32_t baud_,
-		SerialConfig config_
-    );
+        SerialConfig config_
+        );
 
     virtual
     void
     end(
         void
-    );
+        );
 
     virtual
     uint16_t
-    read (
+    read(
         void
-    );
+        );
 
     virtual
     uint32_t
-    write (
+    write(
         uint8_t c_
-    );
-
-    void
-    beginAsync (
-        void
-    );
+        );
 
     bool
     connectionReady(
         void
-    );
+        );
 
-	static
+    static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(
         void
-    );
-
-    Windows::Storage::Streams::DataReaderLoadOperation ^
-    loadAsync(
-        unsigned int count_
-    );
+        );
 
 private:
-	//optional device-specifiers
-	Windows::Devices::Enumeration::DeviceInformation ^_device;
-	Platform::String ^_vid;
-	Platform::String ^_pid;
+    // Device specific members (set during instantation)
+    Windows::Devices::Enumeration::DeviceInformation ^_device;
+    Platform::String ^_pid;
+    Platform::String ^_vid;
 
-	//member variables
+    uint32_t _baud;
+    SerialConfig _config;
+    std::atomic_bool _connection_ready;
+    Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
+    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
+    Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
     Windows::Storage::Streams::DataReader ^_rx;
-    Windows::Storage::Streams::DataWriter ^_tx;
-	Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-	Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
-	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
-	
-	uint32_t _baud;
-	SerialConfig _config;
-	LONG volatile _connection_ready;
-    bool _synchronous_mode;
+	Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
+	Windows::Storage::Streams::DataWriter ^_tx;
 
+    Concurrency::task<void>
+    connectToDeviceAsync(
+        Windows::Devices::Enumeration::DeviceInformation ^device_
+        );
 
-    void
-    begin (
-        bool synchronous_mode_
-    );
-
-	Windows::Devices::Enumeration::DeviceInformation ^
-	identifyDevice(
-		Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
-	);
-
-	Concurrency::task<void>
-	connectAsync(
-		Windows::Devices::Enumeration::DeviceInformation ^device_
-	);
-
+    Windows::Devices::Enumeration::DeviceInformation ^
+    identifyDeviceFromCollection(
+        Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+        );
 };
 
 } // namespace Serial
