@@ -10,11 +10,13 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="..\..\source\Serial\BluetoothSerial.cpp" />
     <ClCompile Include="..\..\source\Serial\USBSerial.cpp" />
+    <ClCompile Include="..\..\source\Serial\NetworkSerial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\..\source\Serial\BluetoothSerial.h" />
     <ClInclude Include="..\..\source\Serial\USBSerial.h" />
     <ClInclude Include="..\..\source\Serial\IStream.h" />
+    <ClInclude Include="..\..\source\Serial\NetworkSerial.h" />
   </ItemGroup>
 </Project>
