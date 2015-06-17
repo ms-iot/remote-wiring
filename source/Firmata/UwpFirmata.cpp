@@ -70,8 +70,10 @@ UwpFirmata::begin(
 	Microsoft::Maker::Serial::IStream ^s_
 	)
 {
-	::RawFirmata.begin( s_ );
+    _firmata_stream = s_;
+    ::RawFirmata.begin( s_ );
 }
+
 
 void
 UwpFirmata::startListening(
@@ -79,8 +81,7 @@ UwpFirmata::startListening(
 	)
 {
 	//is a thread currently running?
-	if (_inputThread.joinable())
-		return;
+	if (_inputThread.joinable()) { return; }
 
 	//prepare communications
 	_inputThreadShouldExit = false;
@@ -95,10 +96,20 @@ UwpFirmata::finish(
 	void
 	)
 {
+    _firmata_stream->flush();
 	stopThreads();
-	if (_inputThread.joinable())
-		_inputThread.join();
+	if (_inputThread.joinable()) { _inputThread.join(); }
+    _firmata_stream = nullptr;
 	return ::RawFirmata.finish();
+}
+
+
+void
+UwpFirmata::flush(
+    void
+    )
+{
+    return _firmata_stream->flush();
 }
 
 
@@ -107,7 +118,9 @@ UwpFirmata::printVersion(
 	void
 	)
 {
-	return ::RawFirmata.printVersion();
+    ::RawFirmata.printVersion();
+    _firmata_stream->flush();
+	return;
 }
 
 
@@ -116,7 +129,9 @@ UwpFirmata::printFirmwareVersion(
 	void
 	)
 {
-	return ::RawFirmata.printFirmwareVersion();
+    ::RawFirmata.printFirmwareVersion();
+    _firmata_stream->flush();
+    return;
 }
 
 
@@ -157,7 +172,9 @@ UwpFirmata::sendAnalog(
 	int value_
 	)
 {
-	return ::RawFirmata.sendAnalog( pin_, value_ );
+    ::RawFirmata.sendAnalog(pin_, value_);
+    _firmata_stream->flush();
+    return;
 }
 
 
@@ -167,18 +184,9 @@ UwpFirmata::sendDigitalPort(
 	int portData_
 	)
 {
-	return ::RawFirmata.sendDigitalPort( portNumber_, portData_ );
-}
-
-
-void
-UwpFirmata::setDigitalReadEnabled(
-	uint8_t portNumber,
-	int portData
-	)
-{
-	write( static_cast<uint8_t>( Command::REPORT_DIGITAL_PIN ) | ( portNumber & 0x0F ) );
-	write( static_cast<uint8_t>( portData ) );
+    ::RawFirmata.sendDigitalPort(portNumber_, portData_);
+    _firmata_stream->flush();
+    return;
 }
 
 
@@ -187,9 +195,7 @@ UwpFirmata::sendString(
 	String ^string_
 	)
 {
-	std::wstring stringW = string_->ToString()->Begin();
-	std::string stringA( stringW.begin(), stringW.end() );
-	return ::RawFirmata.sendString( stringA.c_str() );
+    return sendString(STRING_DATA, string_);
 }
 
 
@@ -201,7 +207,7 @@ UwpFirmata::sendString(
 {
 	std::wstring stringW = string_->ToString()->Begin();
 	std::string stringA( stringW.begin(), stringW.end() );
-	return ::RawFirmata.sendString( command_, stringA.c_str() );
+    return ::RawFirmata.sendString(command_, stringA.c_str());
 }
 
 
@@ -240,7 +246,8 @@ UwpFirmata::endSysex(
 	if( _sysCommand && !_blobStarted )
 	{
 		::RawFirmata.sendSysex( _sysCommand, _sysPosition, _dataBuffer );
-		_sysCommand = 0;
+        _firmata_stream->flush();
+        _sysCommand = 0;
 		_sysPosition = 0;
 		return true;
 	}

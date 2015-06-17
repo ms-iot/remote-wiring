@@ -176,13 +176,48 @@ public:
 
 	UwpFirmata();
 
+	bool
+	appendBlob(
+		uint8_t byte_
+	);
+
+	bool
+	appendSysex(
+		uint8_t byte_
+	);
+
+    int
+    available(
+        void
+    );
+
 	void
 	begin(
 		Serial::IStream ^s
 	);
 
+	bool
+	beginBlob(
+		void
+	);
+
+	bool
+	beginSysex(
+		uint8_t command_
+	);
+
 	void
-	startListening(
+	enableI2c(
+		uint16_t i2cReadDelayMicros_
+	);
+
+	bool
+	endBlob(
+		void
+	);
+
+	bool
+	endSysex(
 		void
 	);
 
@@ -191,10 +226,10 @@ public:
 		void
 	);
 
-    void
-    printVersion(
-        void
-    );
+	void
+	flush(
+		void
+	);
 
     void
     printFirmwareVersion(
@@ -202,14 +237,7 @@ public:
     );
 
     void
-    setFirmwareNameAndVersion(
-		String ^name,
-		uint8_t major,
-		uint8_t minor
-    );
-
-    int
-    available(
+    printVersion(
         void
     );
 
@@ -217,6 +245,14 @@ public:
     processInput(
         void
     );
+
+	void
+	readI2c(
+		uint8_t address_,
+		size_t numBytes_,
+		uint8_t reg_,
+		bool continuous_
+	);
 
     void
     sendAnalog(
@@ -230,12 +266,6 @@ public:
 		int portData
     );
 
-	void
-	setDigitalReadEnabled(
-		uint8_t portNumber,
-		int portData
-	);
-
     void
     sendString(
         String ^string
@@ -247,34 +277,21 @@ public:
         String ^string
     );
 
-	bool
-	beginSysex(
-		uint8_t command_
-	);
+    void
+    setFirmwareNameAndVersion(
+		String ^name,
+		uint8_t major,
+		uint8_t minor
+    );
 
-	bool
-	appendSysex(
-		uint8_t byte_
-	);
-
-	bool
-	endSysex(
+	void
+	startListening(
 		void
 	);
 
-	bool
-	beginBlob(
-		void
-	);
-
-	bool
-	appendBlob(
-		uint8_t byte_
-	);
-
-	bool
-	endBlob(
-		void
+	void
+	stopI2c(
+		uint8_t address_
 	);
 
     void
@@ -283,28 +300,22 @@ public:
 	);
 
 	void
-	enableI2c(
-		uint16_t i2cReadDelayMicros_
-	);
-
-	void
 	writeI2c(
 		uint8_t address_,
 		String ^message_
 	);
 
+	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	static inline
 	void
-	readI2c(
-		uint8_t address_,
-		size_t numBytes_,
-		uint8_t reg_,
-		bool continuous_
-	);
-
-	void
-	stopI2c(
-		uint8_t address_
-	);
+	analogInvoke(
+		UwpFirmata ^caller,
+		uint8_t pin_,
+		int value_
+	)
+	{
+		caller->AnalogValueEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
+	}
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
 	static inline
@@ -321,13 +332,18 @@ public:
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
 	static inline
 	void
-	analogInvoke(
+	stringInvoke(
 		UwpFirmata ^caller,
-		uint8_t pin_,
-		int value_
+		uint8_t *string_data
 	)
 	{
-		caller->AnalogValueEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
+		size_t len = strlen( reinterpret_cast<char *>( string_data ) ) + 1;
+		size_t wlen = len * sizeof( wchar_t );
+		wchar_t *wstr_data = (wchar_t *) malloc( wlen );
+
+		size_t c;
+		mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>( string_data ), len + 1 );
+		caller->StringEvent( caller, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
 	}
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
@@ -366,24 +382,6 @@ public:
 		}
 	}
 
-
-	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
-	static inline
-	void
-	stringInvoke(
-		UwpFirmata ^caller,
-		uint8_t *string_data
-	)
-	{
-		size_t len = strlen( reinterpret_cast<char *>( string_data ) ) + 1;
-		size_t wlen = len * sizeof( wchar_t );
-		wchar_t *wstr_data = (wchar_t *) malloc( wlen );
-
-		size_t c;
-		mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>( string_data ), len + 1 );
-		caller->StringEvent( caller, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
-	}
-
   private:
 	//sysex-building
 	  uint8_t _sysCommand;
@@ -400,7 +398,8 @@ public:
 
 	  //member variables to hold the current input thread & communications
 	  std::thread _inputThread;
-	  std::atomic<bool> _inputThreadShouldExit;
+	  std::atomic_bool _inputThreadShouldExit;
+      Serial::IStream ^_firmata_stream;
 
 	  //input-thread related functions
 	  void inputThread(void);
