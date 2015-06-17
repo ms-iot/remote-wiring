@@ -24,7 +24,8 @@
 
 #include "pch.h"
 #include "RemoteDevice.h"
-#include <ppltasks.h>
+
+using namespace Concurrency;
 
 using namespace Microsoft::Maker;
 using namespace Microsoft::Maker::RemoteWiring;
@@ -68,7 +69,18 @@ RemoteDevice::analogRead(
 	uint8_t pin_
 	)
 {
-	uint16_t val = 0;
+    uint16_t val = -1;
+
+    if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::ANALOG)) {
+        if (_pin_mode[pin_] == static_cast<uint8_t>(PinMode::INPUT)) {
+            pinMode(pin_, PinMode::ANALOG);
+            _pin_mode[pin_] = static_cast<uint8_t>(PinMode::ANALOG);
+        }
+        else {
+            return static_cast<uint16_t>(val);
+        }
+    }
+
 	if( pin_ < MAX_PINS )
 	{
 		val = _analog_pins[ pin_ ];
@@ -105,7 +117,17 @@ RemoteDevice::digitalRead(
 	int port;
 	uint8_t port_mask;
 	getPinMap( pin_, &port, &port_mask );
-	return ( ( _digital_port[ port ] & port_mask ) > 0 ) ? static_cast<PinState>( 1 ) : static_cast<PinState>( 0 );
+
+    if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::INPUT)) {
+        if (_pin_mode[pin_] == static_cast<uint8_t>(PinMode::ANALOG)) {
+            pinMode(pin_, PinMode::INPUT);
+        }
+        else {
+            return PinState::LOW;
+        }
+    }
+
+    return static_cast<PinState>(_digital_port[port] & port_mask);
 }
 
 
@@ -136,7 +158,6 @@ RemoteDevice::digitalWrite(
 	}
 
 	_firmata->sendDigitalPort( port, static_cast<uint16_t>( _digital_port[ port ] ) );
-	DigitalPinUpdatedEvent( pin_, state_ );
 }
 
 
@@ -178,6 +199,7 @@ RemoteDevice::pinMode(
 		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
 		_firmata->write( _subscribed_ports[ port ] );
 	}
+    _firmata->flush();
 
 	//finally, update the cached pin mode
 	_pin_mode[ pin_ ] = static_cast<uint8_t>( mode_ );
