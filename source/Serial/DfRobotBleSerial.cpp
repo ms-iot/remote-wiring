@@ -180,6 +180,26 @@ DfRobotBleSerial::end(
     _device_collection = nullptr;
 }
 
+void
+DfRobotBleSerial::flush(
+    void
+    )
+{
+    create_task(_gatt_characteristic->WriteValueAsync(_tx->DetachBuffer(), GattWriteOption::WriteWithResponse))
+        .then([this](GattCommunicationStatus status_)
+    {
+        switch (status_) {
+        case GattCommunicationStatus::Success:
+            break;
+        case GattCommunicationStatus::Unreachable:
+            ConnectionLost();
+            break;
+        default:
+            break;
+        }
+    });
+}
+
 /// \details An Advanced Query String is constructed based upon paired bluetooth GATT devices. Then a collection is returned of all devices matching the query.
 /// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
 /// \warning Must be called from UI thread
@@ -220,20 +240,6 @@ DfRobotBleSerial::write(
     if (!connectionReady()) { return 0; }
 
     _tx->WriteByte(c_);
-    create_task(_gatt_characteristic->WriteValueAsync(_tx->DetachBuffer(), GattWriteOption::WriteWithResponse))
-        .then([this](GattCommunicationStatus status_)
-    {
-        switch (status_) {
-        case GattCommunicationStatus::Success:
-            break;
-        case GattCommunicationStatus::Unreachable:
-            ConnectionLost();
-            break;
-        default:
-            break;
-        }
-    });
-
     return 1;
 }
 

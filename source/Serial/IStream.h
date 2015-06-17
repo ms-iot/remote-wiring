@@ -83,6 +83,12 @@ public interface struct IStream
         ) = 0;
 
     virtual
+    void
+    flush(
+        void
+        ) = 0;
+
+    virtual
     uint16_t
     read(
         void

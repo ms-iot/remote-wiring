@@ -76,6 +76,12 @@ public:
         );
 
     virtual
+    void
+    flush(
+        void
+        );
+
+    virtual
     uint16_t
     read(
         void

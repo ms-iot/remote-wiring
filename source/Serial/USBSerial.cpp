@@ -199,6 +199,14 @@ UsbSerial::end(
     _device_collection = nullptr;
 }
 
+void
+UsbSerial::flush(
+    void
+    )
+{
+    _current_store_operation = _tx->StoreAsync();
+}
+
 /// \details An Advanced Query String is constructed based upon paired usb devices. Then a collection is returned of all devices matching the query.
 /// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
 Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
@@ -259,7 +267,6 @@ UsbSerial::write(
     }
 
     _tx->WriteByte(c_);
-    _current_store_operation = _tx->StoreAsync();
     return 1;
 }
 
