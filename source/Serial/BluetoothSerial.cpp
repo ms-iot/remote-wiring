@@ -40,9 +40,11 @@ BluetoothSerial::BluetoothSerial(
 	void
 	) :
 	_connection_ready( 0 ),
+	_device_service( nullptr ),
 	_rx( nullptr ),
-	_current_load_operation( nullptr ),
-	_current_store_operation( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
 	_tx( nullptr ),
 	_deviceIdentifier( nullptr ),
 	_device( nullptr )
@@ -53,9 +55,11 @@ BluetoothSerial::BluetoothSerial(
 	Platform::String ^deviceIdentifier_
 	) :
 	_connection_ready( 0 ),
+	_device_service( nullptr ),
 	_rx( nullptr ),
-	_current_load_operation( nullptr ),
-	_current_store_operation( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
 	_tx( nullptr ),
 	_deviceIdentifier( deviceIdentifier_ ),
 	_device( nullptr )
@@ -66,9 +70,11 @@ BluetoothSerial::BluetoothSerial(
 	DeviceInformation ^device_
 	) :
 	_connection_ready( 0 ),
+	_device_service( nullptr ),
 	_rx( nullptr ),
-	_current_load_operation( nullptr ),
-	_current_store_operation( nullptr ),
+	_service_id( nullptr ),
+	_service_provider( nullptr ),
+	_stream_socket( nullptr ),
 	_tx( nullptr ),
 	_deviceIdentifier( nullptr ),
 	_device( device_ )
@@ -134,8 +140,14 @@ BluetoothSerial::end(
 	_rx = nullptr;
 	delete( _tx ); //_tx->Close();
 	_tx = nullptr;
+	delete( _stream_socket ); //_socket->Close();
 	_current_load_operation = nullptr;
 	_current_store_operation = nullptr;
+	_stream_socket = nullptr;
+	_device_service = nullptr;
+	_service_id = nullptr;
+	_service_provider = nullptr;
+	_devices = nullptr;
 }
 
 
@@ -236,6 +248,7 @@ BluetoothSerial::begin(
 				//no devices found
 				throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"No bluetooth devices found." ) );
 			}
+			_devices = devices;
 
 			//if a device identifier is specified, we will attempt to match one of the devices in the collection to the identifier.
 			if( _deviceIdentifier != nullptr )
@@ -255,7 +268,7 @@ BluetoothSerial::begin(
 			//if no device or device identifier is specified, we try brute-force to connectAsync to each device
 			// start with a "failed" device. This will never be passed on, since we guarantee above that there is at least one device.
 			auto t = Concurrency::task_from_exception<void>( ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"ERROR! Hacking too much time!" ) ) );
-			for each( auto device in devices )
+			for each( auto device in _devices )
 			{
 				t = t.then([this,device] (Concurrency::task<void> t) {
 					try
@@ -298,12 +311,13 @@ BluetoothSerial::connectAsync(
 	return Concurrency::create_task( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync( device_->Id ) )
 	.then( [ this ]( Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^device_service_ )
 	{
+		_device_service = device_service_;
 		_stream_socket = ref new Windows::Networking::Sockets::StreamSocket();
 
 		// Connect the socket
 		return Concurrency::create_task( _stream_socket->ConnectAsync(
-			device_service_->ConnectionHostName,
-			device_service_->ConnectionServiceName,
+			_device_service->ConnectionHostName,
+			_device_service->ConnectionServiceName,
 			Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication ) );
 	} ).then( [ this ]( )
 	{

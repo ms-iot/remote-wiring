@@ -94,11 +94,15 @@ private:
 	Windows::Devices::Enumeration::DeviceInformation ^_device;
 
 	//member variables
+    Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
+    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId ^_service_id;
+    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceProvider ^_service_provider;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
 	Windows::Storage::Streams::DataReader ^_rx;
 	Windows::Storage::Streams::DataWriter ^_tx;
 	Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
 	Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
+	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
 
     LONG volatile _connection_ready;
     bool _synchronous_mode;
