@@ -24,9 +24,10 @@
 
 #pragma once
 
-#include <cstdint>
-#include <thread>
 #include <atomic>
+#include <cstdint>
+#include <mutex>
+#include <thread>
 
 using namespace Platform;
 using namespace Concurrency;
@@ -174,7 +175,14 @@ public:
 	event I2cReplyCallbackFunction^ I2cReplyEvent;
 	event SystemResetCallbackFunction^ SystemResetEvent;
 
-	UwpFirmata();
+	UwpFirmata(
+        void
+    );
+
+    virtual
+    ~UwpFirmata(
+        void
+    );
 
 	bool
 	appendBlob(
@@ -220,6 +228,11 @@ public:
 	endSysex(
 		void
 	);
+
+    void
+    lock(
+        void
+    );
 
 	void
 	finish(
@@ -278,6 +291,11 @@ public:
     );
 
     void
+	sendValueAsTwo7bitBytes(
+		int value
+	);
+ 
+    void
     setFirmwareNameAndVersion(
 		String ^name,
 		uint8_t major,
@@ -293,6 +311,11 @@ public:
 	stopI2c(
 		uint8_t address_
 	);
+
+    void
+    unlock(
+        void
+    );
 
     void
     write(
@@ -384,26 +407,29 @@ public:
 
   private:
 	//sysex-building
-	  uint8_t _sysCommand;
-	  uint8_t _sysPosition;
-	  const size_t MAX_SYSEX_LEN = 15;
+    const size_t MAX_SYSEX_LEN = 15;
+    uint8_t _sys_command;
+	uint8_t _sys_position;
 
-	  //blob-related
-	  bool _blobStarted;
-	  uint8_t _blobPosition;
-	  const size_t MAX_BLOB_LEN = 31;
+	//blob-related
+    const size_t MAX_BLOB_LEN = 31;
+    bool _blob_started;
+	uint8_t _blob_position;
 
-	  //common buffer
-	  uint8_t *_dataBuffer;
+	//common buffer
+	uint8_t *_data_buffer;
 
-	  //member variables to hold the current input thread & communications
-	  std::thread _inputThread;
-	  std::atomic_bool _inputThreadShouldExit;
-      Serial::IStream ^_firmata_stream;
+	//member variables to hold the current input thread & communications
+    std::unique_lock<std::mutex> _firmata_lock;
+    Serial::IStream ^_firmata_stream;
+    std::mutex _firmutex;
+    std::thread _input_thread;
+	std::atomic_bool _input_thread_should_exit;
 
-	  //input-thread related functions
-	  void inputThread(void);
-	  void stopThreads(void);
+	void
+    inputThread(
+        void
+    );
 
 	void
 	sendI2cSysex(
@@ -413,6 +439,11 @@ public:
 		const size_t len,
 		const char * data
 	);
+
+	void
+    stopThreads(
+        void
+    );
 };
 
 } // namespace Firmata
