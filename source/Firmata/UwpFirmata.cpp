@@ -45,18 +45,32 @@ namespace {
 
 UwpFirmata::UwpFirmata(
 	void
-	)
+):
+    _blob_started(false),
+    _blob_position(0),
+    _data_buffer(new uint8_t[31]),
+    _firmata_lock(_firmutex, std::defer_lock),
+    _firmata_stream(nullptr),
+    _input_thread_should_exit(false),
+    _sys_command(0),
+    _sys_position(0)
 {
-	_sysCommand = 0;
-	_dataBuffer = (uint8_t*)malloc( 31 );
-	_sysPosition = 0;
-	_blobStarted = false;
-	_blobPosition = 0;
-
 	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::digitalInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::analogInvoke, this, _1, _2 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UwpFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
 	RawFirmata.attach( static_cast<uint8_t>( STRING_DATA ), static_cast<stringCallbackFunction>( std::bind( &UwpFirmata::stringInvoke, this, _1 ) ) );
+}
+
+
+//******************************************************************************
+//* Destructors
+//******************************************************************************
+
+
+UwpFirmata::~UwpFirmata(
+    void
+) {
+    finish();
 }
 
 
@@ -81,13 +95,13 @@ UwpFirmata::startListening(
 	)
 {
 	//is a thread currently running?
-	if (_inputThread.joinable()) { return; }
+	if (_input_thread.joinable()) { return; }
 
 	//prepare communications
-	_inputThreadShouldExit = false;
+	_input_thread_should_exit = false;
 
 	//initialize the new input thread
-	_inputThread = std::thread( [ this ]() -> void { inputThread(); } );
+	_input_thread = std::thread( [ this ]() -> void { inputThread(); } );
 }
 
 
@@ -96,11 +110,20 @@ UwpFirmata::finish(
 	void
 	)
 {
+    _firmata_lock.lock();
     _firmata_stream->flush();
 	stopThreads();
-	if (_inputThread.joinable()) { _inputThread.join(); }
+	if (_input_thread.joinable()) { _input_thread.join(); }
+    _input_thread_should_exit = false;
+
+    _blob_started = false;
+    _blob_position = 0;
     _firmata_stream = nullptr;
-	return ::RawFirmata.finish();
+    _sys_command = 0;
+    _sys_position = 0;
+    _data_buffer = nullptr;
+    _firmata_lock.unlock();
+    return ::RawFirmata.finish();
 }
 
 
@@ -118,6 +141,7 @@ UwpFirmata::printVersion(
 	void
 	)
 {
+    std::lock_guard<std::mutex> lock(_firmutex);
     ::RawFirmata.printVersion();
     _firmata_stream->flush();
 	return;
@@ -129,6 +153,7 @@ UwpFirmata::printFirmwareVersion(
 	void
 	)
 {
+    std::lock_guard<std::mutex> lock(_firmutex);
     ::RawFirmata.printFirmwareVersion();
     _firmata_stream->flush();
     return;
@@ -172,6 +197,7 @@ UwpFirmata::sendAnalog(
 	int value_
 	)
 {
+    std::lock_guard<std::mutex> lock(_firmutex);
     ::RawFirmata.sendAnalog(pin_, value_);
     _firmata_stream->flush();
     return;
@@ -184,6 +210,7 @@ UwpFirmata::sendDigitalPort(
 	int portData_
 	)
 {
+    std::lock_guard<std::mutex> lock(_firmutex);
     ::RawFirmata.sendDigitalPort(portNumber_, portData_);
     _firmata_stream->flush();
     return;
@@ -210,15 +237,22 @@ UwpFirmata::sendString(
     return ::RawFirmata.sendString(command_, stringA.c_str());
 }
 
+void
+UwpFirmata::sendValueAsTwo7bitBytes(
+    int value_
+    )
+{
+    return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
+}
 
 bool
 UwpFirmata::beginSysex(
 	uint8_t command_
 	)
 {
-	if( _blobStarted ) return false;
-	_sysCommand = command_;
-	_sysPosition = 0;
+	if( _blob_started ) return false;
+	_sys_command = command_;
+	_sys_position = 0;
 	return true;
 }
 
@@ -228,10 +262,10 @@ UwpFirmata::appendSysex(
 	uint8_t byte_
 	)
 {
-	if( _sysCommand && ( _sysPosition < MAX_SYSEX_LEN ) && !_blobStarted )
+	if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) && !_blob_started )
 	{
-		_dataBuffer[ _sysPosition ] = byte_;
-		++_sysPosition;
+		_data_buffer.get()[_sys_position] = byte_;
+		++_sys_position;
 		return true;
 	}
 	return false;
@@ -243,12 +277,13 @@ UwpFirmata::endSysex(
 	void
 	)
 {
-	if( _sysCommand && !_blobStarted )
+	if( _sys_command && !_blob_started )
 	{
-		::RawFirmata.sendSysex( _sysCommand, _sysPosition, _dataBuffer );
+        std::lock_guard<std::mutex> lock(_firmutex);
+        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get());
         _firmata_stream->flush();
-        _sysCommand = 0;
-		_sysPosition = 0;
+        _sys_command = 0;
+		_sys_position = 0;
 		return true;
 	}
 	return false;
@@ -260,10 +295,10 @@ UwpFirmata::beginBlob(
 	void
 	)
 {
-	if( _sysCommand ) return false;
+	if( _sys_command ) return false;
 
-	_blobStarted = true;
-	_blobPosition = 0;
+	_blob_started = true;
+	_blob_position = 0;
 	return true;
 }
 
@@ -273,16 +308,16 @@ UwpFirmata::appendBlob(
 	uint8_t byte_
 	)
 {
-	if( !_blobStarted || _sysCommand ) return false;
+	if( !_blob_started || _sys_command ) return false;
 
-	if( _blobPosition >= MAX_BLOB_LEN )
+	if( _blob_position >= MAX_BLOB_LEN )
 	{
 		endBlob();
 		beginBlob();
 	}
 
-	_dataBuffer[ _blobPosition ] = byte_ & 0x7F;
-	++_blobPosition;
+	_data_buffer.get()[_blob_position] = byte_ & 0x7F;
+	++_blob_position;
 	return true;
 }
 
@@ -292,17 +327,17 @@ UwpFirmata::endBlob(
 	void
 	)
 {
-	if( !_blobStarted || _sysCommand ) return false;
+	if( !_blob_started || _sys_command ) return false;
 
 	::RawFirmata.write( static_cast<byte>( START_SYSEX ) );
 	::RawFirmata.write( static_cast<byte>( SYSEX_BLOB_COMMAND ) );
-	for( uint8_t i = 0; i < _blobPosition; ++i )
+	for( uint8_t i = 0; i < _blob_position; ++i )
 	{
-		::RawFirmata.write( _dataBuffer[ i ] );
+		::RawFirmata.write( _data_buffer.get()[i] );
 	}
 	::RawFirmata.write( static_cast<byte>( END_SYSEX ) );
-	_blobPosition = 0;
-	_blobStarted = false;
+	_blob_position = 0;
+	_blob_started = false;
 	return true;
 }
 
@@ -365,6 +400,24 @@ UwpFirmata::stopI2c(
 }
 
 
+void
+UwpFirmata::lock(
+    void
+    )
+{
+    _firmata_lock.lock();
+}
+
+
+void
+UwpFirmata::unlock(
+    void
+    )
+{
+    _firmata_lock.unlock();
+}
+
+
 //******************************************************************************
 //* Private Methods
 //******************************************************************************
@@ -402,7 +455,7 @@ UwpFirmata::inputThread(
 	)
 {
 	//set state-tracking member variables and begin processing input
-	while( !_inputThreadShouldExit )
+	while( !_input_thread_should_exit )
 	{
 		try
 		{
@@ -421,5 +474,5 @@ UwpFirmata::stopThreads(
 	void
 	)
 {
-	_inputThreadShouldExit = true;
+	_input_thread_should_exit = true;
 }

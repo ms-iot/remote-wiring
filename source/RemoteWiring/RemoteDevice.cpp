@@ -180,6 +180,7 @@ RemoteDevice::pinMode(
 	uint8_t port_mask;
 	getPinMap( pin_, &port, &port_mask );
 
+    _firmata->lock();
 	_firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
 	_firmata->write( pin_ );
 	_firmata->write( static_cast<uint8_t>( mode_ ) );
@@ -200,6 +201,7 @@ RemoteDevice::pinMode(
 		_firmata->write( _subscribed_ports[ port ] );
 	}
     _firmata->flush();
+    _firmata->unlock();
 
 	//finally, update the cached pin mode
 	_pin_mode[ pin_ ] = static_cast<uint8_t>( mode_ );
