@@ -32,100 +32,89 @@ namespace Serial {
 public ref class BluetoothSerial sealed : public IStream
 {
 public:
-	event RemoteWiringConnectionCallback^ ConnectionEstablished;
-	event RemoteWiringConnectionCallback^ ConnectionLost;
-	event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
+    event RemoteWiringConnectionCallback^ ConnectionEstablished;
+    event RemoteWiringConnectionCallback^ ConnectionLost;
+    event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
-    BluetoothSerial();
-	BluetoothSerial( Platform::String ^deviceIdentifier_ );
-	BluetoothSerial( Windows::Devices::Enumeration::DeviceInformation ^device_ );
+    BluetoothSerial(
+        Platform::String ^device_name_
+        );
+
+    BluetoothSerial(
+        Windows::Devices::Enumeration::DeviceInformation ^device_
+        );
+
+    virtual
+    ~BluetoothSerial(
+        void
+        );
 
     virtual
     uint16_t
     available(
-		void
-    );
+        void
+        );
 
     virtual
     void
     begin(
         uint32_t baud_,
-		SerialConfig config_
-    );
+        SerialConfig config_
+        );
 
     virtual
     void
     end(
-		void
-    );
+        void
+        );
 
     virtual
     uint16_t
     read(
-		void
-    );
+        void
+        );
 
     virtual
     uint32_t
     write(
-		uint8_t c_
-    );
+        uint8_t c_
+        );
 
-	void
-    beginAsync(
-		void
-    );
-
-	bool
+    bool
     connectionReady(
         void
-    );
+        );
 
-	static
-	Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-	listAvailableDevicesAsync(
-		void
-	);
+    static
+    Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
+    listAvailableDevicesAsync(
+        void
+        );
 
 private:
-	//optional device-specifiers
-	Platform::String ^_deviceIdentifier;
-	Windows::Devices::Enumeration::DeviceInformation ^_device;
+    // Device specific members (set during instantation)
+    Windows::Devices::Enumeration::DeviceInformation ^_device;
+    Platform::String ^_device_name;
 
-	//member variables
-    Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_device_service;
-    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId ^_service_id;
-    Windows::Devices::Bluetooth::Rfcomm::RfcommServiceProvider ^_service_provider;
+    std::atomic_bool _connection_ready;
+    Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
+    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
+    Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
+    Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_rfcomm_service;
+    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
-	Windows::Storage::Streams::DataReader ^_rx;
-	Windows::Storage::Streams::DataWriter ^_tx;
-	Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-	Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
-	Windows::Devices::Enumeration::DeviceInformationCollection ^_devices;
+    Windows::Storage::Streams::DataWriter ^_tx;
 
-    LONG volatile _connection_ready;
-    bool _synchronous_mode;
+    Concurrency::task<void>
+    connectToDeviceAsync(
+        Windows::Devices::Enumeration::DeviceInformation ^device_
+        );
 
-    void
-    begin(
-		bool synchronous_mode_
-	);
-
-	Concurrency::task<void>
-	connectAsync(
-		Windows::Devices::Enumeration::DeviceInformation ^device_
-	);
-
-	Windows::Devices::Enumeration::DeviceInformation ^
-	identifyDevice(
-		Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
-	);
-
-	Windows::Storage::Streams::DataReaderLoadOperation ^
-	loadAsync(
-		unsigned int count_
-	);
+    Windows::Devices::Enumeration::DeviceInformation ^
+    identifyDeviceFromCollection(
+        Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+        );
 };
 
 } // namespace Serial

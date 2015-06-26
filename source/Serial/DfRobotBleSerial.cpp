@@ -23,12 +23,12 @@
 */
 
 #include "pch.h"
-#include "BluetoothSerial.h"
+#include "DfRobotBleSerial.h"
 
 using namespace Concurrency;
-using namespace Windows::Devices::Bluetooth::Rfcomm;
+using namespace Windows::Devices::Bluetooth;
+using namespace Windows::Devices::Bluetooth::GenericAttributeProfile;
 using namespace Windows::Devices::Enumeration;
-using namespace Windows::Networking::Sockets;
 using namespace Windows::Storage::Streams;
 
 using namespace Microsoft::Maker::Serial;
@@ -37,34 +37,34 @@ using namespace Microsoft::Maker::Serial;
 //* Constructors
 //******************************************************************************
 
-BluetoothSerial::BluetoothSerial(
+DfRobotBleSerial::DfRobotBleSerial(
     Platform::String ^device_name_
     ) :
+    DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
+    DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     _connection_ready(false),
-    _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
     _device_name(device_name_),
-    _rfcomm_service(nullptr),
-    _rx(nullptr),
-    _stream_socket(nullptr),
+    _gatt_characteristic(nullptr),
+    _gatt_device(nullptr),
+    _gatt_service(nullptr),
     _tx(nullptr)
 {
 }
 
-BluetoothSerial::BluetoothSerial(
+DfRobotBleSerial::DfRobotBleSerial(
     DeviceInformation ^device_
     ) :
+    DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
+    DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     _connection_ready(false),
-    _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(device_),
-    _device_collection(nullptr),
     _device_name(nullptr),
-    _rfcomm_service(nullptr),
-    _rx(nullptr),
-    _stream_socket(nullptr),
+    _device_collection(nullptr),
+    _gatt_characteristic(nullptr),
+    _gatt_device(nullptr),
+    _gatt_service(nullptr),
     _tx(nullptr)
 {
 }
@@ -72,7 +72,7 @@ BluetoothSerial::BluetoothSerial(
 //******************************************************************************
 //* Destructors
 //******************************************************************************
-BluetoothSerial::~BluetoothSerial(
+DfRobotBleSerial::~DfRobotBleSerial(
     void
     )
 {
@@ -85,7 +85,7 @@ BluetoothSerial::~BluetoothSerial(
 //******************************************************************************
 
 uint16_t
-BluetoothSerial::available(
+DfRobotBleSerial::available(
     void
     )
 {
@@ -94,14 +94,15 @@ BluetoothSerial::available(
         return 0;
     }
     else {
-        return _rx->UnconsumedBufferLength;
+        std::lock_guard<std::mutex> lock(_q_lock);
+        return !_rx.empty();
     }
 }
 
 /// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a bluetooth connection.
 /// \warning Must be called from the UI thread
 void
-BluetoothSerial::begin(
+DfRobotBleSerial::begin(
     uint32_t baud_,
     SerialConfig config_
     )
@@ -123,7 +124,7 @@ BluetoothSerial::begin(
             _device_collection = device_collection_;
             if (!_device_collection->Size)
             {
-                throw ref new Platform::Exception(E_UNEXPECTED, L"No Bluetooth devices found or Bluetooth is disabled.");
+                throw ref new Platform::Exception(E_UNEXPECTED, L"No Bluetooth LE devices found or Bluetooth is disabled.");
             }
 
             _device = identifyDeviceFromCollection(_device_collection);
@@ -142,17 +143,17 @@ BluetoothSerial::begin(
         }
         catch (Platform::Exception ^e)
         {
-            ConnectionFailed(L"BluetoothSerial::connectToDeviceAsync failed with a Platform::Exception type. (message: " + e->Message + L")");
+            ConnectionFailed(L"DfRobotBleSerial::connectToDeviceAsync failed with a Platform::Exception type. (message: " + e->Message + L")");
         }
         catch (...)
         {
-            ConnectionFailed(L"BluetoothSerial::connectToDeviceAsync failed with a non-Platform::Exception type. (name: " + _device_name + L")");
+            ConnectionFailed(L"DfRobotBleSerial::connectToDeviceAsync failed with a non-Platform::Exception type. (name: " + _device_name + L")");
         }
     });
 }
 
 bool
-BluetoothSerial::connectionReady(
+DfRobotBleSerial::connectionReady(
     void
     )
 {
@@ -161,87 +162,78 @@ BluetoothSerial::connectionReady(
 
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
 void
-BluetoothSerial::end(
+DfRobotBleSerial::end(
     void
     )
 {
-    _connection_ready = false;
-    _current_load_operation = nullptr;
-    _current_store_operation = nullptr;
+    std::lock_guard<std::mutex> lock(_q_lock);
+    _connection_ready =  false;
+    if (_gatt_characteristic) _gatt_characteristic->WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::None);
 
     // Reset with respect to dependencies
-    delete(_rx); //_rx->Close();
-    _rx = nullptr;
+    _rx = std::queue<byte>();
     delete(_tx); //_tx->Close();
     _tx = nullptr;
-    delete(_stream_socket); //_socket->Close();
-    _stream_socket = nullptr;
-    _rfcomm_service = nullptr;
+    _gatt_characteristic = nullptr;
+    _gatt_service = nullptr;
+    _gatt_device = nullptr;
     _device_collection = nullptr;
 }
 
-/// \details An Advanced Query String is constructed based upon paired bluetooth devices. Then a collection is returned of all devices matching the query.
+/// \details An Advanced Query String is constructed based upon paired bluetooth GATT devices. Then a collection is returned of all devices matching the query.
 /// \ref https://msdn.microsoft.com/en-us/library/aa965711(VS.85).aspx
 /// \warning Must be called from UI thread
 Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
-BluetoothSerial::listAvailableDevicesAsync(
+DfRobotBleSerial::listAvailableDevicesAsync(
     void
     )
 {
-    // Construct AQS String from service id of desired device
-    Platform::String ^device_aqs = Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::GetDeviceSelector(Windows::Devices::Bluetooth::Rfcomm::RfcommServiceId::SerialPort);
+    // Construct AQS String for Bluetooth LE devices
+    Platform::String ^device_aqs = Windows::Devices::Bluetooth::GenericAttributeProfile::GattDeviceService::GetDeviceSelectorFromUuid(Windows::Devices::Bluetooth::GenericAttributeProfile::GattServiceUuids::GenericAccess);
 
     // Identify all paired devices satisfying query
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
 }
 
 uint16_t
-BluetoothSerial::read(
+DfRobotBleSerial::read(
     void
     )
 {
     uint16_t c = static_cast<uint16_t>(-1);
 
-    if ( !connectionReady() ) {
-        return c;
-    }
-
-    if ( available() ) {
-        c = _rx->ReadByte();
-    }
-    else if ( _current_load_operation->Status != Windows::Foundation::AsyncStatus::Started ) {
-        // Attempt to detect disconnection
-        if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
-        {
-            _connection_ready = false;
-            ConnectionLost();
-            return -1;
-        }
-
-        _current_load_operation = _rx->LoadAsync(100);
+    if (available()) {
+        std::lock_guard<std::mutex> lock(_q_lock);
+        c = _rx.front();
+        _rx.pop();
     }
 
     return c;
 }
 
 uint32_t
-BluetoothSerial::write(
+DfRobotBleSerial::write(
     uint8_t c_
     )
 {
     // Check to see if connection is ready
-    if ( !connectionReady() ) { return 0; }
-
-    // Attempt to detect disconnection
-    if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-    {
-        _connection_ready = false;
-        ConnectionLost();
-        return 0;
-    }
+    if (!connectionReady()) { return 0; }
 
     _tx->WriteByte(c_);
-    _current_store_operation = _tx->StoreAsync();
+    create_task(_gatt_characteristic->WriteValueAsync(_tx->DetachBuffer(), GattWriteOption::WriteWithResponse))
+        .then([this](GattCommunicationStatus status_)
+    {
+        switch (status_) {
+        case GattCommunicationStatus::Success:
+            break;
+        case GattCommunicationStatus::Unreachable:
+            ConnectionLost();
+            break;
+        default:
+            break;
+        }
+    });
+
     return 1;
 }
 
@@ -250,47 +242,38 @@ BluetoothSerial::write(
 //******************************************************************************
 
 Concurrency::task<void>
-BluetoothSerial::connectToDeviceAsync(
+DfRobotBleSerial::connectToDeviceAsync(
     Windows::Devices::Enumeration::DeviceInformation ^device_
     )
 {
     _device_name = device_->Name;  // Update name in case device was specified directly
-    _stream_socket = ref new StreamSocket();
-    return Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
-        .then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^rfcomm_service_)
+    return Concurrency::create_task(Windows::Devices::Bluetooth::BluetoothLEDevice::FromIdAsync(device_->Id))
+        .then([this](Windows::Devices::Bluetooth::BluetoothLEDevice ^gatt_device_)
     {
         // Store parameter as a member to ensure the duration of object allocation
-        _rfcomm_service = rfcomm_service_;
+        _gatt_device = gatt_device_;
 
-        // Connect the socket
-        return Concurrency::create_task(_stream_socket->ConnectAsync(
-            _rfcomm_service->ConnectionHostName,
-            _rfcomm_service->ConnectionServiceName,
-            Windows::Networking::Sockets::SocketProtectionLevel::BluetoothEncryptionAllowNullAuthentication))
-            .then([this]()
-        {
-            // Enable RX
-            _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
-            _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-            _current_load_operation = _rx->LoadAsync(100);
+        // Enable TX
+        _tx = ref new DataWriter();
+        _gatt_service = _gatt_device->GetGattService(DFROBOT_BLE_SERVICE_UUID);
+        _gatt_characteristic = _gatt_service->GetCharacteristics(DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID)->GetAt(0);
 
-            // Enable TX
-            _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
-            _current_store_operation = nullptr;
+        // Enable RX
+        _gatt_characteristic->ValueChanged += ref new Windows::Foundation::TypedEventHandler<GattCharacteristic ^, GattValueChangedEventArgs ^>(this, &DfRobotBleSerial::rxCallback);
+        _gatt_characteristic->WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::Notify);
 
-            // Set connection ready flag
-            _connection_ready = true;
-            ConnectionEstablished();
-        });
+        // Set connection ready flag and fire connection established event
+        _connection_ready = true;
+        ConnectionEstablished();
     });
 }
 
 Windows::Devices::Enumeration::DeviceInformation ^
-BluetoothSerial::identifyDeviceFromCollection(
+DfRobotBleSerial::identifyDeviceFromCollection(
     Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
     )
 {
-    for (auto &&device : devices_)
+    for(auto &&device : devices_)
     {
         if (device->Id->Equals(_device_name) || device->Name->Equals(_device_name))
         {
@@ -299,5 +282,23 @@ BluetoothSerial::identifyDeviceFromCollection(
     }
 
     // If we searched and found nothing that matches the identifier, we've failed to connect and cannot recover.
-    throw ref new Platform::Exception(E_INVALIDARG, L"No Bluetooth devices found matching the specified identifier.");
+    throw ref new Platform::Exception(E_INVALIDARG, L"No Bluetooth LE devices found matching the specified identifier.");
+}
+
+void
+DfRobotBleSerial::rxCallback(
+    GattCharacteristic ^sender,
+    GattValueChangedEventArgs ^args
+    )
+{
+    // Extract data into workable form from parameters
+    Platform::Array<byte> ^rx_data = ref new Platform::Array<byte>(args->CharacteristicValue->Length);
+    DataReader::FromBuffer(args->CharacteristicValue)->ReadBytes(rx_data);
+
+    {
+        std::lock_guard<std::mutex> lock(_q_lock);
+        std::for_each(rx_data->Data, rx_data->Data + rx_data->Length, [this](byte data_) {
+            _rx.push(data_);
+        });
+    }
 }

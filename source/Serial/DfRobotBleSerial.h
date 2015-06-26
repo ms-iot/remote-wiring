@@ -23,6 +23,8 @@
 */
 
 #pragma once
+#include <mutex>
+#include <queue>
 
 #include "IStream.h"
 
@@ -30,7 +32,7 @@ namespace Microsoft {
 namespace Maker {
 namespace Serial {
 
-public ref class UsbSerial sealed : public IStream
+public ref class DfRobotBleSerial sealed : public IStream
 {
 public:
     event RemoteWiringConnectionCallback^ ConnectionEstablished;
@@ -38,21 +40,16 @@ public:
     event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
-    UsbSerial(
-        Platform::String ^vid_
+    DfRobotBleSerial(
+        Platform::String ^device_name_
         );
 
-    UsbSerial(
-        Platform::String ^vid_,
-        Platform::String ^pid_
-        );
-
-    UsbSerial(
+    DfRobotBleSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
 
     virtual
-    ~UsbSerial(
+    ~DfRobotBleSerial(
         void
         );
 
@@ -99,20 +96,21 @@ public:
         );
 
 private:
+    const uuid_t DFROBOT_BLE_SERVICE_UUID;
+    const uuid_t DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID;
+
     // Device specific members (set during instantation)
     Windows::Devices::Enumeration::DeviceInformation ^_device;
-    Platform::String ^_pid;
-    Platform::String ^_vid;
+    Platform::String ^_device_name;
 
-    uint32_t _baud;
-    SerialConfig _config;
     std::atomic_bool _connection_ready;
-    Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
-    Windows::Storage::Streams::DataReader ^_rx;
-	Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
-	Windows::Storage::Streams::DataWriter ^_tx;
+    Windows::Devices::Bluetooth::GenericAttributeProfile::GattCharacteristic ^_gatt_characteristic;
+    Windows::Devices::Bluetooth::BluetoothLEDevice ^_gatt_device;
+    Windows::Devices::Bluetooth::GenericAttributeProfile::GattDeviceService ^_gatt_service;
+    std::mutex _q_lock;
+    std::queue<byte> _rx;
+    Windows::Storage::Streams::DataWriter ^_tx;
 
     Concurrency::task<void>
     connectToDeviceAsync(
@@ -122,6 +120,12 @@ private:
     Windows::Devices::Enumeration::DeviceInformation ^
     identifyDeviceFromCollection(
         Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+        );
+
+    void
+    rxCallback(
+        Windows::Devices::Bluetooth::GenericAttributeProfile::GattCharacteristic ^sender,
+        Windows::Devices::Bluetooth::GenericAttributeProfile::GattValueChangedEventArgs ^args
         );
 };
 
