@@ -225,6 +225,15 @@ You will need to add one of the following XML blocks to your manifest file, insi
 </m2:DeviceCapability>
 ```
 
+##Enabling Network Capabilities
+You will need to add one of the following XML blocks to your manifest file, inside the <Capabilities> tag, in order to invoke the network socket capabilities of a WinRT application.
+
+###Windows 10 and Windows 8.1
+```xml
+<Capability Name="privateNetworkClientServer"/>
+<Capability Name="internetClientServer"/>
+```
+
 ##Enabling USB Capabilities
 You will need to add one of the following XML blocks to your manifest file in order to invoke the USB capabilities of a WinRT application, depending on which OS version you are targetting.
 
