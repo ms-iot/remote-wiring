@@ -260,6 +260,11 @@ DfRobotBleSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::Bluetooth::BluetoothLEDevice::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::Bluetooth::BluetoothLEDevice ^gatt_device_)
     {
+		if( gatt_device_ == nullptr )
+		{
+			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. BluetoothLEDevice::FromIdAsync returned null." ) );
+		}
+
         // Store parameter as a member to ensure the duration of object allocation
         _gatt_device = gatt_device_;
 
