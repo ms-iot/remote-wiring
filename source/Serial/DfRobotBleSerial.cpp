@@ -76,7 +76,11 @@ DfRobotBleSerial::~DfRobotBleSerial(
     void
     )
 {
-    ConnectionLost();
+	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+	if( connectionReady() )
+	{
+		ConnectionLost();
+	}
     end();
 }
 
