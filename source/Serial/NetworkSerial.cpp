@@ -39,14 +39,14 @@ using namespace Microsoft::Maker::Serial;
 //******************************************************************************
 
 NetworkSerial::NetworkSerial(
-	Windows::Networking::HostName ^host,
-	uint16_t port
+	Windows::Networking::HostName ^host_,
+	uint16_t port_
 	) :
 	_connection_ready( 0 ),
 	_current_load_operation( nullptr ),
 	_current_store_operation( nullptr ),
-	_host( host ),
-	_port( port ),
+	_host( host_ ),
+	_port( port_ ),
 	_stream_socket( nullptr ),
 	_rx( nullptr ),
 	_tx( nullptr )
@@ -61,6 +61,7 @@ NetworkSerial::~NetworkSerial(
 	void
 	)
 {
+	ConnectionLost();
 	end();
 }
 
@@ -82,7 +83,7 @@ NetworkSerial::available(
 	}
 }
 
-/// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a bluetooth connection.
+/// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a network connection.
 void
 NetworkSerial::begin(
 	uint32_t baud_,
@@ -105,11 +106,11 @@ NetworkSerial::begin(
 		}
 		catch( Platform::Exception ^e )
 		{
-			ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
+			ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
 		}
 		catch( ... )
 		{
-			ConnectionFailed( ref new Platform::String( L"BluetoothSerial::connectAsync failed with a non-Platform::Exception type." ) );
+			ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a non-Platform::Exception type." ) );
 		}
 	} );
 }
@@ -204,13 +205,13 @@ NetworkSerial::write(
 
 Concurrency::task<void>
 NetworkSerial::connectToHostAsync(
-	Windows::Networking::HostName ^host,
-	uint16_t port
+	Windows::Networking::HostName ^host_,
+	uint16_t port_
 	)
 {
 	_stream_socket = ref new StreamSocket();
 	_stream_socket->Control->KeepAlive = true;
-	return Concurrency::create_task( _stream_socket->ConnectAsync( host, port.ToString() ) )
+	return Concurrency::create_task( _stream_socket->ConnectAsync( host_, port_.ToString() ) )
 		.then( [ this ]()
 	{
 		_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );

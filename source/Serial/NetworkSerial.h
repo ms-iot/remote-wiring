@@ -38,8 +38,8 @@ public:
 
 	[Windows::Foundation::Metadata::DefaultOverload]
 	NetworkSerial(
-		Windows::Networking::HostName ^host,
-		uint16_t port
+		Windows::Networking::HostName ^host_,
+		uint16_t port_
 		);
 
 	virtual
@@ -103,8 +103,8 @@ private:
 
 	Concurrency::task<void>
 		connectToHostAsync(
-			Windows::Networking::HostName ^host,
-			uint16_t port
+			Windows::Networking::HostName ^host_,
+			uint16_t port_
 			);
 };
 
