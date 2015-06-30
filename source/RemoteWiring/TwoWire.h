@@ -105,6 +105,9 @@ public:
 	);
 
 private:
+	//since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire
+	const uint16_t MAX_READ_DELAY_MICROS = 0x3FFF;
+
 	//singleton pattern w/ friend class to instantiate
 	TwoWire(
 		Firmata::UwpFirmata ^ firmata_
@@ -113,14 +116,28 @@ private:
 	{
 		_firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UwpFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
 	}
-
-	//since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire
-	const uint16_t MAX_READ_DELAY_MICROS = 0x3FFF;
-
-	void onI2cReply( Firmata::I2cCallbackEventArgs ^argv );
-
+	
 	//a reference to the UAP firmata interface
 	Firmata::UwpFirmata ^_firmata;
+
+	//sysex-building
+	const size_t MAX_SYSEX_LEN = 15;
+	uint8_t _sys_command;
+	uint8_t _sys_position;
+
+	void
+	sendI2cSysex(
+		const uint8_t address_,
+		const uint8_t rw_mask_,
+		const uint8_t reg_,
+		const size_t len,
+		const char * data
+	);
+
+	void
+	onI2cReply(
+		Firmata::I2cCallbackEventArgs ^argv
+	);
 };
 
 } // namespace I2c

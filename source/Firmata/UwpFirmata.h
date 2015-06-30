@@ -215,11 +215,6 @@ public:
 		uint8_t command_
 	);
 
-	void
-	enableI2c(
-		uint16_t i2cReadDelayMicros_
-	);
-
 	bool
 	endBlob(
 		void
@@ -259,14 +254,6 @@ public:
     processInput(
         void
     );
-
-	void
-	readI2c(
-		uint8_t address_,
-		size_t numBytes_,
-		uint8_t reg_,
-		bool continuous_
-	);
 
     void
     sendAnalog(
@@ -308,11 +295,6 @@ public:
 		void
 	);
 
-	void
-	stopI2c(
-		uint8_t address_
-	);
-
     void
     unlock(
         void
@@ -321,12 +303,6 @@ public:
     void
     write(
 		uint8_t c
-	);
-
-	void
-	writeI2c(
-		uint8_t address_,
-		String ^message_
 	);
 
 	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
@@ -409,38 +385,33 @@ public:
 
   private:
 	//sysex-building
-    const size_t MAX_SYSEX_LEN = 15;
-    uint8_t _sys_command;
+	const size_t MAX_SYSEX_LEN = 15;
+	uint8_t _sys_command;
 	uint8_t _sys_position;
 
 	//blob-related
-    const size_t MAX_BLOB_LEN = 31;
-    bool _blob_started;
+	const size_t MAX_BLOB_LEN = 31;
+	bool _blob_started;
 	uint8_t _blob_position;
 
 	//common buffer
 	std::unique_ptr<uint8_t> _data_buffer;
 
 	//member variables to hold the current input thread & communications
-    std::unique_lock<std::mutex> _firmata_lock;
-    Serial::IStream ^_firmata_stream;
-    std::mutex _firmutex;
-    std::thread _input_thread;
+	Serial::IStream ^_firmata_stream;
+
+	//thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
+	std::mutex _firmutex;
+	std::unique_lock<std::mutex> _firmata_lock;
+
+	//input thread & behavior mechanisms
+	std::thread _input_thread;
 	std::atomic_bool _input_thread_should_exit;
 
 	void
     inputThread(
         void
     );
-
-	void
-	sendI2cSysex(
-		const uint8_t address_,
-		const uint8_t rw_mask_,
-		const uint8_t reg_,
-		const size_t len,
-		const char * data
-	);
 
 	void
     stopThreads(
