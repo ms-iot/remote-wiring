@@ -80,7 +80,7 @@ public ref class SysexCallbackEventArgs sealed
 public:
 	SysexCallbackEventArgs(
 		uint8_t command_,
-		String ^sysex_string_
+		IBuffer ^sysex_string_
 		) :
 		_command( command_ ),
 		_sysex_string( sysex_string_ )
@@ -89,11 +89,11 @@ public:
 
 	inline uint8_t getCommand( void ) { return _command; }
 
-	inline String ^ getSysexString( void ) { return _sysex_string; }
+	inline IBuffer ^ getDataBuffer( void ) { return _sysex_string; }
 
 private:
 	uint8_t _command;
-	String ^_sysex_string;
+	IBuffer ^_sysex_string;
 };
 
 public ref class I2cCallbackEventArgs sealed
@@ -101,20 +101,25 @@ public ref class I2cCallbackEventArgs sealed
 public:
 	I2cCallbackEventArgs(
 		uint8_t address_,
-		String ^response_
+		uint8_t reg_,
+		IBuffer ^response_
 		) :
 		_address( address_ ),
+		_reg( reg_ ),
 		_response( response_ )
 	{
 	}
 
 	inline uint8_t getAddress( void ) { return _address; }
 
-	inline String ^ getResponseString( void ) { return _response; }
+	inline uint8_t getRegister( void ) { return _reg; }
+
+	inline IBuffer ^ getDataBuffer( void ) { return _response; }
 
 private:
 	uint8_t _address;
-	String ^_response;
+	uint8_t _reg;
+	IBuffer ^_response;
 };
 
 public ref class SystemResetCallbackEventArgs sealed {
@@ -358,28 +363,40 @@ public:
 	)
 	{
 		/*
-		 * we need to convert to wchar string, but the data will be replied as 2 7-bit bytes for every actual byte. So we're going to reuse the same memory
-		 * space, since we can combine the two bytes back together and zero out the MSB. additionally, cannot use std string conversion functions here because some bytes may be 0.
+		 * data will be replied as 2 7-bit bytes for every actual byte. So we're going to reuse
+		 *  the same memory space, since we can combine the two bytes back together.
 		 */
 
 		//should never happen, but we'll correct for it just in case
 		if( argc_ % 2 == 1 ) --argc_;
 
-		uint8_t i;
-		for( i = 0; i < argc_; i += 2 )
+		//reassemble all the bytes (which were split into two seven-bit bytes) back into one byte each
+		uint8_t i, len;
+		for( i = 0, len = 0; i < argc_; i += 2, ++len )
 		{
-			argv_[i] = argv_[i] | ( argv_[i + 1] << 7 );
-			argv_[i + 1] = 0;
+			argv_[len] = argv_[i] | ( argv_[i + 1] << 7 );
 		}
+		argv_[len] = 0;
 
+		DataWriter ^writer = ref new DataWriter();
 		if( command_ == static_cast<uint8_t>( SysexCommand::I2C_REPLY ) )
 		{
-			//if we're receiving an I2C reply we should remove the first 2 characters (4 bytes) from the string, which are the reply address and the register.
-			caller->I2cReplyEvent( caller, ref new I2cCallbackEventArgs( argv_[0], ref new String( (const wchar_t *)( argv_ + 4 ), ( argc_ - 4 ) / 2 ) ) );
+			//if we're receiving an I2C reply, the first two bytes in our reply are the address and register
+			for( i = 2; i < len; ++i )
+			{
+				writer->WriteByte( argv_[i] );
+			}
+
+			caller->I2cReplyEvent( caller, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
 		}
 		else
 		{
-			caller->SysexEvent( caller, ref new SysexCallbackEventArgs( command_, ref new String( (const wchar_t *)argv_, argc_ / 2 ) ) );
+			for( i = 0; i < len; ++i )
+			{
+				writer->WriteByte( argv_[i] );
+			}
+
+			caller->SysexEvent( caller, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
 		}
 	}
 

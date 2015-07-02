@@ -32,7 +32,7 @@ ref class RemoteDevice;
 
 namespace I2c {
 
-public delegate void I2cReplyCallback( uint8_t address_, Platform::String ^ response );
+public delegate void I2cReplyCallback( uint8_t address_, uint8_t reg_, Windows::Storage::Streams::DataReader ^response );
 
 public ref class TwoWire sealed
 {
@@ -61,7 +61,7 @@ public:
 	void
 	write(
 		uint8_t address_,
-		Platform::String ^message_
+		Windows::Storage::Streams::IBuffer ^buff
 	);
 
 	//a one-time read which will does not prompt a register for data
@@ -130,8 +130,7 @@ private:
 		const uint8_t address_,
 		const uint8_t rw_mask_,
 		const uint8_t reg_,
-		const size_t len,
-		const char * data
+		Platform::Array<uint8_t> ^data
 	);
 
 	void

@@ -44,14 +44,15 @@ TwoWire::enable(
 void
 TwoWire::write(
 	uint8_t address_,
-	Platform::String ^message_
+	Windows::Storage::Streams::IBuffer ^buff
 	)
 {
-	std::wstring wstr( message_->Begin() );
-	std::string str( wstr.begin(), wstr.end() );
-	const size_t len = message_->Length();
+	if( buff == nullptr || buff->Length == 0 ) return;
+	auto stream = Windows::Storage::Streams::DataReader::FromBuffer( buff );
+	auto data = ref new Platform::Array<uint8_t>( stream->UnconsumedBufferLength );
+	stream->ReadBytes( data );
 
-	sendI2cSysex( address_, 0, 0xFF, len, str.c_str() );
+	sendI2cSysex( address_, 0, 0xFF, data );
 }
 
 void
@@ -64,7 +65,9 @@ TwoWire::read(
 {
 	//if you want to do continuous reads, you must provide a register to prompt for new data
 	if( continuous_ && ( reg_ == 0xFF ) ) return;
-	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, 1, (const char*)&numBytes_ );
+	auto data = ref new Platform::Array<uint8_t>( 1 );
+	data[0] = numBytes_;
+	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, data );
 }
 
 
@@ -73,7 +76,7 @@ TwoWire::stop(
 	uint8_t address_
 	)
 {
-	sendI2cSysex( address_, 0x18, 0xFF, 0, nullptr );
+	sendI2cSysex( address_, 0x18, 0xFF, nullptr );
 }
 
 
@@ -86,8 +89,7 @@ TwoWire::sendI2cSysex(
 	const uint8_t address_,
 	const uint8_t rw_mask_,
 	const uint8_t reg_,
-	const size_t len,
-	const char * data
+	Platform::Array<uint8_t> ^data
 	)
 {
 	_firmata->lock();
@@ -101,10 +103,14 @@ TwoWire::sendI2cSysex(
 		_firmata->sendValueAsTwo7bitBytes( reg_ );
 	}
 
-	for( size_t i = 0; i < len; i++ )
+	if( data != nullptr )
 	{
-		_firmata->sendValueAsTwo7bitBytes( data[i] );
+		for( size_t i = 0; i < data->Length; ++i )
+		{
+			_firmata->sendValueAsTwo7bitBytes( data[i] );
+		}
 	}
+
 	_firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
 	_firmata->unlock();
 }
@@ -115,5 +121,5 @@ TwoWire::onI2cReply(
 	I2cCallbackEventArgs ^args
 	)
 {
-	I2cReplyEvent( args->getAddress(), args->getResponseString() );
+	I2cReplyEvent( args->getAddress(), args->getRegister(), Windows::Storage::Streams::DataReader::FromBuffer( args->getDataBuffer() ) );
 }
