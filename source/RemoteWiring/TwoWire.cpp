@@ -42,41 +42,35 @@ TwoWire::enable(
 
 
 void
-TwoWire::write(
-	uint8_t address_,
-	Windows::Storage::Streams::IBuffer ^buff
-	)
-{
-	if( buff == nullptr || buff->Length == 0 ) return;
-	auto stream = Windows::Storage::Streams::DataReader::FromBuffer( buff );
-	auto data = ref new Platform::Array<uint8_t>( stream->UnconsumedBufferLength );
-	stream->ReadBytes( data );
-
-	sendI2cSysex( address_, 0, 0xFF, data );
-}
-
-void
-TwoWire::read(
-	uint8_t address_,
-	size_t numBytes_,
-	uint8_t reg_,
-	bool continuous_
-	)
-{
-	//if you want to do continuous reads, you must provide a register to prompt for new data
-	if( continuous_ && ( reg_ == 0xFF ) ) return;
-	auto data = ref new Platform::Array<uint8_t>( 1 );
-	data[0] = numBytes_;
-	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, data );
-}
-
-
-void
-TwoWire::stop(
+TwoWire::beginTransmission(
 	uint8_t address_
 	)
 {
-	sendI2cSysex( address_, 0x18, 0xFF, nullptr );
+	if( _address ) return;
+	_address = address_;
+	_position = 0;
+}
+
+void
+TwoWire::write(
+	uint8_t data_
+	)
+{
+	if( !_address || _position > MAX_MESSAGE_LEN ) return;
+	_data_buffer.get()[_position] = data_;
+	++_position;
+}
+
+
+void
+TwoWire::endTransmission(
+	void
+	)
+{
+	if( !_address ) return;
+	sendI2cSysex( _address, 0, _position, _data_buffer.get() );
+	_address = 0;
+	_position = 0;
 }
 
 
@@ -88,8 +82,8 @@ void
 TwoWire::sendI2cSysex(
 	const uint8_t address_,
 	const uint8_t rw_mask_,
-	const uint8_t reg_,
-	Platform::Array<uint8_t> ^data
+	const uint8_t len_,
+	uint8_t *data_
 	)
 {
 	_firmata->lock();
@@ -98,20 +92,16 @@ TwoWire::sendI2cSysex(
 	_firmata->write( address_ );
 	_firmata->write( rw_mask_ );
 
-	if( reg_ != 0xFF )
+	if( data_ != nullptr )
 	{
-		_firmata->sendValueAsTwo7bitBytes( reg_ );
-	}
-
-	if( data != nullptr )
-	{
-		for( size_t i = 0; i < data->Length; ++i )
+		for( size_t i = 0; i < len_; ++i )
 		{
-			_firmata->sendValueAsTwo7bitBytes( data[i] );
+			_firmata->sendValueAsTwo7bitBytes( data_[i] );
 		}
 	}
 
 	_firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+	_firmata->flush();
 	_firmata->unlock();
 }
 
