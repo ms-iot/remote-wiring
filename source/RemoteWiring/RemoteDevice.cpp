@@ -261,7 +261,7 @@ RemoteDevice::onSysexMessage(
 	Firmata::SysexCallbackEventArgs ^argv
 	)
 {
-	SysexMessageReceivedEvent( argv->getCommand(), argv->getSysexString() );
+	SysexMessageReceivedEvent( argv->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv->getDataBuffer() ) );
 }
 
 

@@ -55,7 +55,7 @@ public enum class PinState
 
 public delegate void DigitalPinUpdatedCallback( uint8_t pin, PinState state );
 public delegate void AnalogPinUpdatedCallback( uint8_t pin, uint16_t value );
-public delegate void SysexMessageReceivedCallback( uint8_t command, Platform::String ^message );
+public delegate void SysexMessageReceivedCallback( uint8_t command, Windows::Storage::Streams::DataReader ^message );
 public delegate void StringMessageReceivedCallback( Platform::String ^message );
 
 public ref class RemoteDevice sealed {

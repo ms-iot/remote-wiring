@@ -279,7 +279,6 @@ UwpFirmata::endSysex(
 {
 	if( _sys_command && !_blob_started )
 	{
-        std::lock_guard<std::mutex> lock(_firmutex);
         ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get());
         _firmata_stream->flush();
         _sys_command = 0;
@@ -352,55 +351,6 @@ UwpFirmata::write(
 
 
 void
-UwpFirmata::enableI2c(
-	uint16_t i2cReadDelayMicros_
-	)
-{
-	::RawFirmata.startSysex();
-	::RawFirmata.write( static_cast<uint8_t>( I2C_CONFIG ) );
-	::RawFirmata.sendValueAsTwo7bitBytes( i2cReadDelayMicros_ );
-	::RawFirmata.endSysex();
-}
-
-
-void
-UwpFirmata::writeI2c(
-	uint8_t address_,
-	Platform::String ^message_
-	)
-{
-	std::wstring wstr( message_->Begin() );
-	std::string str( wstr.begin(), wstr.end() );
-	const size_t len = message_->Length();
-
-	sendI2cSysex( address_, 0, 0xFF, len, str.c_str() );
-}
-
-
-void
-UwpFirmata::readI2c(
-	uint8_t address_,
-	size_t numBytes_,
-	uint8_t reg_,
-	bool continuous_
-	)
-{
-	//if you want to do continuous reads, you must provide a register to prompt for new data
-	if( continuous_ && ( reg_ == 0xFF ) ) return;
-	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, 1, (const char*)&numBytes_ );
-}
-
-
-void
-UwpFirmata::stopI2c(
-	uint8_t address_
-	)
-{
-	sendI2cSysex( address_, 0x18, 0xFF, 0, nullptr );
-}
-
-
-void
 UwpFirmata::lock(
     void
     )
@@ -421,32 +371,6 @@ UwpFirmata::unlock(
 //******************************************************************************
 //* Private Methods
 //******************************************************************************
-
-void
-UwpFirmata::sendI2cSysex(
-	const uint8_t address_,
-	const uint8_t rw_mask_,
-	const uint8_t reg_,
-	const size_t len,
-	const char * data
-	)
-{
-	::RawFirmata.startSysex();
-	::RawFirmata.write( static_cast<uint8_t>( I2C_REQUEST ) );
-	::RawFirmata.write( address_ );
-	::RawFirmata.write( rw_mask_ );
-
-	if( reg_ != 0xFF )
-	{
-		::RawFirmata.sendValueAsTwo7bitBytes( reg_ );
-	}
-
-	for( size_t i = 0; i < len; i++ )
-	{
-		::RawFirmata.sendValueAsTwo7bitBytes( data[ i ] );
-	}
-	::RawFirmata.endSysex();
-}
 
 
 void
