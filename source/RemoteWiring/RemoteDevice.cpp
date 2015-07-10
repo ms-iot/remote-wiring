@@ -122,12 +122,9 @@ RemoteDevice::digitalRead(
         if (_pin_mode[pin_] == static_cast<uint8_t>(PinMode::ANALOG)) {
             pinMode(pin_, PinMode::INPUT);
         }
-        else {
-            return PinState::LOW;
-        }
     }
 
-    return static_cast<PinState>(_digital_port[port] & port_mask);
+    return static_cast<PinState>( ( _digital_port[port] & port_mask ) > 0 );
 }
 
 
