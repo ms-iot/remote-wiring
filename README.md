@@ -1,6 +1,6 @@
 #Windows Remote Arduino
 
-Windows Remote Arduino is an open-source [Windows Runtime Component](https://msdn.microsoft.com/en-us/magazine/jj651567.aspx?utm_source=rss&utm_medium=rss&utm_campaign=windows-runtime-reimagining-app-development-with-the-windows-runtime) library which allows Makers to control an Arduino through a Bluetooth or USB connection! It is intended for [Windows Runtime (WinRT)](https://msdn.microsoft.com/en-us/library/windows/apps/br211369.aspx) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the [Firmata protocol](https://github.com/firmata/protocol), which is implemented in a pre-packaged [Firmata library](http://arduino.cc/en/reference/firmata) included in the Arduino software obtained from [http://arduino.cc](http://arduino.cc).
+Windows Remote Arduino is an open-source [Windows Runtime Component](https://msdn.microsoft.com/en-us/magazine/jj651567.aspx?utm_source=rss&utm_medium=rss&utm_campaign=windows-runtime-reimagining-app-development-with-the-windows-runtime) library which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for [Windows Runtime (WinRT)](https://msdn.microsoft.com/en-us/library/windows/apps/br211369.aspx) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the [Firmata protocol](https://github.com/firmata/protocol), which is implemented in a pre-packaged [Firmata library](http://arduino.cc/en/reference/firmata) included in the Arduino software obtained from [http://arduino.cc](http://arduino.cc).
 
 [View the open-source license](license.txt).
 
@@ -70,7 +70,7 @@ This section explains how to set up your Arduino and how to add the Windows Remo
 
 ##Arduino Setup
 
-Windows Remote Arduino uses the [Firmata protocol](https://github.com/firmata/protocol), which has implementations in many languages including Arduino! The Arduino implementation is called [StandardFirmata](https://github.com/firmata/arduino/blob/master/examples/StandardFirmata/StandardFirmata.ino) and comes pre-packaged with the Arduino software when you install it! Follow the steps below to upload the StandardFirmata sketch to your Arduino.
+Windows Remote Arduino uses the [Firmata protocol](https://github.com/firmata/protocol), which has implementations in many languages including Arduino! The Arduino implementation is called [StandardFirmata](https://github.com/firmata/arduino/blob/master/examples/StandardFirmata/StandardFirmata.ino) and comes pre-packaged with the Arduino software when you install it! The raw StandardFirmata sketch works for USB and Bluetooth, while modified versions are available for WiFi and Ethernet (see below). Follow the steps below to upload the StandardFirmata sketch to your Arduino.
 
 1. Download and install the Arduino software from [http://arduino.cc](http://arduino.cc).
 2. Connect your Arduino device to the computer using USB. 
@@ -78,27 +78,43 @@ Windows Remote Arduino uses the [Firmata protocol](https://github.com/firmata/pr
 4. Verify that you have the correct Arduino board selected under *Tools > Board*
 5. Verify that you have the correct COM Port selected under *Tools > Port*
 6. In the Arduino IDE, navigate to *File > Examples > Firmata > StandardFirmata*
-7. Press “Upload” to deploy the StandardFirmata sketch to the Arduino device.
+7. Verify that StandardFirmata will use the correct baud rate for your connection (see Notes on Serial Commuinication below)
+8. Press “Upload” to deploy the StandardFirmata sketch to the Arduino device.
 
 That’s it! Your Arduino will now run the StandardFirmata sketch forever unless reprogrammed with a different sketch. You can now optionally disconnect your Arduino from the computer and power it in any way you choose. If you wish to use the recommended Bluetooth pairing between your devices, you will need to [hook up a Bluetooth device to the Arduino](bluetooth.md). We recommend the [SparkFun Bluetooth Mate Silver](https://www.sparkfun.com/products/12576).
 
-####Notes on Serial Commuinication
+####Notes on Serial Communication
 
 Some hardware setups may require additional considerations when it comes to setting up your Bluetooth device over the serial pins 0 and 1.
 
-1. StandardFirmata uses the Serial lines to talk to a Bluetooth device or over USB. By default, it uses a baud rate of 57,600 bps. Depending on the configuration of your Bluetooth device, you may need to modify that rate. It can be found in the `setup` method and looks like this:
+1. *Baud Rate*: StandardFirmata uses the Serial lines to talk to a Bluetooth device or over USB. By default, it uses a baud rate of 57,600 bps. Depending on the configuration of your Bluetooth device, you may need to modify that rate. It can be found in the `setup` method and looks like this:
 
  `Firmata.begin(57600);`
 
- Simply change the `begin` parameter to match the configuration of your Bluetooth device. The most common configurations are 1152000, 57600, and 9600. The recommended SparkFun Bluetooth Mate devices use 115200 by default. If you are not sure of the default baud rate of your Bluetooth device, check the device documentation.
+ Simply change the `begin` parameter to match the configuration of your Bluetooth device. The most common configurations are 1152000, 57600, and 9600. The recommended SparkFun Bluetooth Mate devices use 115200 by default. USB connections should also be set to 115200. If you are not sure of the default baud rate of your Bluetooth device, check the device documentation.
  
-2. Many Arduino devices, such as the Leonardo and the Yun, use `Serial1` (Rather than just `Serial`) for serial communications over pins 0 and 1. If you are using one of these devices, you will need to change the serial initialization procedure. You will want to remove the line `Firmata.begin(57600);` and replace it with the code below:
+2. *Serial vs Serial1*: Many Arduino devices, such as the Leonardo and the Yun, use `Serial1` (Rather than just `Serial`) for serial communications over pins 0 and 1. If you are using one of these devices, you will need to change the serial initialization procedure. You will want to remove the line `Firmata.begin(57600);` and replace it with the code below:
 
  ```
   Serial1.begin( 57600 );	//or your baud rate here, it will be 115200 if using the Bluetooth Mate Silver or Gold
   while( !Serial1 );
   Firmata.begin( Serial1 );
  ```
+ 
+####Notes on WiFi and Ethernet
+
+First, you must own an [Arduino WiFi shield](https://www.arduino.cc/en/Main/ArduinoWiFiShield) *or* an [Arduino Ethernet shield](https://www.arduino.cc/en/Main/ArduinoEthernetShield).
+
+The Arduino IDE includes WiFi and Ethernet libraries written for their respective shield linked above. Unfortunately, raw StandardFirmata itself doesn't understand these libraries right 'out of the box'. However, custom libraries and Firmata sketches have been written which will allow you to easily configure Windows Remote Arduino to use these shields!
+
+There is an additional repository which contains these libraries and sketches. It is called [standard-firmata-networking](https://github.com/turkycat/standard-firmata-networking) and is also available as open-source.
+
+1. Clone the [standard-firmata-networking](https://github.com/turkycat/standard-firmata-networking) repository.
+2. Copy the EthernetStream and/or WiFiStream folders located in \lib\ to your Arduino libraries directory (usually %HOMEPATH%\Documents\Arduino\libraries)
+3. Open one of the standard-firmata-ethernet.ino or standard-firmata-wifi.ino sketch files.
+4. (WiFi only) customize the *WiFi Settings* section near the top of the sketch file. This is necessary to connect to your wireless network.
+5. Verify that the correct shield is attached to your Arduino.
+6. Press "Upload" to deploy the Firmata sketch to the Arduino device.
 
 ##Project Setup
 

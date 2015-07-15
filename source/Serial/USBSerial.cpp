@@ -100,7 +100,11 @@ UsbSerial::~UsbSerial(
     void
     )
 {
-    ConnectionLost();
+	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+	if( connectionReady() )
+	{
+		ConnectionLost();
+	}
     end();
 }
 
@@ -282,6 +286,11 @@ UsbSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::SerialCommunication::SerialDevice ^serial_device_)
     {
+		if( serial_device_ == nullptr )
+		{
+			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
+		}
+
         // Store parameter as a member to ensure the duration of object allocation
         _serial_device = serial_device_;
 
