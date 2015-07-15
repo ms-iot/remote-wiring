@@ -200,6 +200,12 @@ RemoteDevice::pinMode(
     _firmata->flush();
     _firmata->unlock();
 
+	//if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
+	if( mode_ == PinMode::OUTPUT && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
+	{
+		_digital_port[port] &= ~port_mask;
+	}
+
 	//finally, update the cached pin mode
 	_pin_mode[ pin_ ] = static_cast<uint8_t>( mode_ );
 }
