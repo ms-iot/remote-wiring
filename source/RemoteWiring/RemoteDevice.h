@@ -94,7 +94,8 @@ public:
 	virtual ~RemoteDevice();
 
 	///<summary>
-	///reads analog data stored in the cache
+	///Returns the most recently-reported value for the given analog pin.
+	///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
 	///</summary>
 	uint16_t
 	analogRead(
@@ -102,7 +103,9 @@ public:
 	);
 
 	///<summary>
-	///writes analog data to the remote device and the cache
+	///Sets the value of the given pin to the given analog value.
+	///<para>This function should only be called for pins that support PWM. If the given pin is in 
+	///PinMode.OUTPUT, the pin will automatically be changed to PinMode.PWM</para>
 	///</summary>
 	void
 	analogWrite(
@@ -111,7 +114,8 @@ public:
 	);
 
 	///<summary>
-	///reads a digital pin state from the cache 
+	///Returns the most recently-reported value for the given digital pin.
+	///<para>Analog pins must first be in PinMode.INPUT before their values will be reported.</para>
 	///</summary>
 	PinState
 	digitalRead(
@@ -119,7 +123,7 @@ public:
 	);
 
 	///<summary>
-	///writes a digital state to the remote device and the cache
+	///Sets the value of the given pin to the given state.
 	///</summary>
 	void
 	digitalWrite(
@@ -128,7 +132,13 @@ public:
 	);
 
 	///<summary>
-	///sets the given pin to the given mode and stores the value in the cache
+	///Sets the given pin to the given PinMode.
+	///<para>Due to the way that Arduino and Arduino-like devices are engineered, this function is unable to differentiate 
+	///between Digital and Analog pins. Refer to the descriptions below for more information about referring to the correct pin number.</para>
+	///<para>Digital pins are typically zero-indexed. This means that the first digital pin is pin 0, while the last
+	///digital pin is (the number of digital pins) - 1.</para>
+	///<para>Analog pins are numbered starting immediately after the digital pins. This means the first analog pin is indexed as the total
+	///number of digital pins that the device supports.</para>
 	///</summary>
 	void
 	pinMode(
@@ -137,9 +147,9 @@ public:
 	);
 
 	///<summary>
-	/// Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
-	/// This is not a function you will find in the Arduino API, but is an extremely helpful function
-	/// that allows the RemoteDevice class to maintain consistency with your apps.
+	///Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
+	///<para>This is not a function you will find in the Arduino API, but is an extremely helpful function 
+	///that allows the RemoteDevice class to maintain consistency with your apps.</para>
 	///</summary>
 	PinMode
 	getPinMode(

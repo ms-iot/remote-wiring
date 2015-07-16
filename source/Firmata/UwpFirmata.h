@@ -190,104 +190,168 @@ public:
         void
     );
 
+	///<summary>
+	///This function appends one byte to the current blob message
+	///</summary>
 	bool
 	appendBlob(
 		uint8_t byte_
 	);
 
+	///<summary>
+	///This function appends one byte to the current sysex message
+	///</summary>
 	bool
 	appendSysex(
 		uint8_t byte_
 	);
 
+	///<summary>
+	///Returns the number of bytes available to be read from the backing transport
+	///</summary>
     int
     available(
         void
     );
 
+	///<summary>
+	///Attaches the given IStream reference as the backing transport for this UwpFirmata instance.
+	///</summary>
 	void
 	begin(
 		Serial::IStream ^s
 	);
 
+	///<summary>
+	///Begins a blob message, which will allow for performance improvements by sending 7-bit bytes.
+	///<para>You must never use byte values larger than 127 when using this function.</para>
+	///</summary>
 	bool
 	beginBlob(
 		void
 	);
 
+	///<summary>
+	///Begins a sysex message.
+	///</summary>
 	bool
 	beginSysex(
 		uint8_t command_
 	);
 
+	///<summary>
+	///Ends a blob message, which will finalize and send the blob data.
+	///</summary>
 	bool
 	endBlob(
 		void
 	);
 
+	///<summary>
+	///Ends a sysex message, which will finalize and send the message.
+	///</summary>
 	bool
 	endSysex(
 		void
 	);
 
+	///<summary>
+	///Locks this instance of the UwpFirmata object, allowing for thread safety and guaranteeing that messages do not interfere with each other.
+	///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
+	///</summary>
     void
     lock(
         void
     );
 
+	///<summary>
+	///Finishes the usage of this UwpFirmata instance. Any existing connections will be closed.
+	///</summary>
 	void
 	finish(
 		void
 	);
 
+	///<summary>
+	///Flushes any awaiting data from the outbound queue. This function must be called before any data
+	///is sent across an active connection
+	///</summary>
 	void
 	flush(
 		void
 	);
 
+	///<summary>
+	///Writes the firmware version.
+	///</summary>
     void
     printFirmwareVersion(
         void
     );
 
+	///<summary>
+	///Prints the Firmata version.
+	///</summary>
     void
     printVersion(
         void
     );
 
+	///<summary>
+	///Allows one byte to be read from an active connection and messages to be parsed. This function will need to be called multiple times
+	///before a single multi-byte message can be completed and the appropriate action taken.
+	///</summary>
     void
     processInput(
         void
     );
 
+	///<summary>
+	///Sends an analog value for a given pin across an active connection
+	///</summary>
     void
     sendAnalog(
 		uint8_t pin,
 		int value
     );
 
+	///<summary>
+	///Sends an digital value for a given port across an active connection
+	///</summary>
     void
     sendDigitalPort(
 		uint8_t portNumber,
 		int portData
     );
 
+	///<summary>
+	///Sends a string across an active connection
+	///</summary>
     void
     sendString(
         String ^string
     );
 
+	///<summary>
+	///Sends a command and a string across an active connection
+	///</summary>
     void
     sendString(
 		uint8_t command,
         String ^string
     );
 
+	///<summary>
+	///Sends a given byte value as two seven-bit bytes
+	///</summary>
     void
 	sendValueAsTwo7bitBytes(
 		int value
 	);
- 
+
+	///<summary>
+	///Sets the firmware name and version
+	///</summary>
     void
     setFirmwareNameAndVersion(
 		String ^name,
@@ -295,22 +359,37 @@ public:
 		uint8_t minor
     );
 
+	///<summary>
+	///Spins up a thread which will listen for and process input.
+	///<para>This function must be called before any inputs can be processed and corresponding events can be raised.</para>
+	///</summary>
 	void
 	startListening(
 		void
 	);
 
+	///<summary>
+	///Unlocks this instance of the UwpFirmata object, allowing other threads or actions to use it.
+	///<para>This function must be explicitly invoked after each invocation of the lock() method, when the lock is no longer needed.</para>
+	///</summary>
     void
     unlock(
         void
     );
 
+	///<summary>
+	///Writes a single byte using an active connection
+	///</summary>
     void
     write(
 		uint8_t c
 	);
 
-	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+internal:
+
+	///<summary>
+	///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
+	///</summary>
 	static inline
 	void
 	analogInvoke(
@@ -322,7 +401,9 @@ public:
 		caller->AnalogValueEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
 	}
 
-	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	///<summary>
+	///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
+	///</summary>
 	static inline
 	void
 	digitalInvoke(
@@ -334,7 +415,9 @@ public:
 		caller->DigitalPortValueEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
 	}
 
-	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	///<summary>
+	///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
+	///</summary>
 	static inline
 	void
 	stringInvoke(
@@ -352,7 +435,9 @@ public:
         delete[](wstr_data);
 	}
 
-	//when used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference
+	///<summary>
+	///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
+	///</summary>
 	static inline
 	void
 	sysexInvoke(

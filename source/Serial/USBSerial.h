@@ -38,15 +38,24 @@ public:
 	virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
+	///<summary>
+	///A constructor which accepts a string corresponding to a device VID to connect to.
+	///</summary>
     UsbSerial(
         Platform::String ^vid_
         );
 
+	///<summary>
+	///A constructor which accepts two strings corresponding to a device VID and PID to connect to.
+	///</summary>
     UsbSerial(
         Platform::String ^vid_,
         Platform::String ^pid_
         );
 
+	///<summary>
+	///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
+	///</summary>
     UsbSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
@@ -93,11 +102,17 @@ public:
         uint8_t c_
         );
 
+	///<summary>
+	///Returns true if the connection is currently established
+	///</summary>
     bool
     connectionReady(
         void
         );
 
+	///<summary>
+	///Begins an asyncronous request for all USB devices that are connected and may be used to attempt a device connection.
+	///</summary>
     static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(

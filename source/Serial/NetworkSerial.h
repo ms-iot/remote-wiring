@@ -37,6 +37,9 @@ public:
 	virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
 	[Windows::Foundation::Metadata::DefaultOverload]
+	///<summary>
+	///A constructor which accepts a device HostName (web address or IP) and port to connect to.
+	///</summary>
 	NetworkSerial(
 		Windows::Networking::HostName ^host_,
 		uint16_t port_
@@ -84,6 +87,9 @@ public:
 		uint8_t c_
 		);
 
+	///<summary>
+	///Returns true if the connection is currently established
+	///</summary>
 	bool
 	connectionReady(
 		void

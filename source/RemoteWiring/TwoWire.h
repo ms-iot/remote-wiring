@@ -41,7 +41,9 @@ public:
 
 	event I2cReplyCallback ^ I2cReplyEvent;
 
-	/// <summary>Enables I2C with no delay time for requesting a response from the slave device</summary>
+	///<summary>
+	///Enables I2C with no delay time for requesting a response from the slave device
+	///</summary>
 	void
 	inline
 	enable(
@@ -51,37 +53,49 @@ public:
 		enable( 0 );
 	}
 
-	
-	/// <summary>Enables I2C with a given delay time for requesting a response from the slave device</summary>
+
+	///<summary>
+	///Enables I2C with a given delay time for requesting a response from the slave device
+	///</summary>
 	void
 	enable(
 		uint16_t i2cReadDelayMicros_
 	);
 
 	
-	/// <summary>Begins an I2C transmission to the given device address</summary>
+	///<summary>
+	///Begins an I2C transmission to the given device address.
+	///</summary>
 	void
 	beginTransmission(
 		uint8_t address_
 	);
 
 
-	/// <summary>Writes raw byte data to the device
-	/// <para>You must have an active device transmission open. Begin a new transmission with beginTransmission( uint8_t )</summary>
+	///<summary>
+	///Writes raw byte data to the device
+	///<para>You must have an active device transmission open. Begin a new transmission with beginTransmission( uint8_t )</para>
+	///</summary>
 	void
 	write(
 		uint8_t data_
 	);
 
 
-	/// <summary>ends an I2C transmission</summary>
+	///<summary>
+	///ends an I2C transmission
+	///</summary>
 	void
 	endTransmission(
 		void
 	);
 
 
-	/// <summary>A one-time read which does not specify a register</summary>
+	///<summary>
+	///A one-time read which will request the given number of bytes from the device.
+	///<para>The device's response will be provided in the form of an I2cReplyEvent. You must subscribe
+	///to this event with a delegate function in order to be alerted of your reply.</para>
+	///</summary>
 	inline
 	void
 	requestFrom(
