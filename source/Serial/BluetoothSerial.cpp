@@ -301,7 +301,7 @@ BluetoothSerial::connectToDeviceAsync(
 
             // Set connection ready flag
             _connection_ready = true;
-            ConnectionEstablished();
+			ConnectionEstablished();
         });
     });
 }

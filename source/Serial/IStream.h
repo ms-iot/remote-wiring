@@ -63,6 +63,10 @@ public delegate void RemoteWiringConnectionFailedCallback(Platform::String ^mess
 
 public interface struct IStream
 {
+	event RemoteWiringConnectionCallback ^ConnectionEstablished;
+	event RemoteWiringConnectionCallback ^ConnectionLost;
+	event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+
     virtual
     uint16_t
     available(
