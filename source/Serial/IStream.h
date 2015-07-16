@@ -63,24 +63,24 @@ public delegate void RemoteWiringConnectionFailedCallback(Platform::String ^mess
 
 public interface struct IStream
 {
-	event RemoteWiringConnectionCallback ^ConnectionEstablished;
-	event RemoteWiringConnectionCallback ^ConnectionLost;
-	event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    event RemoteWiringConnectionCallback ^ConnectionEstablished;
+    event RemoteWiringConnectionCallback ^ConnectionLost;
+    event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
-	///<summary>
-	///Returns the number of bytes available to be read
-	///</summary>
+    ///<summary>
+    ///Returns the number of bytes available to be read
+    ///</summary>
     virtual
     uint16_t
     available(
         void
         ) = 0;
 
-	///<summary>
-	///Initializes the connection process, which will attempt to establish a connection to the device.
-	///<para>This connection process will complete asyncronously. You must subscribe to one of the connection events
-	///in order to be informed of a successful or failed connection attempt.</para>
-	///</summary>
+    ///<summary>
+    ///Initializes the connection process, which will attempt to establish a connection to the device.
+    ///<para>This connection process will complete asyncronously. You must subscribe to one of the connection events
+    ///in order to be informed of a successful or failed connection attempt.</para>
+    ///</summary>
     virtual
     void
     begin(
@@ -88,37 +88,37 @@ public interface struct IStream
         SerialConfig config_
         ) = 0;
 
-	///<summary>
-	///Closes the active connection
-	///</summary>
+    ///<summary>
+    ///Closes the active connection
+    ///</summary>
     virtual
     void
     end(
         void
         ) = 0;
 
-	///<summary>
-	///Flushes any awaiting data from the outbound queue. This function must be called before any data
-	///is actually sent to the other end of the connection.
-	///</summary>
+    ///<summary>
+    ///Flushes any awaiting data from the outbound queue. This function must be called before any data
+    ///is actually sent to the other end of the connection.
+    ///</summary>
     virtual
     void
     flush(
         void
         ) = 0;
 
-	///<summary>
-	///Attempts to read one byte
-	///</summary>
+    ///<summary>
+    ///Attempts to read one byte
+    ///</summary>
     virtual
     uint16_t
     read(
         void
         ) = 0;
 
-	///<summary>
-	///Places one byte into the outbound queue. flush() must be called on this object before the data will be sent.
-	///</summary>
+    ///<summary>
+    ///Places one byte into the outbound queue. flush() must be called on this object before the data will be sent.
+    ///</summary>
     virtual
     uint32_t
     write(

@@ -33,29 +33,29 @@ namespace Serial {
 public ref class UsbSerial sealed : public IStream
 {
 public:
-	virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-	virtual event RemoteWiringConnectionCallback ^ConnectionLost;
-	virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
+    virtual event RemoteWiringConnectionCallback ^ConnectionLost;
+    virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
-	///<summary>
-	///A constructor which accepts a string corresponding to a device VID to connect to.
-	///</summary>
+    ///<summary>
+    ///A constructor which accepts a string corresponding to a device VID to connect to.
+    ///</summary>
     UsbSerial(
         Platform::String ^vid_
         );
 
-	///<summary>
-	///A constructor which accepts two strings corresponding to a device VID and PID to connect to.
-	///</summary>
+    ///<summary>
+    ///A constructor which accepts two strings corresponding to a device VID and PID to connect to.
+    ///</summary>
     UsbSerial(
         Platform::String ^vid_,
         Platform::String ^pid_
         );
 
-	///<summary>
-	///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
-	///</summary>
+    ///<summary>
+    ///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
+    ///</summary>
     UsbSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
@@ -102,17 +102,17 @@ public:
         uint8_t c_
         );
 
-	///<summary>
-	///Returns true if the connection is currently established
-	///</summary>
+    ///<summary>
+    ///Returns true if the connection is currently established
+    ///</summary>
     bool
     connectionReady(
         void
         );
 
-	///<summary>
-	///Begins an asyncronous request for all USB devices that are connected and may be used to attempt a device connection.
-	///</summary>
+    ///<summary>
+    ///Begins an asyncronous request for all USB devices that are connected and may be used to attempt a device connection.
+    ///</summary>
     static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(
@@ -132,8 +132,8 @@ private:
     Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
     Windows::Storage::Streams::DataReader ^_rx;
-	Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
-	Windows::Storage::Streams::DataWriter ^_tx;
+    Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
+    Windows::Storage::Streams::DataWriter ^_tx;
 
     Concurrency::task<void>
     connectToDeviceAsync(

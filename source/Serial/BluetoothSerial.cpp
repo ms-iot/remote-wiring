@@ -76,11 +76,11 @@ BluetoothSerial::~BluetoothSerial(
     void
     )
 {
-	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
-	if( connectionReady() )
-	{
-		ConnectionLost();
-	}
+    //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+    if( connectionReady() )
+    {
+        ConnectionLost();
+    }
     end();
 }
 
@@ -121,10 +121,10 @@ BluetoothSerial::begin(
     Concurrency::create_task(listAvailableDevicesAsync())
         .then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^device_collection_)
     {
-		if( device_collection_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. DeviceInformation::FindAllAsync returned null." ) );
-		}
+        if( device_collection_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. DeviceInformation::FindAllAsync returned null." ) );
+        }
 
         // If a friendly name was specified, then identify the associated device
         if (_device_name) {
@@ -275,10 +275,10 @@ BluetoothSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^rfcomm_service_)
     {
-		if( rfcomm_service_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. RfcommDeviceService::FromIdAsync returned null." ) );
-		}
+        if( rfcomm_service_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. RfcommDeviceService::FromIdAsync returned null." ) );
+        }
 
         // Store parameter as a member to ensure the duration of object allocation
         _rfcomm_service = rfcomm_service_;
@@ -301,7 +301,7 @@ BluetoothSerial::connectToDeviceAsync(
 
             // Set connection ready flag
             _connection_ready = true;
-			ConnectionEstablished();
+            ConnectionEstablished();
         });
     });
 }

@@ -39,17 +39,17 @@ using namespace Microsoft::Maker::Serial;
 //******************************************************************************
 
 NetworkSerial::NetworkSerial(
-	Windows::Networking::HostName ^host_,
-	uint16_t port_
-	) :
-	_connection_ready( 0 ),
-	_current_load_operation( nullptr ),
-	_current_store_operation( nullptr ),
-	_host( host_ ),
-	_port( port_ ),
-	_stream_socket( nullptr ),
-	_rx( nullptr ),
-	_tx( nullptr )
+    Windows::Networking::HostName ^host_,
+    uint16_t port_
+    ) :
+    _connection_ready( 0 ),
+    _current_load_operation( nullptr ),
+    _current_store_operation( nullptr ),
+    _host( host_ ),
+    _port( port_ ),
+    _stream_socket( nullptr ),
+    _rx( nullptr ),
+    _tx( nullptr )
 {
 }
 
@@ -58,15 +58,15 @@ NetworkSerial::NetworkSerial(
 //******************************************************************************
 
 NetworkSerial::~NetworkSerial(
-	void
-	)
+    void
+    )
 {
-	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
-	if( connectionReady() )
-	{
-		ConnectionLost();
-	}
-	end();
+    //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+    if( connectionReady() )
+    {
+        ConnectionLost();
+    }
+    end();
 }
 
 //******************************************************************************
@@ -75,132 +75,132 @@ NetworkSerial::~NetworkSerial(
 
 uint16_t
 NetworkSerial::available(
-	void
-	)
+    void
+    )
 {
-	// Check to see if connection is ready
-	if( !connectionReady() ) {
-		return 0;
-	}
-	else {
-		return _rx->UnconsumedBufferLength;
-	}
+    // Check to see if connection is ready
+    if( !connectionReady() ) {
+        return 0;
+    }
+    else {
+        return _rx->UnconsumedBufferLength;
+    }
 }
 
 /// \details Immediately discards the incoming parameters, because they are used for standard serial connections and will have no bearing on a network connection.
 void
 NetworkSerial::begin(
-	uint32_t baud_,
-	SerialConfig config_
-	)
+    uint32_t baud_,
+    SerialConfig config_
+    )
 {
-	// Discard incoming parameters inherited from IStream interface.
-	UNREFERENCED_PARAMETER( baud_ );
-	UNREFERENCED_PARAMETER( config_ );
+    // Discard incoming parameters inherited from IStream interface.
+    UNREFERENCED_PARAMETER( baud_ );
+    UNREFERENCED_PARAMETER( config_ );
 
-	// Ensure known good state
-	end();
+    // Ensure known good state
+    end();
 
-	connectToHostAsync( _host, _port )
-		.then( [ this ]( Concurrency::task<void> t )
-	{
-		try
-		{
-			t.get();
-		}
-		catch( Platform::Exception ^e )
-		{
-			ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
-		}
-		catch( ... )
-		{
-			ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a non-Platform::Exception type." ) );
-		}
-	} );
+    connectToHostAsync( _host, _port )
+        .then( [ this ]( Concurrency::task<void> t )
+    {
+        try
+        {
+            t.get();
+        }
+        catch( Platform::Exception ^e )
+        {
+            ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
+        }
+        catch( ... )
+        {
+            ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a non-Platform::Exception type." ) );
+        }
+    } );
 }
 
 bool
 NetworkSerial::connectionReady(
-	void
-	)
+    void
+    )
 {
-	return _connection_ready;
+    return _connection_ready;
 }
 
 /// \ref https://social.msdn.microsoft.com/Forums/windowsapps/en-US/961c9d61-99ad-4a1b-82dc-22b6bd81aa2e/error-c2039-close-is-not-a-member-of-windowsstoragestreamsdatawriter?forum=winappswithnativecode
 void
 NetworkSerial::end(
-	void
-	)
+    void
+    )
 {
-	_connection_ready = false;
-	_current_load_operation = nullptr;
-	_current_store_operation = nullptr;
+    _connection_ready = false;
+    _current_load_operation = nullptr;
+    _current_store_operation = nullptr;
 
-	// Reset with respect to dependencies
-	delete( _rx );
-	_rx = nullptr;
-	delete( _tx );
-	_tx = nullptr;
-	delete( _stream_socket );
-	_stream_socket = nullptr;
+    // Reset with respect to dependencies
+    delete( _rx );
+    _rx = nullptr;
+    delete( _tx );
+    _tx = nullptr;
+    delete( _stream_socket );
+    _stream_socket = nullptr;
 }
 
 void
 NetworkSerial::flush(
-	void
-	)
+    void
+    )
 {
-	_current_store_operation = _tx->StoreAsync();
+    _current_store_operation = _tx->StoreAsync();
 }
 
 uint16_t
 NetworkSerial::read(
-	void
-	)
+    void
+    )
 {
-	uint16_t c = static_cast<uint16_t>( -1 );
+    uint16_t c = static_cast<uint16_t>( -1 );
 
-	if( !connectionReady() ) {
-		return c;
-	}
+    if( !connectionReady() ) {
+        return c;
+    }
 
-	if( available() ) {
-		c = _rx->ReadByte();
-	}
-	else if( _current_load_operation->Status != Windows::Foundation::AsyncStatus::Started ) {
-		// Attempt to detect disconnection
-		if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
-		{
-			_connection_ready = false;
-			ConnectionLost();
-			return -1;
-		}
+    if( available() ) {
+        c = _rx->ReadByte();
+    }
+    else if( _current_load_operation->Status != Windows::Foundation::AsyncStatus::Started ) {
+        // Attempt to detect disconnection
+        if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
+        {
+            _connection_ready = false;
+            ConnectionLost();
+            return -1;
+        }
 
-		_current_load_operation = _rx->LoadAsync( 100 );
-	}
+        _current_load_operation = _rx->LoadAsync( 100 );
+    }
 
-	return c;
+    return c;
 }
 
 uint32_t
 NetworkSerial::write(
-	uint8_t c_
-	)
+    uint8_t c_
+    )
 {
-	// Check to see if connection is ready
-	if( !connectionReady() ) { return 0; }
+    // Check to see if connection is ready
+    if( !connectionReady() ) { return 0; }
 
-	// Attempt to detect disconnection
-	if( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-	{
-		_connection_ready = false;
-		ConnectionLost();
-		return 0;
-	}
+    // Attempt to detect disconnection
+    if( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+    {
+        _connection_ready = false;
+        ConnectionLost();
+        return 0;
+    }
 
-	_tx->WriteByte( c_ );
-	return 1;
+    _tx->WriteByte( c_ );
+    return 1;
 }
 
 //******************************************************************************
@@ -209,25 +209,25 @@ NetworkSerial::write(
 
 Concurrency::task<void>
 NetworkSerial::connectToHostAsync(
-	Windows::Networking::HostName ^host_,
-	uint16_t port_
-	)
+    Windows::Networking::HostName ^host_,
+    uint16_t port_
+    )
 {
-	_stream_socket = ref new StreamSocket();
-	_stream_socket->Control->KeepAlive = true;
-	return Concurrency::create_task( _stream_socket->ConnectAsync( host_, port_.ToString() ) )
-		.then( [ this ]()
-	{
-		_rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
-		_rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-		_current_load_operation = _rx->LoadAsync( 100 );
+    _stream_socket = ref new StreamSocket();
+    _stream_socket->Control->KeepAlive = true;
+    return Concurrency::create_task( _stream_socket->ConnectAsync( host_, port_.ToString() ) )
+        .then( [ this ]()
+    {
+        _rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
+        _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
+        _current_load_operation = _rx->LoadAsync( 100 );
 
-		// Enable TX
-		_tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
-		_current_store_operation = nullptr;
+        // Enable TX
+        _tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
+        _current_store_operation = nullptr;
 
-		// Set connection ready flag
-		_connection_ready = true;
-		ConnectionEstablished();
-	} );
+        // Set connection ready flag
+        _connection_ready = true;
+        ConnectionEstablished();
+    } );
 }

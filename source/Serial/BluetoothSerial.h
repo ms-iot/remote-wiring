@@ -33,20 +33,20 @@ public ref class BluetoothSerial sealed : public IStream
 {
 public:
     virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-	virtual event RemoteWiringConnectionCallback ^ConnectionLost;
-	virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    virtual event RemoteWiringConnectionCallback ^ConnectionLost;
+    virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
-	///<summary>
-	///A constructor which accepts a string corresponding to a device name or ID to connect to.
-	///</summary>
+    ///<summary>
+    ///A constructor which accepts a string corresponding to a device name or ID to connect to.
+    ///</summary>
     BluetoothSerial(
         Platform::String ^device_name_
         );
 
-	///<summary>
-	///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
-	///</summary>
+    ///<summary>
+    ///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
+    ///</summary>
     BluetoothSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
@@ -93,17 +93,17 @@ public:
         uint8_t c_
         );
 
-	///<summary>
-	///Returns true if the connection is currently established
-	///</summary>
+    ///<summary>
+    ///Returns true if the connection is currently established
+    ///</summary>
     bool
     connectionReady(
         void
         );
 
-	///<summary>
-	///Begins an asyncronous request for all Bluetooth devices that are paired and may be used to attempt a device connection.
-	///</summary>
+    ///<summary>
+    ///Begins an asyncronous request for all Bluetooth devices that are paired and may be used to attempt a device connection.
+    ///</summary>
     static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(

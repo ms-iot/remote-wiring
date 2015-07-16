@@ -30,47 +30,47 @@ using namespace Microsoft::Maker::RemoteWiring::I2c;
 
 void
 TwoWire::enable(
-	uint16_t i2cReadDelayMicros_
-	)
+    uint16_t i2cReadDelayMicros_
+    )
 {
-	_firmata->lock();
-	_firmata->beginSysex( static_cast<uint8_t>( SysexCommand::I2C_CONFIG ) );
-	_firmata->appendSysex( ( i2cReadDelayMicros_ > MAX_READ_DELAY_MICROS ) ? MAX_READ_DELAY_MICROS : i2cReadDelayMicros_ );
-	_firmata->endSysex();
-	_firmata->unlock();
+    _firmata->lock();
+    _firmata->beginSysex( static_cast<uint8_t>( SysexCommand::I2C_CONFIG ) );
+    _firmata->appendSysex( ( i2cReadDelayMicros_ > MAX_READ_DELAY_MICROS ) ? MAX_READ_DELAY_MICROS : i2cReadDelayMicros_ );
+    _firmata->endSysex();
+    _firmata->unlock();
 }
 
 
 void
 TwoWire::beginTransmission(
-	uint8_t address_
-	)
+    uint8_t address_
+    )
 {
-	if( _address ) return;
-	_address = address_;
-	_position = 0;
+    if( _address ) return;
+    _address = address_;
+    _position = 0;
 }
 
 void
 TwoWire::write(
-	uint8_t data_
-	)
+    uint8_t data_
+    )
 {
-	if( !_address || _position > MAX_MESSAGE_LEN ) return;
-	_data_buffer.get()[_position] = data_;
-	++_position;
+    if( !_address || _position > MAX_MESSAGE_LEN ) return;
+    _data_buffer.get()[_position] = data_;
+    ++_position;
 }
 
 
 void
 TwoWire::endTransmission(
-	void
-	)
+    void
+    )
 {
-	if( !_address ) return;
-	sendI2cSysex( _address, 0, _position, _data_buffer.get() );
-	_address = 0;
-	_position = 0;
+    if( !_address ) return;
+    sendI2cSysex( _address, 0, _position, _data_buffer.get() );
+    _address = 0;
+    _position = 0;
 }
 
 
@@ -80,36 +80,36 @@ TwoWire::endTransmission(
 
 void
 TwoWire::sendI2cSysex(
-	const uint8_t address_,
-	const uint8_t rw_mask_,
-	const uint8_t len_,
-	uint8_t *data_
-	)
+    const uint8_t address_,
+    const uint8_t rw_mask_,
+    const uint8_t len_,
+    uint8_t *data_
+    )
 {
-	_firmata->lock();
-	_firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-	_firmata->write( static_cast<uint8_t>( Microsoft::Maker::Firmata::SysexCommand::I2C_REQUEST ) );
-	_firmata->write( address_ );
-	_firmata->write( rw_mask_ );
+    _firmata->lock();
+    _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+    _firmata->write( static_cast<uint8_t>( Microsoft::Maker::Firmata::SysexCommand::I2C_REQUEST ) );
+    _firmata->write( address_ );
+    _firmata->write( rw_mask_ );
 
-	if( data_ != nullptr )
-	{
-		for( size_t i = 0; i < len_; ++i )
-		{
-			_firmata->sendValueAsTwo7bitBytes( data_[i] );
-		}
-	}
+    if( data_ != nullptr )
+    {
+        for( size_t i = 0; i < len_; ++i )
+        {
+            _firmata->sendValueAsTwo7bitBytes( data_[i] );
+        }
+    }
 
-	_firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
-	_firmata->flush();
-	_firmata->unlock();
+    _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    _firmata->flush();
+    _firmata->unlock();
 }
 
 
 void
 TwoWire::onI2cReply(
-	I2cCallbackEventArgs ^args
-	)
+    I2cCallbackEventArgs ^args
+    )
 {
-	I2cReplyEvent( args->getAddress(), args->getRegister(), Windows::Storage::Streams::DataReader::FromBuffer( args->getDataBuffer() ) );
+    I2cReplyEvent( args->getAddress(), args->getRegister(), Windows::Storage::Streams::DataReader::FromBuffer( args->getDataBuffer() ) );
 }

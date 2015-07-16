@@ -50,8 +50,8 @@ UsbSerial::UsbSerial(
     _device_collection(nullptr),
     _pid(nullptr),
     _rx(nullptr),
-	_serial_device(nullptr),
-	_tx(nullptr),
+    _serial_device(nullptr),
+    _tx(nullptr),
     _vid(vid_)
 {
 }
@@ -69,8 +69,8 @@ UsbSerial::UsbSerial(
     _device_collection(nullptr),
     _pid(pid_),
     _rx(nullptr),
-	_serial_device(nullptr),
-	_tx(nullptr),
+    _serial_device(nullptr),
+    _tx(nullptr),
     _vid(vid_)
 {
 }
@@ -100,11 +100,11 @@ UsbSerial::~UsbSerial(
     void
     )
 {
-	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
-	if( connectionReady() )
-	{
-		ConnectionLost();
-	}
+    //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+    if( connectionReady() )
+    {
+        ConnectionLost();
+    }
     end();
 }
 
@@ -199,7 +199,7 @@ UsbSerial::end(
     _rx = nullptr;
     delete(_tx); //_tx->Close();
     _tx = nullptr;
-	_serial_device = nullptr;
+    _serial_device = nullptr;
     _device_collection = nullptr;
 }
 
@@ -286,15 +286,15 @@ UsbSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::SerialCommunication::SerialDevice ^serial_device_)
     {
-		if( serial_device_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
-		}
+        if( serial_device_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
+        }
 
         // Store parameter as a member to ensure the duration of object allocation
         _serial_device = serial_device_;
 
-		// Configure the device properties
+        // Configure the device properties
         _serial_device->Handshake = SerialHandshake::None;
         _serial_device->BaudRate = _baud;
 
