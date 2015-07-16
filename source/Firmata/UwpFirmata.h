@@ -191,14 +191,6 @@ public:
     );
 
     ///<summary>
-    ///This function appends one byte to the current blob message
-    ///</summary>
-    bool
-    appendBlob(
-        uint8_t byte_
-    );
-
-    ///<summary>
     ///This function appends one byte to the current sysex message
     ///</summary>
     bool
@@ -223,28 +215,11 @@ public:
     );
 
     ///<summary>
-    ///Begins a blob message, which will allow for performance improvements by sending 7-bit bytes.
-    ///<para>You must never use byte values larger than 127 when using this function.</para>
-    ///</summary>
-    bool
-    beginBlob(
-        void
-    );
-
-    ///<summary>
     ///Begins a sysex message.
     ///</summary>
     bool
     beginSysex(
         uint8_t command_
-    );
-
-    ///<summary>
-    ///Ends a blob message, which will finalize and send the blob data.
-    ///</summary>
-    bool
-    endBlob(
-        void
     );
 
     ///<summary>
@@ -490,11 +465,6 @@ internal:
     const size_t MAX_SYSEX_LEN = 15;
     uint8_t _sys_command;
     uint8_t _sys_position;
-
-    //blob-related
-    const size_t MAX_BLOB_LEN = 31;
-    bool _blob_started;
-    uint8_t _blob_position;
 
     //common buffer
     std::unique_ptr<uint8_t> _data_buffer;

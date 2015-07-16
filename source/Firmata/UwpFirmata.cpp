@@ -46,8 +46,6 @@ namespace {
 UwpFirmata::UwpFirmata(
     void
 ):
-    _blob_started(false),
-    _blob_position(0),
     _data_buffer(new uint8_t[31]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
@@ -116,8 +114,6 @@ UwpFirmata::finish(
     if (_input_thread.joinable()) { _input_thread.join(); }
     _input_thread_should_exit = false;
 
-    _blob_started = false;
-    _blob_position = 0;
     _firmata_stream = nullptr;
     _sys_command = 0;
     _sys_position = 0;
@@ -250,7 +246,6 @@ UwpFirmata::beginSysex(
     uint8_t command_
     )
 {
-    if( _blob_started ) return false;
     _sys_command = command_;
     _sys_position = 0;
     return true;
@@ -262,7 +257,7 @@ UwpFirmata::appendSysex(
     uint8_t byte_
     )
 {
-    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) && !_blob_started )
+    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
     {
         _data_buffer.get()[_sys_position] = byte_;
         ++_sys_position;
@@ -277,7 +272,7 @@ UwpFirmata::endSysex(
     void
     )
 {
-    if( _sys_command && !_blob_started )
+    if( _sys_command )
     {
         ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get());
         _firmata_stream->flush();
@@ -286,58 +281,6 @@ UwpFirmata::endSysex(
         return true;
     }
     return false;
-}
-
-
-bool
-UwpFirmata::beginBlob(
-    void
-    )
-{
-    if( _sys_command ) return false;
-
-    _blob_started = true;
-    _blob_position = 0;
-    return true;
-}
-
-
-bool
-UwpFirmata::appendBlob(
-    uint8_t byte_
-    )
-{
-    if( !_blob_started || _sys_command ) return false;
-
-    if( _blob_position >= MAX_BLOB_LEN )
-    {
-        endBlob();
-        beginBlob();
-    }
-
-    _data_buffer.get()[_blob_position] = byte_ & 0x7F;
-    ++_blob_position;
-    return true;
-}
-
-
-bool
-UwpFirmata::endBlob(
-    void
-    )
-{
-    if( !_blob_started || _sys_command ) return false;
-
-    ::RawFirmata.write( static_cast<byte>( START_SYSEX ) );
-    ::RawFirmata.write( static_cast<byte>( SYSEX_BLOB_COMMAND ) );
-    for( uint8_t i = 0; i < _blob_position; ++i )
-    {
-        ::RawFirmata.write( _data_buffer.get()[i] );
-    }
-    ::RawFirmata.write( static_cast<byte>( END_SYSEX ) );
-    _blob_position = 0;
-    _blob_started = false;
-    return true;
 }
 
 
