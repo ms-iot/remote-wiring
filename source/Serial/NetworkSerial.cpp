@@ -152,6 +152,11 @@ NetworkSerial::flush(
     )
 {
     _current_store_operation = _tx->StoreAsync();
+    create_task( _current_store_operation )
+        .then( [ this ]( unsigned int value_ )
+    {
+        return _tx->FlushAsync();
+    } );
 }
 
 uint16_t

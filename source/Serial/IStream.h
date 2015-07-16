@@ -63,9 +63,9 @@ public delegate void RemoteWiringConnectionFailedCallback(Platform::String ^mess
 
 public interface struct IStream
 {
-    event RemoteWiringConnectionCallback ^ConnectionEstablished;
-    event RemoteWiringConnectionCallback ^ConnectionLost;
-    event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
+    virtual event RemoteWiringConnectionCallback ^ConnectionLost;
+    virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
 
     ///<summary>
     ///Returns the number of bytes available to be read

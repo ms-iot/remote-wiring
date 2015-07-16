@@ -163,11 +163,14 @@ private:
     static const int MAX_PINS = 128;
     static const int ANALOG_PINS = 6;
 
+    //initialization for constructor
+    void const initialize();
+
     //a reference to the UAP firmata interface
     Firmata::UwpFirmata ^_firmata;
 
-    //initialization for constructor
-    void const initialize();
+	//a mutex for thread safety
+    std::mutex _device_mutex;
 
     //reporting callbacks
     void onDigitalReport( Firmata::CallbackEventArgs ^argv );
