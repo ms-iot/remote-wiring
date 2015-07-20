@@ -34,8 +34,8 @@ public ref class UsbSerial sealed : public IStream
 {
 public:
     virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-    virtual event RemoteWiringConnectionCallback ^ConnectionLost;
-    virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionLost;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
     ///<summary>

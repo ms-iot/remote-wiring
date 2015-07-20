@@ -64,7 +64,7 @@ NetworkSerial::~NetworkSerial(
     //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
     if( connectionReady() )
     {
-        ConnectionLost();
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::NetworkSerial destructor was called unexpectedly." );
     }
     end();
 }
@@ -178,7 +178,7 @@ NetworkSerial::read(
         if( _current_load_operation->Status == Windows::Foundation::AsyncStatus::Error )
         {
             _connection_ready = false;
-            ConnectionLost();
+            ConnectionLost( L"A fatal error has occurred in NetworkSerial::read() and your connection has been lost." );
             return -1;
         }
 
@@ -200,7 +200,7 @@ NetworkSerial::write(
     if( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
     {
         _connection_ready = false;
-        ConnectionLost();
+        ConnectionLost( L"A fatal error has occurred in NetworkSerial::write() and your connection has been lost." );
         return 0;
     }
 

@@ -79,7 +79,7 @@ BluetoothSerial::~BluetoothSerial(
     //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
     if( connectionReady() )
     {
-        ConnectionLost();
+        ConnectionLost( "Your connection has been terminated. The Microsoft::Maker::Serial::BluetoothSerial destructor was called unexpectedly." );
     }
     end();
 }
@@ -236,7 +236,7 @@ BluetoothSerial::read(
         if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
         {
             _connection_ready = false;
-            ConnectionLost();
+            ConnectionLost( L"A fatal error has occurred in BluetoothSerial::read() and your connection has been lost." );
             return -1;
         }
 
@@ -258,7 +258,7 @@ BluetoothSerial::write(
     if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
     {
         _connection_ready = false;
-        ConnectionLost();
+        ConnectionLost( L"A fatal error has occurred in BluetoothSerial::write() and your connection has been lost." );
         return 0;
     }
 

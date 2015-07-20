@@ -59,13 +59,13 @@ public enum class SerialConfig {
 };
 
 public delegate void RemoteWiringConnectionCallback();
-public delegate void RemoteWiringConnectionFailedCallback(Platform::String ^message);
+public delegate void RemoteWiringConnectionCallbackWithMessage(Platform::String ^message);
 
 public interface struct IStream
 {
     virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-    virtual event RemoteWiringConnectionCallback ^ConnectionLost;
-    virtual event RemoteWiringConnectionFailedCallback ^ConnectionFailed;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionLost;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionFailed;
 
     ///<summary>
     ///Returns the number of bytes available to be read

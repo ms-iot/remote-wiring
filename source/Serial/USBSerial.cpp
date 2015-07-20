@@ -103,7 +103,7 @@ UsbSerial::~UsbSerial(
     //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
     if( connectionReady() )
     {
-        ConnectionLost();
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::UsbSerial destructor was called unexpectedly." );
     }
     end();
 }
@@ -249,7 +249,7 @@ UsbSerial::read(
         if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
         {
             _connection_ready = false;
-            ConnectionLost();
+            ConnectionLost( L"A fatal error has occurred in UsbSerial::read() and your connection has been lost." );
             return -1;
         }
 
@@ -271,7 +271,7 @@ UsbSerial::write(
     if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
     {
         _connection_ready = false;
-        ConnectionLost();
+        ConnectionLost( L"A fatal error has occurred in UsbSerial::write() and your connection has been lost." );
         return 0;
     }
 

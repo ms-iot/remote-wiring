@@ -79,7 +79,7 @@ DfRobotBleSerial::~DfRobotBleSerial(
     //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
     if( connectionReady() )
     {
-        ConnectionLost();
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::DfRobotBleSerial destructor was called unexpectedly." );
     }
     end();
 }
@@ -196,7 +196,7 @@ DfRobotBleSerial::flush(
         case GattCommunicationStatus::Success:
             break;
         case GattCommunicationStatus::Unreachable:
-            ConnectionLost();
+            ConnectionLost( L"Your connection has been lost. The device is no longer available." );
             break;
         default:
             break;
