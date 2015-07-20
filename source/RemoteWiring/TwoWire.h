@@ -42,7 +42,7 @@ public:
     event I2cReplyCallback ^ I2cReplyEvent;
 
     ///<summary>
-    ///Enables I2C with no delay time for requesting a response from the slave device
+    ///Enables I2C with no delay time for requesting a response from the secondary device
     ///</summary>
     void
     inline
@@ -55,7 +55,7 @@ public:
 
 
     ///<summary>
-    ///Enables I2C with a given delay time for requesting a response from the slave device
+    ///Enables I2C with a given delay time for requesting a response from the secondary device
     ///</summary>
     void
     enable(
