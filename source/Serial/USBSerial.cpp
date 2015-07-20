@@ -209,11 +209,6 @@ UsbSerial::flush(
     )
 {
     _current_store_operation = _tx->StoreAsync();
-    create_task( _current_store_operation )
-        .then( [ this ]( unsigned int value_ )
-    {
-        return _tx->FlushAsync();
-    } );
 }
 
 /// \details An Advanced Query String is constructed based upon paired usb devices. Then a collection is returned of all devices matching the query.

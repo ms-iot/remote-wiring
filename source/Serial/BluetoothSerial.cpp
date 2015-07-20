@@ -199,6 +199,21 @@ BluetoothSerial::flush(
         .then( [ this ]( unsigned int value_ )
     {
         return _tx->FlushAsync();
+    } )
+        .then( [ this ]( task<bool> task_ )
+    {
+        try
+        {
+            task_.get();
+        }
+        catch( Platform::Exception ^e )
+        {
+            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+            {
+                _connection_ready = false;
+                ConnectionLost( L"A fatal error occurred while writing data. Your connection has been lost. Error: " + e->Message );
+            }
+        }
     } );
 }
 
