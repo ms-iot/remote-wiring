@@ -162,14 +162,18 @@ NetworkSerial::flush(
         try
         {
             task_.get();
-        }
-        catch( Platform::Exception ^e )
-        {
+
+            //detect disconnection
             if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
             {
                 _connection_ready = false;
-                ConnectionLost( L"A fatal error occurred while writing data. Your connection has been lost. Error: " + e->Message );
+                ConnectionLost( L"A fatal error has occurred in NetworkSerial::flush() and your connection has been lost." );
             }
+        }
+        catch( Platform::Exception ^e )
+        {
+            _connection_ready = false;
+            ConnectionLost( L"A fatal error has occurred in NetworkSerial::flush() and your connection has been lost. Error: " + e->Message );
         }
     } );
 }
@@ -210,14 +214,6 @@ NetworkSerial::write(
 {
     // Check to see if connection is ready
     if( !connectionReady() ) { return 0; }
-
-    // Attempt to detect disconnection
-    if( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-    {
-        _connection_ready = false;
-        ConnectionLost( L"A fatal error has occurred in NetworkSerial::write() and your connection has been lost." );
-        return 0;
-    }
 
     _tx->WriteByte( c_ );
     return 1;

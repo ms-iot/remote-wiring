@@ -209,6 +209,17 @@ UsbSerial::flush(
     )
 {
     _current_store_operation = _tx->StoreAsync();
+    create_task( _current_store_operation )
+        .then( [this]( task<unsigned int> task_ )
+    {
+        //detect disconnection
+        if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+        {
+            _connection_ready = false;
+            ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
+            return 0;
+        }
+    } );
 }
 
 /// \details An Advanced Query String is constructed based upon paired usb devices. Then a collection is returned of all devices matching the query.
@@ -261,14 +272,6 @@ UsbSerial::write(
 {
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
-
-    // Attempt to detect disconnection
-    if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-    {
-        _connection_ready = false;
-        ConnectionLost( L"A fatal error has occurred in UsbSerial::write() and your connection has been lost." );
-        return 0;
-    }
 
     _tx->WriteByte(c_);
     return 1;
