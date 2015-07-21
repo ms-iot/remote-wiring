@@ -169,7 +169,7 @@ private:
     //a reference to the UAP firmata interface
     Firmata::UwpFirmata ^_firmata;
 
-	//a mutex for thread safety
+    //a mutex for thread safety
     std::mutex _device_mutex;
 
     //reporting callbacks

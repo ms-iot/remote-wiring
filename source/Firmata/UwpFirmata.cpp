@@ -111,8 +111,6 @@ UwpFirmata::finish(
     _firmata_lock.lock();
     _firmata_stream->flush();
     stopThreads();
-    if (_input_thread.joinable()) { _input_thread.join(); }
-    _input_thread_should_exit = false;
 
     _firmata_stream = nullptr;
     _sys_command = 0;
@@ -342,4 +340,6 @@ UwpFirmata::stopThreads(
     )
 {
     _input_thread_should_exit = true;
+    if( _input_thread.joinable() ) { _input_thread.join(); }
+    _input_thread_should_exit = false;
 }

@@ -79,7 +79,7 @@ BluetoothSerial::~BluetoothSerial(
     //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
     if( connectionReady() )
     {
-        ConnectionLost( "Your connection has been terminated. The Microsoft::Maker::Serial::BluetoothSerial destructor was called unexpectedly." );
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::BluetoothSerial destructor was called unexpectedly." );
     }
     end();
 }
@@ -259,7 +259,7 @@ BluetoothSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
     }
 
     return c;
@@ -309,7 +309,7 @@ BluetoothSerial::connectToDeviceAsync(
             // Enable RX
             _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
             _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-            _current_load_operation = _rx->LoadAsync(100);
+            _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
 
             // Enable TX
             _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);

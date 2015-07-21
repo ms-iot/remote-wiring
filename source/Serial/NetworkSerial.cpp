@@ -201,7 +201,7 @@ NetworkSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync( 100 );
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
     }
 
     return c;
@@ -236,7 +236,7 @@ NetworkSerial::connectToHostAsync(
     {
         _rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
         _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-        _current_load_operation = _rx->LoadAsync( 100 );
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );

@@ -319,10 +319,10 @@ RemoteDevice::initialize(
     _firmata->SysexEvent += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
     _firmata->StringEvent += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
 
-    for( int i = 0; i < sizeof( _digital_port ); ++i ) { _digital_port[i] = 0; }
-    for( int i = 0; i < sizeof( _subscribed_ports ); ++i ) { _subscribed_ports[i] = 0; }
-    for( int i = 0; i < sizeof( _analog_pins ); ++i ) { _analog_pins[i] = 0; }
-    for( int i = 0; i < sizeof( _pin_mode ); ++i ) { _pin_mode[i] = static_cast<uint8_t>( PinMode::OUTPUT ); }
+    memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
+    memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
+    memset( (void*)_analog_pins, 0, sizeof( _analog_pins ) );
+    memset( (void*)_pin_mode, static_cast<uint8_t>( PinMode::OUTPUT ), sizeof( _pin_mode ) );
 }
 
 void

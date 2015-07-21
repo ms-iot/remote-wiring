@@ -134,11 +134,12 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         using namespace Microsoft.Maker.Serial;
 
 		//create a bluetooth connection and pass it to the RemoteDevice
+		//I am using a constructor that accepts a device name or ID.
 		IStream connection = new BluetoothSerial( "MyBluetoothDevice" );
         RemoteDevice arduino = new RemoteDevice( connection );
 		
 		//always begin your IStream
-		bt.begin( 115200, 0 );
+		bt.begin( 115200, SerialConfig.SERIAL_8N1 );
 
         arduino.pinMode( 7, PinMode.OUTPUT );
         arduino.pinMode( 9, PinMode.INPUT );
@@ -159,7 +160,7 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         RemoteDevice ^arduino = ref new RemoteDevice( connection );
 		
 		//always begin your IStream
-		connection->begin( 115200, 0 );
+		connection->begin( 115200, SerialConfig::SERIAL_8N1 );
 
         arduino->pinMode( 7, PinMode::OUTPUT );
         arduino->pinMode( 9, PinMode::INPUT );

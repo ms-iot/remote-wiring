@@ -212,12 +212,21 @@ UsbSerial::flush(
     create_task( _current_store_operation )
         .then( [this]( task<unsigned int> task_ )
     {
-        //detect disconnection
-        if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+        try
+        {
+            task_.get();
+
+            //detect disconnection
+            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+            {
+                _connection_ready = false;
+                ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
+            }
+        }
+        catch( Platform::Exception ^ )
         {
             _connection_ready = false;
             ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
-            return 0;
         }
     } );
 }
@@ -259,7 +268,7 @@ UsbSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
     }
 
     return c;
@@ -427,7 +436,7 @@ UsbSerial::connectToDeviceAsync(
         // Enable RX
         _rx = ref new Windows::Storage::Streams::DataReader(_serial_device->InputStream);
         _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter(_serial_device->OutputStream);

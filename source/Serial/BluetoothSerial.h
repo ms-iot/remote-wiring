@@ -111,6 +111,9 @@ public:
         );
 
 private:
+    //maximum amount of data that may be read at a time, allows efficient reads
+    static const uint8_t READ_CHUNK_SIZE = 100;
+
     // Device specific members (set during instantation)
     Windows::Devices::Enumeration::DeviceInformation ^_device;
     Platform::String ^_device_name;
