@@ -148,7 +148,7 @@ therefore, to set only pin 2 `HIGH`, and all other pins of port 0 `LOW`, we woul
 
 The sysex example was far more simple than what you would *typically* do with sysex. It was just an example of *how* do use it. Let's accomplish the same thing using ports!
 
-Here is another look at the toggleAllDigitalPins function, reimplemented using ports instead of sysex.
+Here is another look at the toggleAllDigitalPins function, reimplemented using ports instead of sysex. `sendDigitalPort` accepts two `uint8_t` parameters; The first parameter represents the port number, while the second parameter is a bitmask representing the state of the 8 pins in that port. The lowest numbered pin is represented in the LSB position of the mask, and the highest numbered pin in the MSB position.
 
 ```c#
 public void toggleAllDigitalPins( bool setPinsHigh )
@@ -163,8 +163,8 @@ public void toggleAllDigitalPins( bool setPinsHigh )
 	}
 	else
 	{
-		firmata.sendDigitalPort( 0, 0 );	//all pins low
-		firmata.sendDigitalPort( 1, 0 );	//all pins low
+		firmata.sendDigitalPort( 0, 0x00 );	//all pins low
+		firmata.sendDigitalPort( 1, 0x00 );	//all pins low
 	}
 }
 ```

@@ -286,8 +286,8 @@ public:
     ///</summary>
     void
     sendAnalog(
-        uint8_t pin,
-        int value
+        uint8_t pin_,
+        uint16_t value
     );
 
     ///<summary>
@@ -295,8 +295,8 @@ public:
     ///</summary>
     void
     sendDigitalPort(
-        uint8_t portNumber,
-        int portData
+        uint8_t portNumber_,
+        uint8_t portData_
     );
 
     ///<summary>

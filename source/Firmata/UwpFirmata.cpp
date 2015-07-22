@@ -188,7 +188,7 @@ UwpFirmata::processInput(
 void
 UwpFirmata::sendAnalog(
     uint8_t pin_,
-    int value_
+    uint16_t value_
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
@@ -201,7 +201,7 @@ UwpFirmata::sendAnalog(
 void
 UwpFirmata::sendDigitalPort(
     uint8_t portNumber_,
-    int portData_
+    uint8_t portData_
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
