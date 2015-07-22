@@ -50,8 +50,8 @@ UsbSerial::UsbSerial(
     _device_collection(nullptr),
     _pid(nullptr),
     _rx(nullptr),
-	_serial_device(nullptr),
-	_tx(nullptr),
+    _serial_device(nullptr),
+    _tx(nullptr),
     _vid(vid_)
 {
 }
@@ -69,8 +69,8 @@ UsbSerial::UsbSerial(
     _device_collection(nullptr),
     _pid(pid_),
     _rx(nullptr),
-	_serial_device(nullptr),
-	_tx(nullptr),
+    _serial_device(nullptr),
+    _tx(nullptr),
     _vid(vid_)
 {
 }
@@ -100,11 +100,11 @@ UsbSerial::~UsbSerial(
     void
     )
 {
-	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
-	if( connectionReady() )
-	{
-		ConnectionLost();
-	}
+    //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+    if( connectionReady() )
+    {
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::UsbSerial destructor was called unexpectedly." );
+    }
     end();
 }
 
@@ -199,7 +199,7 @@ UsbSerial::end(
     _rx = nullptr;
     delete(_tx); //_tx->Close();
     _tx = nullptr;
-	_serial_device = nullptr;
+    _serial_device = nullptr;
     _device_collection = nullptr;
 }
 
@@ -209,6 +209,26 @@ UsbSerial::flush(
     )
 {
     _current_store_operation = _tx->StoreAsync();
+    create_task( _current_store_operation )
+        .then( [this]( task<unsigned int> task_ )
+    {
+        try
+        {
+            task_.get();
+
+            //detect disconnection
+            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+            {
+                _connection_ready = false;
+                ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
+            }
+        }
+        catch( Platform::Exception ^ )
+        {
+            _connection_ready = false;
+            ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
+        }
+    } );
 }
 
 /// \details An Advanced Query String is constructed based upon paired usb devices. Then a collection is returned of all devices matching the query.
@@ -244,11 +264,11 @@ UsbSerial::read(
         if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
         {
             _connection_ready = false;
-            ConnectionLost();
+            ConnectionLost( L"A fatal error has occurred in UsbSerial::read() and your connection has been lost." );
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
     }
 
     return c;
@@ -261,14 +281,6 @@ UsbSerial::write(
 {
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
-
-    // Attempt to detect disconnection
-    if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-    {
-        _connection_ready = false;
-        ConnectionLost();
-        return 0;
-    }
 
     _tx->WriteByte(c_);
     return 1;
@@ -286,15 +298,15 @@ UsbSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::SerialCommunication::SerialDevice ^serial_device_)
     {
-		if( serial_device_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
-		}
+        if( serial_device_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
+        }
 
         // Store parameter as a member to ensure the duration of object allocation
         _serial_device = serial_device_;
 
-		// Configure the device properties
+        // Configure the device properties
         _serial_device->Handshake = SerialHandshake::None;
         _serial_device->BaudRate = _baud;
 
@@ -424,7 +436,7 @@ UsbSerial::connectToDeviceAsync(
         // Enable RX
         _rx = ref new Windows::Storage::Streams::DataReader(_serial_device->InputStream);
         _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter(_serial_device->OutputStream);

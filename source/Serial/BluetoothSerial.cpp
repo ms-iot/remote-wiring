@@ -76,11 +76,11 @@ BluetoothSerial::~BluetoothSerial(
     void
     )
 {
-	//we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
-	if( connectionReady() )
-	{
-		ConnectionLost();
-	}
+    //we will fire the ConnectionLost event in the case that this object is unexpectedly destructed while the connection is established.
+    if( connectionReady() )
+    {
+        ConnectionLost( L"Your connection has been terminated. The Microsoft::Maker::Serial::BluetoothSerial destructor was called unexpectedly." );
+    }
     end();
 }
 
@@ -121,10 +121,10 @@ BluetoothSerial::begin(
     Concurrency::create_task(listAvailableDevicesAsync())
         .then([this](Windows::Devices::Enumeration::DeviceInformationCollection ^device_collection_)
     {
-		if( device_collection_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. DeviceInformation::FindAllAsync returned null." ) );
-		}
+        if( device_collection_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. DeviceInformation::FindAllAsync returned null." ) );
+        }
 
         // If a friendly name was specified, then identify the associated device
         if (_device_name) {
@@ -195,6 +195,30 @@ BluetoothSerial::flush(
     )
 {
     _current_store_operation = _tx->StoreAsync();
+    create_task( _current_store_operation )
+        .then( [ this ]( unsigned int value_ )
+    {
+        return _tx->FlushAsync();
+    } )
+        .then( [ this ]( task<bool> task_ )
+    {
+        try
+        {
+            task_.get();
+
+            //detect disconnection
+            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+            {
+                _connection_ready = false;
+                ConnectionLost( L"A fatal error has occurred in BluetoothSerial::flush() and your connection has been lost." );
+            }
+        }
+        catch( Platform::Exception ^e )
+        {
+            _connection_ready = false;
+            ConnectionLost( L"A fatal error occurred in BluetoothSerial::flush(). Your connection has been lost. Error: " + e->Message );
+        }
+    } );
 }
 
 /// \details An Advanced Query String is constructed based upon paired bluetooth devices. Then a collection is returned of all devices matching the query.
@@ -231,11 +255,11 @@ BluetoothSerial::read(
         if (_current_load_operation->Status == Windows::Foundation::AsyncStatus::Error)
         {
             _connection_ready = false;
-            ConnectionLost();
+            ConnectionLost( L"A fatal error has occurred in BluetoothSerial::read() and your connection has been lost." );
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync(100);
+        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
     }
 
     return c;
@@ -248,14 +272,6 @@ BluetoothSerial::write(
 {
     // Check to see if connection is ready
     if ( !connectionReady() ) { return 0; }
-
-    // Attempt to detect disconnection
-    if ( _current_store_operation && _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-    {
-        _connection_ready = false;
-        ConnectionLost();
-        return 0;
-    }
 
     _tx->WriteByte(c_);
     return 1;
@@ -275,10 +291,10 @@ BluetoothSerial::connectToDeviceAsync(
     return Concurrency::create_task(Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService::FromIdAsync(device_->Id))
         .then([this](Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^rfcomm_service_)
     {
-		if( rfcomm_service_ == nullptr )
-		{
-			throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. RfcommDeviceService::FromIdAsync returned null." ) );
-		}
+        if( rfcomm_service_ == nullptr )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. RfcommDeviceService::FromIdAsync returned null." ) );
+        }
 
         // Store parameter as a member to ensure the duration of object allocation
         _rfcomm_service = rfcomm_service_;
@@ -293,7 +309,7 @@ BluetoothSerial::connectToDeviceAsync(
             // Enable RX
             _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
             _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-            _current_load_operation = _rx->LoadAsync(100);
+            _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
 
             // Enable TX
             _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);

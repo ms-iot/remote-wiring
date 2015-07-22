@@ -37,96 +37,110 @@ public delegate void I2cReplyCallback( uint8_t address_, uint8_t reg_, Windows::
 public ref class TwoWire sealed
 {
 public:
-	friend ref class RemoteDevice;
+    friend ref class RemoteDevice;
 
-	event I2cReplyCallback ^ I2cReplyEvent;
+    event I2cReplyCallback ^ I2cReplyEvent;
 
-	/// <summary>Enables I2C with no delay time for requesting a response from the slave device</summary>
-	void
-	inline
-	enable(
-		void
-		)
-	{
-		enable( 0 );
-	}
-
-	
-	/// <summary>Enables I2C with a given delay time for requesting a response from the slave device</summary>
-	void
-	enable(
-		uint16_t i2cReadDelayMicros_
-	);
-
-	
-	/// <summary>Begins an I2C transmission to the given device address</summary>
-	void
-	beginTransmission(
-		uint8_t address_
-	);
+    ///<summary>
+    ///Enables I2C with no delay time for requesting a response from the secondary device
+    ///</summary>
+    void
+    inline
+    enable(
+        void
+        )
+    {
+        enable( 0 );
+    }
 
 
-	/// <summary>Writes raw byte data to the device
-	/// <para>You must have an active device transmission open. Begin a new transmission with beginTransmission( uint8_t )</summary>
-	void
-	write(
-		uint8_t data_
-	);
+    ///<summary>
+    ///Enables I2C with a given delay time for requesting a response from the secondary device
+    ///</summary>
+    void
+    enable(
+        uint16_t i2cReadDelayMicros_
+    );
+
+    
+    ///<summary>
+    ///Begins an I2C transmission to the given device address.
+    ///</summary>
+    void
+    beginTransmission(
+        uint8_t address_
+    );
 
 
-	/// <summary>ends an I2C transmission</summary>
-	void
-	endTransmission(
-		void
-	);
+    ///<summary>
+    ///Writes raw byte data to the device
+    ///<para>You must have an active device transmission open. Begin a new transmission with beginTransmission( uint8_t )</para>
+    ///</summary>
+    void
+    write(
+        uint8_t data_
+    );
 
 
-	/// <summary>A one-time read which does not specify a register</summary>
-	inline
-	void
-	requestFrom(
-		uint8_t address_,
-		uint8_t numBytes_
-		) 
-	{
-		sendI2cSysex( address_, 0x08, 1, &numBytes_ );
-	}
+    ///<summary>
+    ///ends an I2C transmission
+    ///</summary>
+    void
+    endTransmission(
+        void
+    );
+
+
+    ///<summary>
+    ///A one-time read which will request the given number of bytes from the device.
+    ///<para>The device's response will be provided in the form of an I2cReplyEvent. You must subscribe
+    ///to this event with a delegate function in order to be alerted of your reply.</para>
+    ///</summary>
+    inline
+    void
+    requestFrom(
+        uint8_t address_,
+        uint8_t numBytes_
+        ) 
+    {
+        sendI2cSysex( address_, 0x08, 1, &numBytes_ );
+    }
 
 private:
-	//since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire
-	const uint16_t MAX_READ_DELAY_MICROS = 0x3FFF;
-	const size_t MAX_MESSAGE_LEN = 15;
+    //since 16 bit values are sent as two 7 bit bytes, you can't send a value larger than this across the wire
+    const uint16_t MAX_READ_DELAY_MICROS = 0x3FFF;
+    const size_t MAX_MESSAGE_LEN = 15;
 
-	//singleton pattern w/ friend class to instantiate
-	TwoWire(
-		Firmata::UwpFirmata ^ firmata_
-		) :
-		_data_buffer( new uint8_t[ MAX_MESSAGE_LEN ] ),
-		_firmata( firmata_ )
-	{
-		_firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UwpFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
-	}
-	
-	//a reference to the UAP firmata interface
-	Firmata::UwpFirmata ^_firmata;
+    //singleton pattern w/ friend class to instantiate
+    TwoWire(
+        Firmata::UwpFirmata ^ firmata_
+        ) :
+        _data_buffer( new uint8_t[ MAX_MESSAGE_LEN ] ),
+        _firmata( firmata_ )
+    {
+        _firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UwpFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
+    }
+    
+    //a reference to the UAP firmata interface
+    Firmata::UwpFirmata ^_firmata;
 
-	//transmission-building variables
-	uint8_t _address;
-	uint8_t _position;
-	std::unique_ptr<uint8_t> _data_buffer;
+    //transmission-building variables
+    uint8_t _address;
+    uint8_t _position;
+    std::unique_ptr<uint8_t> _data_buffer;
 
-	void
-	sendI2cSysex(
-		const uint8_t address_,
-		const uint8_t rw_mask_,
-		const uint8_t len_,
-		uint8_t *data_
-	);
+    void
+    sendI2cSysex(
+        const uint8_t address_,
+        const uint8_t rw_mask_,
+        const uint8_t len_,
+        uint8_t *data_
+    );
 
-	void
-	onI2cReply(
-		Firmata::I2cCallbackEventArgs ^argv
-	);
+    void
+    onI2cReply(
+        Firmata::I2cCallbackEventArgs ^argv
+    );
 };
 
 } // namespace I2c

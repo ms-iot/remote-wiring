@@ -35,28 +35,28 @@ using namespace Microsoft::Maker::RemoteWiring;
 //******************************************************************************
 
 RemoteDevice::RemoteDevice(
-	Serial::IStream ^serial_connection_
-	) :
-	_firmata( ref new Firmata::UwpFirmata ),
-	_twoWire( nullptr )
+    Serial::IStream ^serial_connection_
+    ) :
+    _firmata( ref new Firmata::UwpFirmata ),
+    _twoWire( nullptr )
 {
-	initialize();
-	_firmata->begin( serial_connection_ );
-	_firmata->startListening();
+    initialize();
+    _firmata->begin( serial_connection_ );
+    _firmata->startListening();
 }
 
 RemoteDevice::RemoteDevice(
-	Firmata::UwpFirmata ^firmata_
-	) :
-	_firmata( firmata_ ),
-	_twoWire( nullptr )
+    Firmata::UwpFirmata ^firmata_
+    ) :
+    _firmata( firmata_ ),
+    _twoWire( nullptr )
 {
-	initialize();
+    initialize();
 }
 
 RemoteDevice::~RemoteDevice()
 {
-	_firmata->finish();
+    _firmata->finish();
 }
 
 
@@ -66,9 +66,12 @@ RemoteDevice::~RemoteDevice()
 
 uint16_t
 RemoteDevice::analogRead(
-	uint8_t pin_
-	)
+    uint8_t pin_
+    )
 {
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _device_mutex );
+
     uint16_t val = -1;
 
     if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::ANALOG)) {
@@ -81,133 +84,147 @@ RemoteDevice::analogRead(
         }
     }
 
-	if( pin_ < MAX_PINS )
-	{
-		val = _analog_pins[ pin_ ];
-	}
+    if( pin_ < MAX_PINS )
+    {
+        val = _analog_pins[ pin_ ];
+    }
 
-	return val;
+    return val;
 }
 
 void
 RemoteDevice::analogWrite(
-	uint8_t pin_,
-	uint16_t value_
-	)
+    uint8_t pin_,
+    uint16_t value_
+    )
 {
-	if( _pin_mode[ pin_ ] != static_cast<uint8_t>( PinMode::PWM ) ) {
-		if( _pin_mode[ pin_ ] == static_cast<uint8_t>( PinMode::OUTPUT ) ) {
-			pinMode( pin_, PinMode::PWM );
-			_pin_mode[ pin_ ] = static_cast<uint8_t>( PinMode::PWM );
-		}
-		else {
-			return;
-		}
-	}
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _device_mutex );
 
-	_firmata->sendAnalog( pin_, value_ );
+    if( _pin_mode[ pin_ ] != static_cast<uint8_t>( PinMode::PWM ) ) {
+        if( _pin_mode[ pin_ ] == static_cast<uint8_t>( PinMode::OUTPUT ) ) {
+            pinMode( pin_, PinMode::PWM );
+            _pin_mode[ pin_ ] = static_cast<uint8_t>( PinMode::PWM );
+        }
+        else {
+            return;
+        }
+    }
+
+    _firmata->sendAnalog( pin_, value_ );
 }
 
 
 PinState
 RemoteDevice::digitalRead(
-	uint8_t pin_
-	)
+    uint8_t pin_
+    )
 {
-	int port;
-	uint8_t port_mask;
-	getPinMap( pin_, &port, &port_mask );
+    int port;
+    uint8_t port_mask;
+    getPinMap( pin_, &port, &port_mask );
 
-    if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::INPUT)) {
-        if (_pin_mode[pin_] == static_cast<uint8_t>(PinMode::ANALOG)) {
-            pinMode(pin_, PinMode::INPUT);
+    {   //critial section
+        std::lock_guard<std::mutex> lock( _device_mutex );
+        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) ) {
+            if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::ANALOG ) ) {
+                pinMode( pin_, PinMode::INPUT );
+            }
         }
-    }
 
-    return static_cast<PinState>( ( _digital_port[port] & port_mask ) > 0 );
+        return static_cast<PinState>( ( _digital_port[port] & port_mask ) > 0 );
+    }
 }
 
 
 void
 RemoteDevice::digitalWrite(
-	uint8_t pin_,
-	PinState state_
-	)
+    uint8_t pin_,
+    PinState state_
+    )
 {
-	int port;
-	uint8_t port_mask;
-	getPinMap( pin_, &port, &port_mask );
+    int port;
+    uint8_t port_mask;
+    getPinMap( pin_, &port, &port_mask );
 
-	if( _pin_mode[ pin_ ] != static_cast<uint8_t>( PinMode::OUTPUT ) ) {
-		if( _pin_mode[ pin_ ] == static_cast<uint8_t>( PinMode::PWM ) ) {
-			pinMode( pin_, PinMode::OUTPUT );
-		}
-		else {
-			return;
-		}
-	}
+    {   //critial section
+        std::lock_guard<std::mutex> lock( _device_mutex );
+        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) ) {
+            if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::PWM ) ) {
+                pinMode( pin_, PinMode::OUTPUT );
+            }
+            else {
+                return;
+            }
+        }
 
-	if( static_cast<uint8_t>( state_ ) ) {
-		_digital_port[ port ] |= port_mask;
-	}
-	else {
-		_digital_port[ port ] &= ~port_mask;
-	}
+        if( static_cast<uint8_t>( state_ ) ) {
+            _digital_port[port] |= port_mask;
+        }
+        else {
+            _digital_port[port] &= ~port_mask;
+        }
 
-	_firmata->sendDigitalPort( port, static_cast<uint16_t>( _digital_port[ port ] ) );
+        _firmata->sendDigitalPort( port, static_cast<uint16_t>( _digital_port[port] ) );
+    }
 }
 
 
 PinMode
 RemoteDevice::getPinMode(
-	uint8_t pin_
-	)
+    uint8_t pin_
+    )
 {
-	return static_cast<PinMode>( _pin_mode[ pin_ ] );
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _device_mutex );
+    return static_cast<PinMode>( _pin_mode[ pin_ ] );
 }
 
 
 void
 RemoteDevice::pinMode(
-	uint8_t pin_,
-	PinMode mode_
-	)
+    uint8_t pin_,
+    PinMode mode_
+    )
 {
-	int port;
-	uint8_t port_mask;
-	getPinMap( pin_, &port, &port_mask );
+    int port;
+    uint8_t port_mask;
+    getPinMap( pin_, &port, &port_mask );
 
-    _firmata->lock();
-	_firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
-	_firmata->write( pin_ );
-	_firmata->write( static_cast<uint8_t>( mode_ ) );
+    {   //critial section
+        std::lock_guard<std::mutex> lock( _device_mutex );
+        _firmata->lock();
+        _firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
+        _firmata->write( pin_ );
+        _firmata->write( static_cast<uint8_t>( mode_ ) );
 
-	//lets subscribe to this port if we're setting it to input
-	if( mode_ == PinMode::INPUT )
-	{
-		_subscribed_ports[ port ] |= port_mask;
-		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
-		_firmata->write( _subscribed_ports[ port ] );
-	}
-	//if the selected mode is NOT input and we WERE subscribed to it, unsubscribe
-	else if( _pin_mode[ pin_ ] == static_cast<uint8_t>( PinMode::INPUT ) )
-	{
-		//make sure we aren't subscribed to this port
-		_subscribed_ports[ port ] &= ~port_mask;
-		_firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
-		_firmata->write( _subscribed_ports[ port ] );
-	}
-    _firmata->flush();
-    _firmata->unlock();
+        //lets subscribe to this port if we're setting it to input
+        if( mode_ == PinMode::INPUT )
+        {
+            _subscribed_ports[port] |= port_mask;
+            _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
+            _firmata->write( _subscribed_ports[port] );
+        }
+        //if the selected mode is NOT input and we WERE subscribed to it, unsubscribe
+        else if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::INPUT ) )
+        {
+            //make sure we aren't subscribed to this port
+            _subscribed_ports[port] &= ~port_mask;
+            _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
+            _firmata->write( _subscribed_ports[port] );
+        }
+        _firmata->flush();
+        _firmata->unlock();
 
-	//if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
-	if( mode_ == PinMode::OUTPUT && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
-	{
-		_digital_port[port] &= ~port_mask;
-	}
+        //if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
+        if( mode_ == PinMode::OUTPUT && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
+        {
+            _digital_port[port] &= ~port_mask;
+        }
 
-	//finally, update the cached pin mode
-	_pin_mode[ pin_ ] = static_cast<uint8_t>( mode_ );
+        //finally, update the cached pin mode
+        _pin_mode[pin_] = static_cast<uint8_t>( mode_ );
+    }
 }
 
 
@@ -218,62 +235,73 @@ RemoteDevice::pinMode(
 
 void
 RemoteDevice::onDigitalReport(
-	Firmata::CallbackEventArgs ^args
-	)
+    Firmata::CallbackEventArgs ^args
+    )
 {
-	uint8_t port = args->getPort();
-	uint8_t port_val = static_cast<uint8_t>(args->getValue());
+    uint8_t port = args->getPort();
+    uint8_t port_val = static_cast<uint8_t>(args->getValue());
+    uint8_t port_xor;
 
-	//output_state will only set bits which correspond to output pins that are HIGH
-	uint8_t output_state = ~_subscribed_ports[ port ] & _digital_port[ port ];
-	port_val |= output_state;
+    {   //critial section
+        std::lock_guard<std::mutex> lock( _device_mutex );
+        //output_state will only set bits which correspond to output pins that are HIGH
+        uint8_t output_state = ~_subscribed_ports[port] & _digital_port[port];
+        port_val |= output_state;
 
-	//determine which pins have changed
-	uint8_t port_xor = port_val ^ _digital_port[ port ];
+        //determine which pins have changed
+        port_xor = port_val ^ _digital_port[port];
 
-	//throw a pin event for each pin that has changed
-	uint8_t i = 0;
-	while( port_xor > 0 )
-	{
-		if( port_xor & 0x01 )
-		{
-			DigitalPinUpdatedEvent( ( port * 8 ) + i, ( ( port_val >> i ) & 0x01 ) > 0 ? PinState::HIGH : PinState::LOW );
-		}
-		port_xor >>= 1;
-		++i;
-	}
+        //update the cache
+        _digital_port[port] = port_val;
+    }
 
-	_digital_port[ port ] = port_val;
+    //throw a pin event for each pin that has changed
+    uint8_t i = 0;
+    while( port_xor > 0 )
+    {
+        if( port_xor & 0x01 )
+        {
+            DigitalPinUpdatedEvent( ( port * 8 ) + i, ( ( port_val >> i ) & 0x01 ) > 0 ? PinState::HIGH : PinState::LOW );
+        }
+        port_xor >>= 1;
+        ++i;
+    }
 }
 
 
 void
 RemoteDevice::onAnalogReport(
-	Firmata::CallbackEventArgs ^args
-	)
+    Firmata::CallbackEventArgs ^args
+    )
 {
-	uint8_t pin = args->getPort();
-	uint16_t val = args->getValue();
-	_analog_pins[ pin ] = val;
-	AnalogPinUpdatedEvent( pin, val );
+    uint8_t pin = args->getPort();
+    uint16_t val = args->getValue();
+
+    {   //critial section
+        std::lock_guard<std::mutex> lock( _device_mutex );
+        _analog_pins[pin] = val;
+    }
+
+    //throw an event for the pin value update
+    AnalogPinUpdatedEvent( pin, val );
 }
 
 
 void
 RemoteDevice::onSysexMessage(
-	Firmata::SysexCallbackEventArgs ^argv
-	)
+    Firmata::SysexCallbackEventArgs ^argv
+    )
 {
-	SysexMessageReceivedEvent( argv->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv->getDataBuffer() ) );
+    SysexMessageReceivedEvent( argv->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv->getDataBuffer() ) );
 }
 
 
 void
 RemoteDevice::onStringMessage(
-	Firmata::StringCallbackEventArgs ^argv
-	)
+    Firmata::StringCallbackEventArgs ^argv
+    )
 {
-	StringMessageReceivedEvent( argv->getString() );
+    StringMessageReceivedEvent( argv->getString() );
 }
 
 
@@ -281,38 +309,35 @@ RemoteDevice::onStringMessage(
 //* Private Methods
 //******************************************************************************
 
-
 void const
 RemoteDevice::initialize(
-	void
-	)
+    void
+    )
 {
-	_firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
-	_firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
-	_firmata->SysexEvent += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
-	_firmata->StringEvent += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
+    _firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
+    _firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+    _firmata->SysexEvent += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
+    _firmata->StringEvent += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
 
-	//TODO: Initialize from Firmata, I have a good idea how to do this, JDF
-	for( int i = 0; i < sizeof( _digital_port ); ++i ) { _digital_port[ i ] = 0; }
-	for( int i = 0; i < sizeof( _subscribed_ports ); ++i ) { _subscribed_ports[ i ] = 0; }
-	for( int i = 0; i < sizeof( _analog_pins ); ++i ) { _analog_pins[ i ] = 0; }
-	for( int i = 0; i < sizeof( _pin_mode ); ++i ) { _pin_mode[ i ] = static_cast<uint8_t>( PinMode::OUTPUT ); }
+    memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
+    memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
+    memset( (void*)_analog_pins, 0, sizeof( _analog_pins ) );
+    memset( (void*)_pin_mode, static_cast<uint8_t>( PinMode::OUTPUT ), sizeof( _pin_mode ) );
 }
-
 
 void
 RemoteDevice::getPinMap(
-	uint8_t pin,
-	int *port,
-	uint8_t *port_mask
-	)
+    uint8_t pin,
+    int *port,
+    uint8_t *port_mask
+    )
 {
-	if( port != nullptr )
-	{
-		*port = ( pin / 8 );
-	}
-	if( port_mask != nullptr )
-	{
-		*port_mask = ( 1 << ( pin % 8 ) );
-	}
+    if( port != nullptr )
+    {
+        *port = ( pin / 8 );
+    }
+    if( port_mask != nullptr )
+    {
+        *port_mask = ( 1 << ( pin % 8 ) );
+    }
 }

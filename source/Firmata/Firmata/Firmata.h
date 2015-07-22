@@ -107,147 +107,147 @@ class FirmataClass
 
 
     void
-	begin(
-		long speed = 57600
-	);
-
-
-	void
-	begin(
-		Microsoft::Maker::Serial::IStream ^s
-	);
-
-	void
-	finish(
-		void
-	);
+    begin(
+        long speed = 57600
+    );
 
 
     void
-	printVersion(
-		void
-	);
+    begin(
+        Microsoft::Maker::Serial::IStream ^s
+    );
+
+    void
+    finish(
+        void
+    );
 
 
     void
-	printFirmwareVersion(
-		void
-	);
+    printVersion(
+        void
+    );
 
 
     void
-	setFirmwareNameAndVersion(
-		const char *name,
-		byte major,
-		byte minor
-	);
+    printFirmwareVersion(
+        void
+    );
+
+
+    void
+    setFirmwareNameAndVersion(
+        const char *name,
+        byte major,
+        byte minor
+    );
 
 
     int
-	available(
-		void
-	);
+    available(
+        void
+    );
 
 
     void
-	processInput(
-		void
-	);
+    processInput(
+        void
+    );
 
 
     void
-	sendAnalog(
-		byte pin,
-		int value
-	);
+    sendAnalog(
+        byte pin,
+        int value
+    );
 
 
     void
-	sendDigitalPort(
-		byte portNumber,
-		int portData
-	);
+    sendDigitalPort(
+        byte portNumber,
+        int portData
+    );
 
 
     void
-	sendString(
-		const char *string
-	);
+    sendString(
+        const char *string
+    );
 
 
     void
-	sendString(
-		byte command,
-		const char *string
-	);
+    sendString(
+        byte command,
+        const char *string
+    );
 
 
     void
-	sendSysex(
-		byte command,
-		byte bytec,
-		byte *bytev
-	);
+    sendSysex(
+        byte command,
+        byte bytec,
+        byte *bytev
+    );
 
 
     void
-	write(
-		byte c
-	);
+    write(
+        byte c
+    );
 
 
     //attach & detach callback functions to messages
     void
-	attach(
-		byte command,
-		callbackFunction newFunction
-	);
+    attach(
+        byte command,
+        callbackFunction newFunction
+    );
 
 
     void
-	attach(
-		byte command,
-		systemResetCallbackFunction newFunction
-	);
+    attach(
+        byte command,
+        systemResetCallbackFunction newFunction
+    );
 
 
     void
-	attach(
-		byte command,
-		stringCallbackFunction newFunction
-	);
+    attach(
+        byte command,
+        stringCallbackFunction newFunction
+    );
 
 
     void
-	attach(
-		byte command,
-		sysexCallbackFunction newFunction
-	);
+    attach(
+        byte command,
+        sysexCallbackFunction newFunction
+    );
 
 
     void
-	detach(
-		byte command
-	);
+    detach(
+        byte command
+    );
 
 
     // utility methods
     void
-	sendValueAsTwo7bitBytes(
-		int value
-	);
+    sendValueAsTwo7bitBytes(
+        int value
+    );
 
 
     void
-	startSysex(
-		void
-	);
+    startSysex(
+        void
+    );
 
 
     void
-	endSysex(
-		void
-	);
+    endSysex(
+        void
+    );
 
   private:
     Microsoft::Maker::Serial::IStream ^FirmataStream;

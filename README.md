@@ -134,11 +134,12 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         using namespace Microsoft.Maker.Serial;
 
 		//create a bluetooth connection and pass it to the RemoteDevice
-		IStream bt = new BluetoothSerial();
-        RemoteDevice arduino = new RemoteDevice( bt );
+		//I am using a constructor that accepts a device name or ID.
+		IStream connection = new BluetoothSerial( "MyBluetoothDevice" );
+        RemoteDevice arduino = new RemoteDevice( connection );
 		
 		//always begin your IStream
-		bt.begin( 115200, 0 );
+		bt.begin( 115200, SerialConfig.SERIAL_8N1 );
 
         arduino.pinMode( 7, PinMode.OUTPUT );
         arduino.pinMode( 9, PinMode.INPUT );
@@ -155,11 +156,11 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         using namespace Microsoft::Maker::Serial;
 		
 		//create a bluetooth connection and pass it to the RemoteDevice
-		IStream ^bt = ref new BluetoothSerial;
-        RemoteDevice ^arduino = ref new RemoteDevice( bt );
+		IStream ^connection = ref new BluetoothSerial( "MyBluetoothDevice" );
+        RemoteDevice ^arduino = ref new RemoteDevice( connection );
 		
 		//always begin your IStream
-		bt->begin( 115200, 0 );
+		connection->begin( 115200, SerialConfig::SERIAL_8N1 );
 
         arduino->pinMode( 7, PinMode::OUTPUT );
         arduino->pinMode( 9, PinMode::INPUT );
@@ -206,13 +207,13 @@ For example, whenever you set an analog or digital pin to INPUT, the library wil
 Events are often called on background threads. You may need to consider basic threading behaviors if you are storing data into an array or object created/used on your main thread, or if you are working with a user interface. When you use digital and analog read, the threading issues are taken care of by the library and are of no concern to you.
 
 ```c#
-IStream bt;
+IStream connection;
 RemoteDevice arduino;
 
 public MyObject()
 {
-	bt = new Bluetooth Serial( "RNBT_BTLE" ); //Directly providing a device name to connect to
-	arduino = new RemoteDevice( bt );
+	connection = new BluetoothSerial( "MyBluetoothDevice" ); //Directly providing my device name to connect to
+	arduino = new RemoteDevice( connection );
 
 	//subscribe to the DigitalPinUpdateEvent with the name of the function to be called.
 	arduino.DigitalPinUpdateEvent += MyDigitalPinUpdateCallback;
@@ -221,13 +222,15 @@ public MyObject()
 	arduino.AnalogPinUpdateEvent += MyAnalogPinUpdateCallback;
 
 	//subscribe to the ConnectionEstablished event with the name of the function to be called.
-	bt.ConnectionEstablished += MyConnectionEstablishedCallback;
+	connection.ConnectionEstablished += MyConnectionEstablishedCallback;
 	
 	//always begin your IStream object
-	bt.begin( 115200, 0 );
+	connection.begin( 115200, 0 );
 }
 
 //this function will automatically be called when the bluetooth connection is established
+//you may think of this like setup() in an Arduino sketch. It is the best place to prepare your
+//Arduino for the logic that the rest of your program will execute
 public void MyConnectionEstablishedCallback()
 {
 	//set pin 7 to input mode to automatically receive callbacks when it changes

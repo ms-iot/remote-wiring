@@ -32,15 +32,21 @@ namespace Serial {
 public ref class BluetoothSerial sealed : public IStream
 {
 public:
-    event RemoteWiringConnectionCallback^ ConnectionEstablished;
-    event RemoteWiringConnectionCallback^ ConnectionLost;
-    event RemoteWiringConnectionFailedCallback^ ConnectionFailed;
+    virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionLost;
+    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
+    ///<summary>
+    ///A constructor which accepts a string corresponding to a device name or ID to connect to.
+    ///</summary>
     BluetoothSerial(
         Platform::String ^device_name_
         );
 
+    ///<summary>
+    ///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
+    ///</summary>
     BluetoothSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
@@ -87,11 +93,17 @@ public:
         uint8_t c_
         );
 
+    ///<summary>
+    ///Returns true if the connection is currently established
+    ///</summary>
     bool
     connectionReady(
         void
         );
 
+    ///<summary>
+    ///Begins an asyncronous request for all Bluetooth devices that are paired and may be used to attempt a device connection.
+    ///</summary>
     static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
     listAvailableDevicesAsync(
@@ -99,6 +111,9 @@ public:
         );
 
 private:
+    //maximum amount of data that may be read at a time, allows efficient reads
+    static const uint8_t READ_CHUNK_SIZE = 100;
+
     // Device specific members (set during instantation)
     Windows::Devices::Enumeration::DeviceInformation ^_device;
     Platform::String ^_device_name;

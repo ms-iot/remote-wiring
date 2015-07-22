@@ -52,8 +52,8 @@ RemoteDevice arduino;
 //MyObject constructor
 public MyObject()
 {
-	//create a default bluetooth connection
-	bt = new BluetoothSerial();
+	//create a bluetooth connection by specifying the device name, in this case
+	bluetooth = new BluetoothSerial( "MyBluetoothDevice" );
 	
 	//construct the firmata client
 	firmata = new UwpFirmata();
@@ -62,13 +62,13 @@ public MyObject()
 	arduino = new RemoteDevice( firmata );
 	
 	//if you create the firmata client yourself, don't forget to begin it!
-	firmata.begin( bt );
+	firmata.begin( bluetooth );
 	
 	//since we do not care about inputs in this example, we will not call firmata.startListening()!
 	//firmata.startListening();
 	
 	//you must always call 'begin' on your IStream object to connect.
-	bt.begin( 115200, 0 );
+	bluetooth.begin( 115200, SerialConfig.SERIAL_8N1 );
 }
 ```
 
@@ -165,6 +165,110 @@ public void toggleAllDigitalPins( bool setPinsHigh )
 	{
 		firmata.sendDigitalPort( 0, 0 );	//all pins low
 		firmata.sendDigitalPort( 1, 0 );	//all pins low
+	}
+}
+```
+
+#Advanced Topic #3: Firmata & Mutex Locking
+
+One fairly large detail we have glossed over so far is the concept of locking the UwpFirmata instance. Those of you familiar with the concept of a mutex will have no trouble understanding what this is for; but for those that aren't, we'll go into some details here.
+
+##Thread safety
+
+Firmata works by passing short messages back and forth between the interacting devices. Bad things could happen if two threads, maybe responding to button clicks, attempt to send messages at the same time. If the device on the other end receives these messages intertwined, it is likely it will not be able to understand them. The best case scenario in this case is that nothing happens, but much worse things could happen. Furthermore, you are unlikely to be made aware of this issue as it occurs!
+
+To prevent this, we've added locking functionality to the UwpFirmata class. When you use RemoteDevice directly, this additional logic is all taken care of for you. Therefore, it is impossible for two `digitalWrite()` calls to get intertwined, for example. However, when you use the UwpFirmata object yourself, it is best practice to `@lock()` and '@unlock()` the object before and after each time it is used, to guarantee that no other logic can interact with the same UwpFirmata object while your logic is taking place.
+
+To demonstrate this, I've written a short sample class that will spin up two threads. The first thread will write an analog value to pin 9 and 10 at regular intervals. The second thread will randomly read the value of pin 13. Let's assume there exists special logic in our version of StandardFirmata that will modify the value of pin 13 (HIGH or LOW) based on the values written to pins 9 and 10.
+
+```c#
+public class AnalogWriteAndReport
+{
+	IStream connection;
+	UwpFirmata firmata;
+	RemoteDevice arduino;
+
+	//these volatile variables allow me to terminate my threads safely when necessary.
+	public volatile bool isRunning;
+
+	public AnalogWriteAndReport()
+	{
+		//first, we construct our objects. I'm using NetworkSerial to connect to my Arduino over a LAN
+		connection = new NetworkSerial( new Windows.Networking.HostName( "192.168.0.113" ), 5000 );
+		firmata = new UwpFirmata();
+		arduino = new RemoteDevice( firmata );
+
+		//attach the connection to the UwpFirmata object with begin()
+		firmata.begin( connection );
+
+		//attach our ConnectionEstablished callback so we can be informed that the device is ready!
+		connection.ConnectionEstablished += OnNetworkConnectionEstablished;
+
+		//finally, tell the connection to begin. These arguments (baud and serialconfig) don't matter for the NetworkSerial class,
+		//but when they do matter, I like to use 115200 baud rate, and 8N1 is necessary when using USB connections.
+		connection.begin( 115200, SerialConfig.SERIAL_8N1 );
+	}
+
+	//this function is called when the connection is established, and the device is ready.
+	private void OnNetworkConnectionEstablished()
+	{
+		//I'm going to set pins 9 and 10 to PWM mode, so that I can write analog values to them
+		arduino.pinMode( 9, PinMode.PWM );
+		arduino.pinMode( 10, PinMode.PWM );
+
+		//Now, I will set pin 13 to INPUT so that it enables reporting, and we'll be informed whenever the pin value changes.
+		arduino.pinMode( 13, PinMode.INPUT );
+
+		//next, I'm going to spin up two threads. One will write values to these pins, and the other will periodically read them
+		isRunning = true;
+		Task.Run( () => Read() );
+		Task.Run( () => Write() );
+	}
+
+	/*
+	 * This function will loop until writerThreadShouldExit is set to true. It will constantly write
+	 * a value in the range of [0, 127] to pin 9 and twice that value to pin 10.
+	 * 
+	 * Remember: there exists special logic in our version of StandardFirmata that will modify the value of pin 10 (HIGH or LOW) based on the value written to these pins.
+	 */
+	private void Write()
+	{
+		int pinValue = 0;
+		while( isRunning )
+		{
+			if( pinValue > 127 ) pinValue = 0;
+
+			//this is our "critical section". Since pin 10 must always be twice the value of pin 9, we're going to lock
+			//before we send these messages. This guarantees that no other thread can use this UwpFirmata object while we 'own' the lock.
+			//it would be very bad if someone tried to read pin 13 in between our two messages!
+			firmata.@lock();
+			firmata.sendAnalog( 9, pinValue );
+			firmata.sendAnalog( 10, pinValue * 2 );
+			firmata.@unlock();  //don't forget to unlock!
+
+			pinValue++;
+			Task.Delay( 100 );
+		}
+	}
+
+	/*
+	 * This function might simulate a client requesting the current value of pin 13 at random times.
+	 * Since pin 13's value depends on the values of pins 9 and 10, it would be very bad if this thread
+	 * attempted to read the value of this pin while the other thread is in the middle of changing pins 9 and 10!
+	 */
+	private void Read()
+	{
+		Random random = new Random();
+		while( isRunning )
+		{                
+			//we do not need to lock here, since the RemoteDevice will do that for us.
+			PinState state = arduino.digitalRead( 13 );
+
+			//do something with the state variable here, like report it to the client!
+
+			//a random delay up to 10 seconds may simulate the random attempts to read the state by a client
+			Task.Delay( random.Next( 10000 ) );
+		}
 	}
 }
 ```
