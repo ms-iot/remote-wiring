@@ -155,20 +155,20 @@ NetworkSerial::flush(
     create_task( _current_store_operation )
         .then( [ this ]( unsigned int value_ )
     {
-        return _tx->FlushAsync();
+        //detect disconnection
+        if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+        {
+            _connection_ready = false;
+            ConnectionLost( L"A fatal error has occurred in NetworkSerial::flush() and your connection has been lost." );
+            return task_from_result( false );
+        }
+        return create_task( _tx->FlushAsync() );
     } )
         .then( [ this ]( task<bool> task_ )
     {
         try
         {
-            task_.get();
-
-            //detect disconnection
-            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-            {
-                _connection_ready = false;
-                ConnectionLost( L"A fatal error has occurred in NetworkSerial::flush() and your connection has been lost." );
-            }
+            task_.wait();
         }
         catch( Platform::Exception ^e )
         {
@@ -201,7 +201,7 @@ NetworkSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+        _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
     }
 
     return c;
@@ -236,7 +236,7 @@ NetworkSerial::connectToHostAsync(
     {
         _rx = ref new Windows::Storage::Streams::DataReader( _stream_socket->InputStream );
         _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+        _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );

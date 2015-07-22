@@ -211,7 +211,7 @@ public:
     ///</summary>
     void
     begin(
-        Serial::IStream ^s
+        Serial::IStream ^s_
     );
 
     ///<summary>
@@ -295,8 +295,8 @@ public:
     ///</summary>
     void
     sendDigitalPort(
-        uint8_t portNumber_,
-        uint8_t portData_
+        uint8_t port_number_,
+        uint8_t port_data_
     );
 
     ///<summary>
@@ -304,7 +304,7 @@ public:
     ///</summary>
     void
     sendString(
-        String ^string
+        String ^string_
     );
 
     ///<summary>
@@ -312,8 +312,8 @@ public:
     ///</summary>
     void
     sendString(
-        uint8_t command,
-        String ^string
+        uint8_t command_,
+        String ^string_
     );
 
     ///<summary>
@@ -321,7 +321,7 @@ public:
     ///</summary>
     void
     sendValueAsTwo7bitBytes(
-        int value
+        int value_
     );
 
     ///<summary>
@@ -329,9 +329,9 @@ public:
     ///</summary>
     void
     setFirmwareNameAndVersion(
-        String ^name,
-        uint8_t major,
-        uint8_t minor
+        String ^name_,
+        uint8_t major_,
+        uint8_t minor_
     );
 
     ///<summary>
@@ -357,7 +357,7 @@ public:
     ///</summary>
     void
     write(
-        uint8_t c
+        uint8_t c_
     );
 
 internal:
@@ -368,12 +368,12 @@ internal:
     static inline
     void
     analogInvoke(
-        UwpFirmata ^caller,
+        UwpFirmata ^caller_,
         uint8_t pin_,
         int value_
     )
     {
-        caller->AnalogValueEvent( caller, ref new CallbackEventArgs( pin_, value_ ) );
+        caller_->AnalogValueEvent( caller_, ref new CallbackEventArgs( pin_, value_ ) );
     }
 
     ///<summary>
@@ -382,12 +382,12 @@ internal:
     static inline
     void
     digitalInvoke(
-        UwpFirmata ^caller,
+        UwpFirmata ^caller_,
         uint8_t port_,
         int value_
     )
     {
-        caller->DigitalPortValueEvent( caller, ref new CallbackEventArgs( port_, value_ ) );
+        caller_->DigitalPortValueEvent( caller_, ref new CallbackEventArgs( port_, value_ ) );
     }
 
     ///<summary>
@@ -396,17 +396,17 @@ internal:
     static inline
     void
     stringInvoke(
-        UwpFirmata ^caller,
-        uint8_t *string_data
+        UwpFirmata ^caller_,
+        uint8_t *string_data_
     )
     {
-        size_t len = strlen( reinterpret_cast<char *>( string_data ) ) + 1;
+        size_t len = strlen( reinterpret_cast<char *>( string_data_ ) ) + 1;
         size_t wlen = len * sizeof( wchar_t );
         wchar_t *wstr_data = new wchar_t[wlen];
 
         size_t c;
-        mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>(string_data), len + 1 );
-        caller->StringEvent( caller, ref new StringCallbackEventArgs( ref new String(wstr_data) ) );
+        mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>(string_data_), len + 1 );
+        caller_->StringEvent( caller_, ref new StringCallbackEventArgs( ref new String(wstr_data) ) );
         delete[](wstr_data);
     }
 
@@ -416,7 +416,7 @@ internal:
     static inline
     void
     sysexInvoke(
-        UwpFirmata ^caller,
+        UwpFirmata ^caller_,
         uint8_t command_,
         uint8_t argc_,
         uint8_t *argv_
@@ -447,7 +447,7 @@ internal:
                 writer->WriteByte( argv_[i] );
             }
 
-            caller->I2cReplyEvent( caller, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
+            caller_->I2cReplyEvent( caller_, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
         }
         else
         {
@@ -456,7 +456,7 @@ internal:
                 writer->WriteByte( argv_[i] );
             }
 
-            caller->SysexEvent( caller, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
+            caller_->SysexEvent( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
         }
     }
 

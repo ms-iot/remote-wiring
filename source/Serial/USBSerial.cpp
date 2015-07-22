@@ -268,7 +268,7 @@ UsbSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+        _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
     }
 
     return c;
@@ -436,7 +436,7 @@ UsbSerial::connectToDeviceAsync(
         // Enable RX
         _rx = ref new Windows::Storage::Streams::DataReader(_serial_device->InputStream);
         _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+        _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter(_serial_device->OutputStream);
