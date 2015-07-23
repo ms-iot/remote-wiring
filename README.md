@@ -31,7 +31,27 @@ However, devices like an Arduino are fundamentally limited by the single-threade
 ###Windows 10
 Windows 10 introduces the concept of a [Universal Windows Platform (UWP)](https://dev.windows.com/en-us/develop/building-universal-windows-apps). This means that developers can produce one solution that will work on any device running Windows 10, including Windows Phone 10 and Raspberry Pi 2. By including the **Windows Remote Arduino** library in your solution, you can turn any Windows device into a remote programming surface for your Arduino! Now it is possible to use the power of the Windows 10 operating system to open up a whole new set of advanced capabilities (and maker projects!) through the use of multi-threading, data storage, internet access, and natural user experiences.
 
-#Structure
+#Supported Boards
+
+This section lists boards which have been *well-tested* using all connection methods offered by this library. If a board or manufacturer is not listed, it does *not* mean that the board will not work with Windows Remote Arduino, it just means it has not been explicitly tested and verified. In fact, it is the case that most boards *will* work with this library as long as they can run StandardFirmata or an equivalent sketch that understands the Firmata protocol. 
+
+##Arduino
+
+1. Uno
+2. Leonardo
+3. Mega
+
+####Note: There is a known issue with USB connections to Arduino Uno. The device will very often ignore up to 50 bytes of information being sent to the device only after a fresh connection is established. This issue does not exist with other connection methods. The best known work-around is to reset the Uno (using the physical reset button on the board) after the connection is established.
+
+##DFRobot
+
+1. Bluno
+2. Bluno Beetle
+
+####Note: There is a known issue with USB connections to DFRobot boards. Input (from the Arduino to the Windows device) does not work when connected via USB. This issue is not present under and other connection methods, and there is no known workaround at this time.
+
+
+#Software Architecture
 The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
 
 ##Layers
