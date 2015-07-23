@@ -120,7 +120,6 @@ private:
 
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
     Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_rfcomm_service;
     Windows::Storage::Streams::DataReader ^_rx;

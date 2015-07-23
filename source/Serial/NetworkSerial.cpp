@@ -44,7 +44,6 @@ NetworkSerial::NetworkSerial(
     ) :
     _connection_ready( 0 ),
     _current_load_operation( nullptr ),
-    _current_store_operation( nullptr ),
     _host( host_ ),
     _port( port_ ),
     _stream_socket( nullptr ),
@@ -135,7 +134,6 @@ NetworkSerial::end(
 {
     _connection_ready = false;
     _current_load_operation = nullptr;
-    _current_store_operation = nullptr;
 
     // Reset with respect to dependencies
     delete( _rx );
@@ -151,17 +149,18 @@ NetworkSerial::flush(
     void
     )
 {
-    _current_store_operation = _tx->StoreAsync();
-    create_task( _current_store_operation )
-        .then( [ this ]( unsigned int value_ )
+    auto async_operation_ = _tx->StoreAsync();
+    create_task( async_operation_ )
+        .then( [ this, async_operation_ ]( unsigned int value_ )
     {
+        UNREFERENCED_PARAMETER( value_ );
+
         //detect disconnection
-        if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+        if( async_operation_->Status == Windows::Foundation::AsyncStatus::Error )
         {
-            _connection_ready = false;
-            ConnectionLost( L"A fatal error has occurred in NetworkSerial::flush() and your connection has been lost." );
-            return task_from_result( false );
+            throw ref new Platform::Exception( E_UNEXPECTED );
         }
+
         return create_task( _tx->FlushAsync() );
     } )
         .then( [ this ]( task<bool> task_ )
@@ -240,7 +239,6 @@ NetworkSerial::connectToHostAsync(
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter( _stream_socket->OutputStream );
-        _current_store_operation = nullptr;
 
         // Set connection ready flag
         _connection_ready = true;

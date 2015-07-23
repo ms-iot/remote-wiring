@@ -132,7 +132,6 @@ private:
     SerialConfig _config;
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;

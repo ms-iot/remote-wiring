@@ -45,7 +45,6 @@ UsbSerial::UsbSerial(
     _config(SerialConfig::SERIAL_8N1),
     _connection_ready(0),
     _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
     _pid(nullptr),
@@ -64,7 +63,6 @@ UsbSerial::UsbSerial(
     _config(SerialConfig::SERIAL_8N1),
     _connection_ready(false),
     _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
     _pid(pid_),
@@ -82,7 +80,6 @@ UsbSerial::UsbSerial(
     _config(SerialConfig::SERIAL_8N1),
     _connection_ready(false),
     _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(device_),
     _device_collection(nullptr),
     _pid(nullptr),
@@ -192,7 +189,6 @@ UsbSerial::end(
 {
     _connection_ready = false;
     _current_load_operation = nullptr;
-    _current_store_operation = nullptr;
 
     // Reset with respect to dependencies
     delete(_rx); //_rx->Close();
@@ -208,19 +204,18 @@ UsbSerial::flush(
     void
     )
 {
-    _current_store_operation = _tx->StoreAsync();
-    create_task( _current_store_operation )
-        .then( [this]( task<unsigned int> task_ )
+    auto async_operation_ = _tx->StoreAsync();
+    create_task( async_operation_ )
+        .then( [ this, async_operation_ ]( task<unsigned int> task_ )
     {
         try
         {
             task_.get();
 
             //detect disconnection
-            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
+            if( async_operation_->Status == Windows::Foundation::AsyncStatus::Error )
             {
-                _connection_ready = false;
-                ConnectionLost( L"A fatal error has occurred in UsbSerial::flush() and your connection has been lost." );
+                throw ref new Platform::Exception( E_UNEXPECTED );
             }
         }
         catch( Platform::Exception ^ )
@@ -440,7 +435,6 @@ UsbSerial::connectToDeviceAsync(
 
         // Enable TX
         _tx = ref new Windows::Storage::Streams::DataWriter(_serial_device->OutputStream);
-        _current_store_operation = nullptr;
 
         // Set connection ready flag
         _connection_ready = true;

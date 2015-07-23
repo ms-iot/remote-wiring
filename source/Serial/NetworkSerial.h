@@ -105,7 +105,6 @@ private:
 
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
