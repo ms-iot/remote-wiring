@@ -42,7 +42,6 @@ BluetoothSerial::BluetoothSerial(
     ) :
     _connection_ready(false),
     _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
     _device_name(device_name_),
@@ -58,7 +57,6 @@ BluetoothSerial::BluetoothSerial(
     ) :
     _connection_ready(false),
     _current_load_operation(nullptr),
-    _current_store_operation(nullptr),
     _device(device_),
     _device_collection(nullptr),
     _device_name(nullptr),
@@ -176,7 +174,6 @@ BluetoothSerial::end(
 {
     _connection_ready = false;
     _current_load_operation = nullptr;
-    _current_store_operation = nullptr;
 
     // Reset with respect to dependencies
     delete(_rx); //_rx->Close();
@@ -194,24 +191,25 @@ BluetoothSerial::flush(
     void
     )
 {
-    _current_store_operation = _tx->StoreAsync();
-    create_task( _current_store_operation )
-        .then( [ this ]( unsigned int value_ )
+    auto async_operation_ = _tx->StoreAsync();
+    create_task( _tx->StoreAsync() )
+        .then( [ this, async_operation_ ]( unsigned int value_ )
     {
-        return _tx->FlushAsync();
+        UNREFERENCED_PARAMETER( value_ );
+
+        //detect disconnection
+        if( async_operation_->Status == Windows::Foundation::AsyncStatus::Error )
+        {
+            throw ref new Platform::Exception( E_UNEXPECTED );
+        }
+
+        return create_task( _tx->FlushAsync() );
     } )
         .then( [ this ]( task<bool> task_ )
     {
         try
         {
-            task_.get();
-
-            //detect disconnection
-            if( _current_store_operation->Status == Windows::Foundation::AsyncStatus::Error )
-            {
-                _connection_ready = false;
-                ConnectionLost( L"A fatal error has occurred in BluetoothSerial::flush() and your connection has been lost." );
-            }
+            task_.wait();
         }
         catch( Platform::Exception ^e )
         {
@@ -259,7 +257,7 @@ BluetoothSerial::read(
             return -1;
         }
 
-        _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+        _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
     }
 
     return c;
@@ -309,11 +307,10 @@ BluetoothSerial::connectToDeviceAsync(
             // Enable RX
             _rx = ref new Windows::Storage::Streams::DataReader(_stream_socket->InputStream);
             _rx->InputStreamOptions = Windows::Storage::Streams::InputStreamOptions::Partial;  // Partial mode will allow for better async reads
-            _current_load_operation = _rx->LoadAsync( READ_CHUNK_SIZE );
+            _current_load_operation = _rx->LoadAsync( MAX_READ_SIZE );
 
             // Enable TX
             _tx = ref new Windows::Storage::Streams::DataWriter(_stream_socket->OutputStream);
-            _current_store_operation = nullptr;
 
             // Set connection ready flag
             _connection_ready = true;

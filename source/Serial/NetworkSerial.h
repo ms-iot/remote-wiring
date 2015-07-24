@@ -97,7 +97,7 @@ public:
 
 private:
     //maximum amount of data that may be read at a time, allows efficient reads
-    static const uint8_t READ_CHUNK_SIZE = 100;
+    static const uint8_t MAX_READ_SIZE = 100;
 
     // Device specific members (set during instantation)
     Windows::Networking::HostName ^_host;
@@ -105,7 +105,6 @@ private:
 
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
-    Windows::Storage::Streams::DataWriterStoreOperation ^_current_store_operation;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;

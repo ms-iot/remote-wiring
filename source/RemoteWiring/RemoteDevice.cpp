@@ -165,7 +165,7 @@ RemoteDevice::digitalWrite(
             _digital_port[port] &= ~port_mask;
         }
 
-        _firmata->sendDigitalPort( port, static_cast<uint16_t>( _digital_port[port] ) );
+        _firmata->sendDigitalPort( port, _digital_port[ port ] );
     }
 }
 
