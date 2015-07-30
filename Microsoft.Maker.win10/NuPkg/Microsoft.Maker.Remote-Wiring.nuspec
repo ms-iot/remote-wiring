@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Remote-Wiring</id>
+        <version>0.1.0.0</version>
+        <title>Remote wiring for Arduino and Windows 10 IoT core</title>
+        <authors>Microsoft</authors>
+        <licenseUrl>https://github.com/ms-iot/remote-wiring/blob/develop/license.txt</licenseUrl>
+        <projectUrl>https://github.com/ms-iot/remote-wiring</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Windows Remote Arduino is an open-source Windows Runtime Component library which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for Windows Runtime (WinRT) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the Firmata protocol, which is implemented in a pre-packaged Firmata library included in the Arduino software obtained from http://arduino.cc.</description>
+    </metadata>
+    <files>
+        <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Firmata.dll" />
+        <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />
+
+        <file src="..\ARM\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-arm\native\Microsoft.Maker.RemoteWiring.dll" />
+        <file src="..\ARM\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.winmd" target="lib\uap10.0\Microsoft.Maker.RemoteWiring.winmd" />
+
+        <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Serial.dll" />
+        <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd" target="lib\uap10.0\Microsoft.Maker.Serial.winmd" />
+
+<!--
+        <file src="..\..\source\Firmata\Firmata\Firmata.cpp" target="src\Firmata\Firmata\Firmata.cpp" />
+        <file src="..\..\source\Firmata\Firmata\Firmata.h" target="src\Firmata\Firmata\Firmata.h" />
+        <file src="..\..\source\Firmata\Firmata\license.txt" target="src\Firmata\Firmata\license.txt" />
+        <file src="..\..\source\Firmata\UwpFirmata.cpp" target="src\Firmata\UwpFirmata.cpp" />
+        <file src="..\..\source\Firmata\UwpFirmata.h" target="src\Firmata\UwpFirmata.h" />
+        <file src="..\..\source\RemoteWiring\RemoteDevice.cpp" target="src\RemoteWiring\RemoteDevice.cpp" />
+        <file src="..\..\source\RemoteWiring\RemoteDevice.h" target="src\RemoteWiring\RemoteDevice.h" />
+        <file src="..\..\source\RemoteWiring\TwoWire.cpp" target="src\RemoteWiring\TwoWire.cpp" />
+        <file src="..\..\source\RemoteWiring\TwoWire.h" target="src\RemoteWiring\TwoWire.h" />
+        <file src="..\..\source\Serial\BluetoothSerial.cpp" target="src\Serial\BluetoothSerial.cpp" />
+        <file src="..\..\source\Serial\BluetoothSerial.h" target="src\Serial\BluetoothSerial.h" />
+        <file src="..\..\source\Serial\DfRobotBleSerial.cpp" target="src\Serial\DfRobotBleSerial.cpp" />
+        <file src="..\..\source\Serial\DfRobotBleSerial.h" target="src\Serial\DfRobotBleSerial.h" />
+        <file src="..\..\source\Serial\IStream.h" target="src\Serial\IStream.h" />
+        <file src="..\..\source\Serial\NetworkSerial.cpp" target="src\Serial\NetworkSerial.cpp" />
+        <file src="..\..\source\Serial\NetworkSerial.h" target="src\Serial\NetworkSerial.h" />
+        <file src="..\..\source\Serial\USBSerial.cpp" target="src\Serial\USBSerial.cpp" />
+        <file src="..\..\source\Serial\USBSerial.h" target="src\Serial\USBSerial.h" />
+-->
+    </files>
+</package>
