@@ -20,25 +20,6 @@
         <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Serial.dll" />
         <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd" target="lib\uap10.0\Microsoft.Maker.Serial.winmd" />
 
-        <file src="..\x64\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Firmata.dll" />
-<!--        <file src="..\x64\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />  -->
-
-        <file src="..\x64\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x64\native\Microsoft.Maker.RemoteWiring.dll" />
-<!--        <file src="..\x64\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.winmd" target="lib\uap10.0\Microsoft.Maker.RemoteWiring.winmd" />  -->
-
-        <file src="..\x64\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Serial.dll" />
-<!--        <file src="..\x64\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd" target="lib\uap10.0\Microsoft.Maker.Serial.winmd" />  -->
-
-        <file src="..\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Firmata.dll" />
-<!--        <file src="..\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />  -->
-
-        <file src="..\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x86\native\Microsoft.Maker.RemoteWiring.dll" />
-<!--        <file src="..\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.winmd" target="lib\uap10.0\Microsoft.Maker.RemoteWiring.winmd" />  -->
-
-        <file src="..\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Serial.dll" />
-<!--        <file src="..\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd" target="lib\uap10.0\Microsoft.Maker.Serial.winmd" />  -->
-
-
 <!--
         <file src="..\..\source\Firmata\Firmata\Firmata.cpp" target="src\Firmata\Firmata\Firmata.cpp" />
         <file src="..\..\source\Firmata\Firmata\Firmata.h" target="src\Firmata\Firmata\Firmata.h" />
