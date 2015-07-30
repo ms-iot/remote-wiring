@@ -70,7 +70,7 @@ RemoteDevice::analogRead(
     )
 {
     //critical section equivalent to function scope
-    std::lock_guard<std::mutex> lock( _device_mutex );
+    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
     uint16_t val = -1;
 
@@ -99,7 +99,7 @@ RemoteDevice::analogWrite(
     )
 {
     //critical section equivalent to function scope
-    std::lock_guard<std::mutex> lock( _device_mutex );
+    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
     if( _pin_mode[ pin_ ] != static_cast<uint8_t>( PinMode::PWM ) ) {
         if( _pin_mode[ pin_ ] == static_cast<uint8_t>( PinMode::OUTPUT ) ) {
@@ -125,7 +125,7 @@ RemoteDevice::digitalRead(
     getPinMap( pin_, &port, &port_mask );
 
     {   //critial section
-        std::lock_guard<std::mutex> lock( _device_mutex );
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
         if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) ) {
             if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::ANALOG ) ) {
                 pinMode( pin_, PinMode::INPUT );
@@ -148,7 +148,7 @@ RemoteDevice::digitalWrite(
     getPinMap( pin_, &port, &port_mask );
 
     {   //critial section
-        std::lock_guard<std::mutex> lock( _device_mutex );
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
         if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) ) {
             if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::PWM ) ) {
                 pinMode( pin_, PinMode::OUTPUT );
@@ -176,7 +176,7 @@ RemoteDevice::getPinMode(
     )
 {
     //critical section equivalent to function scope
-    std::lock_guard<std::mutex> lock( _device_mutex );
+    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
     return static_cast<PinMode>( _pin_mode[ pin_ ] );
 }
 
@@ -192,7 +192,7 @@ RemoteDevice::pinMode(
     getPinMap( pin_, &port, &port_mask );
 
     {   //critial section
-        std::lock_guard<std::mutex> lock( _device_mutex );
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
         _firmata->lock();
         _firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
         _firmata->write( pin_ );
@@ -243,7 +243,7 @@ RemoteDevice::onDigitalReport(
     uint8_t port_xor;
 
     {   //critial section
-        std::lock_guard<std::mutex> lock( _device_mutex );
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
         //output_state will only set bits which correspond to output pins that are HIGH
         uint8_t output_state = ~_subscribed_ports[port] & _digital_port[port];
         port_val |= output_state;
@@ -278,7 +278,7 @@ RemoteDevice::onAnalogReport(
     uint16_t val = args->getValue();
 
     {   //critial section
-        std::lock_guard<std::mutex> lock( _device_mutex );
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
         _analog_pins[pin] = val;
     }
 

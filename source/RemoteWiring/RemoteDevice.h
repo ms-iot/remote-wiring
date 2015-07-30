@@ -170,7 +170,7 @@ private:
     Firmata::UwpFirmata ^_firmata;
 
     //a mutex for thread safety
-    std::mutex _device_mutex;
+    std::recursive_mutex _device_mutex;
 
     //reporting callbacks
     void onDigitalReport( Firmata::CallbackEventArgs ^argv );
