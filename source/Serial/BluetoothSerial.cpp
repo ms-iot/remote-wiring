@@ -40,7 +40,7 @@ using namespace Microsoft::Maker::Serial;
 BluetoothSerial::BluetoothSerial(
     Platform::String ^device_name_
     ) :
-    _connection_ready(false),
+    _connection_ready( ATOMIC_VAR_INIT(false)),
     _current_load_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
@@ -55,7 +55,7 @@ BluetoothSerial::BluetoothSerial(
 BluetoothSerial::BluetoothSerial(
     DeviceInformation ^device_
     ) :
-    _connection_ready(false),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
     _current_load_operation(nullptr),
     _device(device_),
     _device_collection(nullptr),

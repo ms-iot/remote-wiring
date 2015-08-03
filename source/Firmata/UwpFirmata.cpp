@@ -49,7 +49,7 @@ UwpFirmata::UwpFirmata(
     _data_buffer(new uint8_t[31]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
-    _input_thread_should_exit(false),
+    _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
     _sys_command(0),
     _sys_position(0)
 {

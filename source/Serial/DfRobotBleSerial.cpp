@@ -42,7 +42,7 @@ DfRobotBleSerial::DfRobotBleSerial(
     ) :
     DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
-    _connection_ready(false),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
     _device(nullptr),
     _device_collection(nullptr),
     _device_name(device_name_),
@@ -58,7 +58,7 @@ DfRobotBleSerial::DfRobotBleSerial(
     ) :
     DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
-    _connection_ready(false),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
     _device(device_),
     _device_name(nullptr),
     _device_collection(nullptr),

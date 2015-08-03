@@ -25,6 +25,7 @@
 #pragma once
 
 #include <cstdint>
+#include <mutex>
 #include "TwoWire.h"
 
 namespace Microsoft {

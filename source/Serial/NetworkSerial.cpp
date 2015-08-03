@@ -42,7 +42,7 @@ NetworkSerial::NetworkSerial(
     Windows::Networking::HostName ^host_,
     uint16_t port_
     ) :
-    _connection_ready( 0 ),
+    _connection_ready( ATOMIC_VAR_INIT( false ) ),
     _current_load_operation( nullptr ),
     _host( host_ ),
     _port( port_ ),
