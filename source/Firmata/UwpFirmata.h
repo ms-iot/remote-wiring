@@ -170,6 +170,8 @@ public delegate void StringCallbackFunction(UwpFirmata ^caller, StringCallbackEv
 public delegate void SysexCallbackFunction(UwpFirmata ^caller, SysexCallbackEventArgs ^argv);
 public delegate void SystemResetCallbackFunction( UwpFirmata ^caller, SystemResetCallbackEventArgs ^argv );
 public delegate void I2cReplyCallbackFunction( UwpFirmata ^caller, I2cCallbackEventArgs ^argv );
+public delegate void FirmataConnectionCallback();
+public delegate void FirmataConnectionCallbackWithMessage( Platform::String ^message );
 
 public ref class UwpFirmata sealed
 {
@@ -180,6 +182,9 @@ public:
     event SysexCallbackFunction^ SysexEvent;
     event I2cReplyCallbackFunction^ I2cReplyEvent;
     event SystemResetCallbackFunction^ SystemResetEvent;
+    event FirmataConnectionCallback^ FirmataConnectionReadyEvent;
+    event FirmataConnectionCallbackWithMessage^ FirmataConnectionFailedEvent;
+    event FirmataConnectionCallbackWithMessage^ FirmataConnectionLostEvent;
 
     UwpFirmata(
         void
@@ -220,6 +225,14 @@ public:
     bool
     beginSysex(
         uint8_t command_
+    );
+
+    ///<summary>
+    ///Returns true if the connection is currently established
+    ///</summary>
+    bool
+    connectionReady(
+        void
     );
 
     ///<summary>
@@ -472,6 +485,9 @@ internal:
     //member variables to hold the current input thread & communications
     Serial::IStream ^_firmata_stream;
 
+    //stores the state of the connection
+    std::atomic_bool _connection_ready;
+
     //thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
     std::mutex _firmutex;
     std::unique_lock<std::mutex> _firmata_lock;
@@ -488,6 +504,21 @@ internal:
     void
     stopThreads(
         void
+    );
+
+    void
+    onConnectionEstablished(
+        void
+    );
+
+    void
+    onConnectionFailed(
+        Platform::String ^message
+    );
+
+    void
+    onConnectionLost(
+        Platform::String ^message
     );
 };
 

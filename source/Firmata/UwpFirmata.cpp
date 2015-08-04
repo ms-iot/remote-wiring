@@ -44,10 +44,11 @@ namespace {
 
 UwpFirmata::UwpFirmata(
     void
-):
+) :
     _data_buffer(new uint8_t[31]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
     _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
     _sys_command(0),
     _sys_position(0)
@@ -66,7 +67,8 @@ UwpFirmata::UwpFirmata(
 
 UwpFirmata::~UwpFirmata(
     void
-) {
+    )
+{
     finish();
 }
 
@@ -102,8 +104,29 @@ UwpFirmata::begin(
     Microsoft::Maker::Serial::IStream ^s_
     )
 {
+    if( s_ == nullptr ) return;
+
     _firmata_stream = s_;
     ::RawFirmata.begin( s_ );
+
+    //lock the IStream object to guarantee its state won't change while we check if it is already connected.
+    _firmata_stream->lock();
+
+    if( _firmata_stream->connectionReady() )
+    {
+        onConnectionEstablished();
+    }
+    else
+    {
+        //we only care about these status changes if the connection is not already established
+        _firmata_stream->ConnectionEstablished += ref new Microsoft::Maker::Serial::IStreamConnectionCallback( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionEstablished );
+        _firmata_stream->ConnectionFailed += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionFailed );
+    }
+
+    //we always care about the connection being lost
+    _firmata_stream->ConnectionLost += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionLost );
+
+    _firmata_stream->unlock();
 }
 
 bool
@@ -116,9 +139,12 @@ UwpFirmata::beginSysex(
     return true;
 }
 
+bool
+UwpFirmata::connectionReady(
     void
     )
 {
+    return _connection_ready;
 }
 
 bool
@@ -320,6 +346,36 @@ UwpFirmata::inputThread(
             OutputDebugString( e->Message->Begin() );
         }
     }
+}
+
+void
+UwpFirmata::onConnectionEstablished(
+    void
+    )
+{
+    {   //critical section guarantees state is only changed when it is not being modified elsewhere
+        std::lock_guard<std::mutex> lock( _firmutex );
+        _connection_ready = true;
+    }
+
+    FirmataConnectionReadyEvent();
+}
+
+void
+UwpFirmata::onConnectionFailed(
+    Platform::String ^message
+    )
+{
+    FirmataConnectionFailedEvent( message );
+}
+
+void
+UwpFirmata::onConnectionLost(
+    Platform::String ^message
+    )
+{
+    _connection_ready = false;
+    FirmataConnectionLostEvent( message );
 }
 
 void
