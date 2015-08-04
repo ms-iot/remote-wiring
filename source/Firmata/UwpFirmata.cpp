@@ -25,7 +25,6 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
-
 #include "Firmata\Firmata.h"
 #include <cstdlib>
 
@@ -76,6 +75,27 @@ UwpFirmata::~UwpFirmata(
 //* Public Methods
 //******************************************************************************
 
+bool
+UwpFirmata::appendSysex(
+    uint8_t byte_
+    )
+{
+    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
+    {
+        _data_buffer.get()[_sys_position] = byte_;
+        ++_sys_position;
+        return true;
+    }
+    return false;
+}
+
+int
+UwpFirmata::available(
+    void
+    )
+{
+    return ::RawFirmata.available();
+}
 
 void
 UwpFirmata::begin(
@@ -86,22 +106,36 @@ UwpFirmata::begin(
     ::RawFirmata.begin( s_ );
 }
 
+bool
+UwpFirmata::beginSysex(
+    uint8_t command_
+    )
+{
+    _sys_command = command_;
+    _sys_position = 0;
+    return true;
+}
 
-void
-UwpFirmata::startListening(
     void
     )
 {
-    //is a thread currently running?
-    if (_input_thread.joinable()) { return; }
-
-    //prepare communications
-    _input_thread_should_exit = false;
-
-    //initialize the new input thread
-    _input_thread = std::thread( [ this ]() -> void { inputThread(); } );
 }
 
+bool
+UwpFirmata::endSysex(
+    void
+    )
+{
+    if( _sys_command )
+    {
+        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get() );
+        _firmata_stream->flush();
+        _sys_command = 0;
+        _sys_position = 0;
+        return true;
+    }
+    return false;
+}
 
 void
 UwpFirmata::finish(
@@ -120,7 +154,6 @@ UwpFirmata::finish(
     return ::RawFirmata.finish();
 }
 
-
 void
 UwpFirmata::flush(
     void
@@ -129,6 +162,13 @@ UwpFirmata::flush(
     return _firmata_stream->flush();
 }
 
+void
+UwpFirmata::lock(
+    void
+    )
+{
+    _firmata_lock.lock();
+}
 
 void
 UwpFirmata::printVersion(
@@ -141,7 +181,6 @@ UwpFirmata::printVersion(
     return;
 }
 
-
 void
 UwpFirmata::printFirmwareVersion(
     void
@@ -153,6 +192,13 @@ UwpFirmata::printFirmwareVersion(
     return;
 }
 
+void
+UwpFirmata::processInput(
+    void
+    )
+{
+    return ::RawFirmata.processInput();
+}
 
 void
 UwpFirmata::setFirmwareNameAndVersion(
@@ -165,25 +211,6 @@ UwpFirmata::setFirmwareNameAndVersion(
     std::string nameA( nameW.begin(), nameW.end() );
     return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
 }
-
-
-int
-UwpFirmata::available(
-    void
-    )
-{
-    return ::RawFirmata.available();
-}
-
-
-void
-UwpFirmata::processInput(
-    void
-    )
-{
-    return ::RawFirmata.processInput();
-}
-
 
 void
 UwpFirmata::sendAnalog(
@@ -239,66 +266,20 @@ UwpFirmata::sendValueAsTwo7bitBytes(
     return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
 }
 
-bool
-UwpFirmata::beginSysex(
-    uint8_t command_
-    )
-{
-    _sys_command = command_;
-    _sys_position = 0;
-    return true;
-}
-
-
-bool
-UwpFirmata::appendSysex(
-    uint8_t byte_
-    )
-{
-    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
-    {
-        _data_buffer.get()[_sys_position] = byte_;
-        ++_sys_position;
-        return true;
-    }
-    return false;
-}
-
-
-bool
-UwpFirmata::endSysex(
+void
+UwpFirmata::startListening(
     void
     )
 {
-    if( _sys_command )
-    {
-        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get());
-        _firmata_stream->flush();
-        _sys_command = 0;
-        _sys_position = 0;
-        return true;
-    }
-    return false;
+    //is a thread currently running?
+    if( _input_thread.joinable() ) { return; }
+
+    //prepare communications
+    _input_thread_should_exit = false;
+
+    //initialize the new input thread
+    _input_thread = std::thread( [ this ]() -> void { inputThread(); } );
 }
-
-
-void
-UwpFirmata::write(
-    uint8_t c_
-    )
-{
-    return ::RawFirmata.write( c_ );
-}
-
-
-void
-UwpFirmata::lock(
-    void
-    )
-{
-    _firmata_lock.lock();
-}
-
 
 void
 UwpFirmata::unlock(
@@ -306,6 +287,14 @@ UwpFirmata::unlock(
     )
 {
     _firmata_lock.unlock();
+}
+
+void
+UwpFirmata::write(
+    uint8_t c_
+    )
+{
+    return ::RawFirmata.write( c_ );
 }
 
 
@@ -332,7 +321,6 @@ UwpFirmata::inputThread(
         }
     }
 }
-
 
 void
 UwpFirmata::stopThreads(
