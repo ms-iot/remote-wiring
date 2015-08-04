@@ -43,6 +43,7 @@ DfRobotBleSerial::DfRobotBleSerial(
     DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     _connection_ready(ATOMIC_VAR_INIT(false)),
+    _dfrobot_lock(_mutex, std::defer_lock),
     _device(nullptr),
     _device_collection(nullptr),
     _device_name(device_name_),
@@ -59,6 +60,7 @@ DfRobotBleSerial::DfRobotBleSerial(
     DFROBOT_BLE_SERVICE_UUID(uuid_t{ 0xdfb0, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID(uuid_t{ 0xdfb1, 0x0, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb } }),
     _connection_ready(ATOMIC_VAR_INIT(false)),
+    _dfrobot_lock(_mutex, std::defer_lock),
     _device(device_),
     _device_name(nullptr),
     _device_collection(nullptr),
@@ -219,6 +221,14 @@ DfRobotBleSerial::listAvailableDevicesAsync(
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
 }
 
+void
+DfRobotBleSerial::lock(
+    void
+    )
+{
+    _dfrobot_lock.lock();
+}
+
 uint16_t
 DfRobotBleSerial::read(
     void
@@ -233,6 +243,14 @@ DfRobotBleSerial::read(
     }
 
     return c;
+}
+
+void
+DfRobotBleSerial::unlock(
+    void
+    )
+{
+    _dfrobot_lock.unlock();
 }
 
 uint32_t

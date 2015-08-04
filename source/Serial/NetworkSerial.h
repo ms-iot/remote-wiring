@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #pragma once
 #include "IStream.h"
+#include <mutex>
 
 namespace Microsoft {
 namespace Maker {
@@ -64,6 +65,12 @@ public:
         );
 
     virtual
+    bool
+    connectionReady(
+        void
+        );
+
+    virtual
     void
     end(
         void
@@ -76,8 +83,20 @@ public:
         );
 
     virtual
+    void
+    lock(
+        void
+        );
+
+    virtual
     uint16_t
     read(
+        void
+        );
+
+    virtual
+    void
+    unlock(
         void
         );
 
@@ -87,14 +106,6 @@ public:
         uint8_t c_
         );
 
-    ///<summary>
-    ///Returns true if the connection is currently established
-    ///</summary>
-    bool
-    connectionReady(
-        void
-        );
-
 private:
     //maximum amount of data that may be read at a time, allows efficient reads
     static const uint8_t MAX_READ_SIZE = 100;
@@ -102,6 +113,10 @@ private:
     // Device specific members (set during instantation)
     Windows::Networking::HostName ^_host;
     uint16_t _port;
+
+    //thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
+    std::mutex _nutex;
+    std::unique_lock<std::mutex> _network_lock;
 
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;

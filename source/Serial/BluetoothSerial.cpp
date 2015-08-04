@@ -41,6 +41,7 @@ BluetoothSerial::BluetoothSerial(
     Platform::String ^device_name_
     ) :
     _connection_ready( ATOMIC_VAR_INIT(false)),
+    _bluetooth_lock(_blutex, std::defer_lock),
     _current_load_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
@@ -56,6 +57,7 @@ BluetoothSerial::BluetoothSerial(
     DeviceInformation ^device_
     ) :
     _connection_ready(ATOMIC_VAR_INIT(false)),
+    _bluetooth_lock(_blutex, std::defer_lock),
     _current_load_operation(nullptr),
     _device(device_),
     _device_collection(nullptr),
@@ -234,6 +236,14 @@ BluetoothSerial::listAvailableDevicesAsync(
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
 }
 
+void
+BluetoothSerial::lock(
+    void
+    )
+{
+    _bluetooth_lock.lock();
+}
+
 uint16_t
 BluetoothSerial::read(
     void
@@ -261,6 +271,14 @@ BluetoothSerial::read(
     }
 
     return c;
+}
+
+void
+BluetoothSerial::unlock(
+    void
+    )
+{
+    _bluetooth_lock.unlock();
 }
 
 uint32_t

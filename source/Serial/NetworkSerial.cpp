@@ -43,6 +43,7 @@ NetworkSerial::NetworkSerial(
     uint16_t port_
     ) :
     _connection_ready( ATOMIC_VAR_INIT( false ) ),
+    _network_lock( _nutex, std::defer_lock ),
     _current_load_operation( nullptr ),
     _host( host_ ),
     _port( port_ ),
@@ -177,6 +178,14 @@ NetworkSerial::flush(
     } );
 }
 
+void
+NetworkSerial::lock(
+    void
+    )
+{
+    _network_lock.lock();
+}
+
 uint16_t
 NetworkSerial::read(
     void
@@ -204,6 +213,14 @@ NetworkSerial::read(
     }
 
     return c;
+}
+
+void
+NetworkSerial::unlock(
+    void
+    )
+{
+    _network_lock.unlock();
 }
 
 uint32_t

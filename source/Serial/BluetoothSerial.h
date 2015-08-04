@@ -24,6 +24,7 @@
 
 #pragma once
 #include "IStream.h"
+#include <mutex>
 
 namespace Microsoft {
 namespace Maker {
@@ -70,6 +71,12 @@ public:
         );
 
     virtual
+    bool
+    connectionReady(
+        void
+        );
+
+    virtual
     void
     end(
         void
@@ -82,8 +89,20 @@ public:
         );
 
     virtual
+    void
+    lock(
+        void
+        );
+
+    virtual
     uint16_t
     read(
+        void
+        );
+
+    virtual
+    void
+    unlock(
         void
         );
 
@@ -91,14 +110,6 @@ public:
     uint32_t
     write(
         uint8_t c_
-        );
-
-    ///<summary>
-    ///Returns true if the connection is currently established
-    ///</summary>
-    bool
-    connectionReady(
-        void
         );
 
     ///<summary>
@@ -118,12 +129,16 @@ private:
     Windows::Devices::Enumeration::DeviceInformation ^_device;
     Platform::String ^_device_name;
 
+    //thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
+    std::mutex _blutex;
+    std::unique_lock<std::mutex> _bluetooth_lock;
+
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
     Windows::Devices::Bluetooth::Rfcomm::RfcommDeviceService ^_rfcomm_service;
-    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Networking::Sockets::StreamSocket ^_stream_socket;
+    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
 
     Concurrency::task<void>
