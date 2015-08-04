@@ -54,7 +54,9 @@ RemoteDevice::RemoteDevice(
     initialize();
 }
 
-RemoteDevice::~RemoteDevice()
+RemoteDevice::~RemoteDevice(
+    void
+    )
 {
     _firmata->finish();
 }
