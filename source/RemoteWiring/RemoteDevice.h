@@ -58,6 +58,8 @@ public delegate void DigitalPinUpdatedCallback( uint8_t pin, PinState state );
 public delegate void AnalogPinUpdatedCallback( uint8_t pin, uint16_t value );
 public delegate void SysexMessageReceivedCallback( uint8_t command, Windows::Storage::Streams::DataReader ^message );
 public delegate void StringMessageReceivedCallback( Platform::String ^message );
+public delegate void RemoteDeviceConnectionCallback();
+public delegate void RemoteDeviceConnectionCallbackWithMessage( Platform::String^ message );
 
 public ref class RemoteDevice sealed {
 
@@ -69,6 +71,9 @@ public:
     event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
     event SysexMessageReceivedCallback ^ SysexMessageReceivedEvent;
     event StringMessageReceivedCallback ^ StringMessageReceivedEvent;
+    event RemoteDeviceConnectionCallback^ RemoteDeviceReadyEvent;
+    event RemoteDeviceConnectionCallbackWithMessage^ RemoteDeviceConnectionFailedEvent;
+    event RemoteDeviceConnectionCallbackWithMessage^ RemoteDeviceConnectionLostEvent;
 
     property I2c::TwoWire ^ I2c
     {
@@ -173,12 +178,6 @@ private:
     //a mutex for thread safety
     std::recursive_mutex _device_mutex;
 
-    //reporting callbacks
-    void onDigitalReport( Firmata::CallbackEventArgs ^argv );
-    void onAnalogReport( Firmata::CallbackEventArgs ^argv );
-    void onSysexMessage( Firmata::SysexCallbackEventArgs ^argv );
-    void onStringMessage( Firmata::StringCallbackEventArgs ^argv );
-
     //maps the given pin number to the correct port and mask
     void getPinMap( uint8_t, int *, uint8_t * );
 
@@ -187,6 +186,43 @@ private:
     uint8_t volatile _digital_port[MAX_PORTS];
     uint16_t volatile _analog_pins[ANALOG_PINS];
     uint8_t _pin_mode[MAX_PINS];
+
+    //connection callbacks
+    void
+    onConnectionReady(
+        void
+        );
+
+    void
+    onConnectionFailed(
+        Platform::String^ message
+        );
+
+    void
+    onConnectionLost(
+        Platform::String^ message
+        );
+
+    //reporting callbacks
+    void
+    onDigitalReport(
+        Firmata::CallbackEventArgs ^argv
+        );
+
+    void
+    onAnalogReport(
+        Firmata::CallbackEventArgs ^argv
+        );
+
+    void
+    onSysexMessage(
+        Firmata::SysexCallbackEventArgs ^argv
+        );
+
+    void
+    onStringMessage(
+        Firmata::StringCallbackEventArgs ^argv
+        );
 };
 
 } // namespace Wiring

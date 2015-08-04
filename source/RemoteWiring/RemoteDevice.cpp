@@ -41,8 +41,12 @@ RemoteDevice::RemoteDevice(
     _twoWire( nullptr )
 {
     initialize();
+
+    //subscribe to all relevant connection changes from our new Firmata object and then attach the given IStream object
+    _firmata->FirmataConnectionReadyEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
+    _firmata->FirmataConnectionFailedEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
+    _firmata->FirmataConnectionLostEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
     _firmata->begin( serial_connection_ );
-    _firmata->startListening();
 }
 
 RemoteDevice::RemoteDevice(
@@ -52,6 +56,25 @@ RemoteDevice::RemoteDevice(
     _twoWire( nullptr )
 {
     initialize();
+
+    //since the UwpFirmata object is provided, we need to lock its state & verify it is not already in a connected state
+    _firmata->lock();
+
+    if( _firmata->connectionReady() )
+    {
+        onConnectionReady();
+    }
+    else
+    {
+        //we only care about these status changes if the connection is not already established
+        _firmata->FirmataConnectionReadyEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
+        _firmata->FirmataConnectionFailedEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
+    }
+
+    //we always care about the connection being lost
+    _firmata->FirmataConnectionLostEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
+
+    _firmata->unlock();
 }
 
 RemoteDevice::~RemoteDevice(
@@ -342,4 +365,28 @@ RemoteDevice::getPinMap(
     {
         *port_mask = ( 1 << ( pin % 8 ) );
     }
+}
+
+void
+RemoteDevice::onConnectionReady(
+    void
+    )
+{
+    throw ref new Platform::NotImplementedException();
+}
+
+void
+RemoteDevice::onConnectionFailed(
+    Platform::String^ message
+    )
+{
+    throw ref new Platform::NotImplementedException();
+}
+
+void
+RemoteDevice::onConnectionLost(
+    Platform::String^ message
+    )
+{
+    throw ref new Platform::NotImplementedException();
 }
