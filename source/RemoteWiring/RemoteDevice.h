@@ -102,6 +102,7 @@ public:
     ///<summary>
     ///Returns the most recently-reported value for the given analog pin.
     ///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
+    ///<param name="pin_">The analog pin number, where 0 refers to the first analog pin A0, 1 refers to A1, and so on.</param>
     ///</summary>
     uint16_t
     analogRead(
@@ -122,6 +123,8 @@ public:
     ///Sets the value of the given pin to the given analog value.
     ///<para>This function should only be called for pins that support PWM. If the given pin is in 
     ///PinMode.OUTPUT, the pin will automatically be changed to PinMode.PWM</para>
+    ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
+    ///<param name="value_">The analog value to write to the given pin.</param>
     ///</summary>
     void
     analogWrite(
@@ -132,6 +135,7 @@ public:
     ///<summary>
     ///Returns the most recently-reported value for the given digital pin.
     ///<para>Analog pins must first be in PinMode.INPUT before their values will be reported.</para>
+    ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///</summary>
     PinState
     digitalRead(
@@ -140,6 +144,8 @@ public:
 
     ///<summary>
     ///Sets the value of the given pin to the given state.
+    ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
+    ///<param name="state_">The desired state for the given pin.</param>
     ///</summary>
     void
     digitalWrite(
@@ -149,12 +155,14 @@ public:
 
     ///<summary>
     ///Sets the given pin to the given PinMode.
-    ///<para>Due to the way that Arduino and Arduino-like devices are engineered, this function is unable to differentiate 
-    ///between Digital and Analog pins. Refer to the descriptions below for more information about referring to the correct pin number.</para>
+    ///<para>This function uses the given pin number "as is". Due to the way that Arduino and Arduino-like devices are engineered, analog pins like "A0"
+    ///actually have a raw pin number which will change from board to board. It is recommended that you use the pinMode( String, PinMode ) overload when working with analog pins.</para>
     ///<para>Digital pins are typically zero-indexed. This means that the first digital pin is pin 0, while the last
     ///digital pin is (the number of digital pins) - 1.</para>
     ///<para>Analog pins are numbered starting immediately after the digital pins. This means the first analog pin is indexed as the total
-    ///number of digital pins that the device supports.</para>
+    ///number of digital pins that the device supports. You may also use the pinMode function which accepts a pin number</para>
+    ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
+    ///<param name="mode_">The desired mode for the given pin.</param>
     ///</summary>
     void
     pinMode(
@@ -179,6 +187,7 @@ public:
     ///Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
     ///<para>This is not a function you will find in the Arduino API, but is an extremely helpful function 
     ///that allows the RemoteDevice class to maintain consistency with your apps.</para>
+    ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///</summary>
     PinMode
     getPinMode(
@@ -240,38 +249,38 @@ private:
     void
     onConnectionReady(
         void
-        );
+    );
 
     void
     onConnectionFailed(
-        Platform::String^ message
-        );
+        Platform::String^ message_
+    );
 
     void
     onConnectionLost(
-        Platform::String^ message
-        );
+        Platform::String^ message_
+    );
 
     //reporting callbacks
     void
     onDigitalReport(
-        Firmata::CallbackEventArgs ^argv
-        );
+        Firmata::CallbackEventArgs ^argv_
+    );
 
     void
     onAnalogReport(
-        Firmata::CallbackEventArgs ^argv
-        );
+        Firmata::CallbackEventArgs ^argv_
+    );
 
     void
     onSysexMessage(
-        Firmata::SysexCallbackEventArgs ^argv
-        );
+        Firmata::SysexCallbackEventArgs ^argv_
+    );
 
     void
     onStringMessage(
-        Firmata::StringCallbackEventArgs ^argv
-        );
+        Firmata::StringCallbackEventArgs ^argv_
+    );
 
     void
     onPinCapabilityResponseReceived(

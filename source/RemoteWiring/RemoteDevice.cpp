@@ -303,11 +303,11 @@ RemoteDevice::pinMode(
 
 void
 RemoteDevice::onDigitalReport(
-    Firmata::CallbackEventArgs ^args
+    Firmata::CallbackEventArgs ^args_
     )
 {
-    uint8_t port = args->getPort();
-    uint8_t port_val = static_cast<uint8_t>(args->getValue());
+    uint8_t port = args_->getPort();
+    uint8_t port_val = static_cast<uint8_t>( args_->getValue() );
     uint8_t port_xor;
 
     {   //critial section
@@ -339,11 +339,11 @@ RemoteDevice::onDigitalReport(
 
 void
 RemoteDevice::onAnalogReport(
-    Firmata::CallbackEventArgs ^args
+    Firmata::CallbackEventArgs ^args_
     )
 {
-    uint8_t pin = args->getPort();
-    uint16_t val = args->getValue();
+    uint8_t pin = args_->getPort();
+    uint16_t val = args_->getValue();
 
     {   //critial section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
@@ -357,19 +357,19 @@ RemoteDevice::onAnalogReport(
 
 void
 RemoteDevice::onSysexMessage(
-    Firmata::SysexCallbackEventArgs ^argv
+    Firmata::SysexCallbackEventArgs ^argv_
     )
 {
-    SysexMessageReceivedEvent( argv->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv->getDataBuffer() ) );
+    SysexMessageReceivedEvent( argv_->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() ) );
 }
 
 
 void
 RemoteDevice::onStringMessage(
-    Firmata::StringCallbackEventArgs ^argv
+    Firmata::StringCallbackEventArgs ^argv_
     )
 {
-    StringMessageReceivedEvent( argv->getString() );
+    StringMessageReceivedEvent( argv_->getString() );
 }
 
 
@@ -395,18 +395,18 @@ RemoteDevice::initialize(
 
 void
 RemoteDevice::getPinMap(
-    uint8_t pin,
-    int *port,
-    uint8_t *port_mask
+    uint8_t pin_,
+    int *port_,
+    uint8_t *port_mask_
     )
 {
-    if( port != nullptr )
+    if( port_ != nullptr )
     {
-        *port = ( pin / 8 );
+        *port_ = ( pin_ / 8 );
     }
-    if( port_mask != nullptr )
+    if( port_mask_ != nullptr )
     {
-        *port_mask = ( 1 << ( pin % 8 ) );
+        *port_mask_ = ( 1 << ( pin_ % 8 ) );
     }
 }
 
