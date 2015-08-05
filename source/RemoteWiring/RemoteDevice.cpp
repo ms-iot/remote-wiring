@@ -28,6 +28,7 @@
 using namespace Concurrency;
 
 using namespace Microsoft::Maker;
+using namespace Microsoft::Maker::Firmata;
 using namespace Microsoft::Maker::RemoteWiring;
 
 //******************************************************************************
@@ -40,8 +41,6 @@ RemoteDevice::RemoteDevice(
     _firmata( ref new Firmata::UwpFirmata ),
     _twoWire( nullptr )
 {
-    initialize();
-
     //subscribe to all relevant connection changes from our new Firmata object and then attach the given IStream object
     _firmata->FirmataConnectionReadyEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
     _firmata->FirmataConnectionFailedEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
@@ -55,8 +54,6 @@ RemoteDevice::RemoteDevice(
     _firmata( firmata_ ),
     _twoWire( nullptr )
 {
-    initialize();
-
     //since the UwpFirmata object is provided, we need to lock its state & verify it is not already in a connected state
     _firmata->lock();
 
@@ -368,25 +365,124 @@ RemoteDevice::getPinMap(
 }
 
 void
-RemoteDevice::onConnectionReady(
-    void
-    )
-{
-    throw ref new Platform::NotImplementedException();
-}
-
-void
 RemoteDevice::onConnectionFailed(
-    Platform::String^ message
+    Platform::String^ message_
     )
 {
-    throw ref new Platform::NotImplementedException();
+    DeviceConnectionFailedEvent( message_ );
 }
 
 void
 RemoteDevice::onConnectionLost(
-    Platform::String^ message
+    Platform::String^ message_
     )
 {
-    throw ref new Platform::NotImplementedException();
+    DeviceConnectionLostEvent( message_ );
+}
+
+void
+RemoteDevice::onConnectionReady(
+    void
+    )
+{
+    //manually sending a sysex message asking for the pin configuration will guarantee it is sent properly even if a user has started a sysex message themselves
+    _firmata->lock();
+    _firmata->startListening();
+    _firmata->PinCapabilityResponseReceivedEvent += ref new Microsoft::Maker::Firmata::SysexCallbackFunction( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onPinCapabilityResponseReceived );
+    _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+    _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
+    _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    _firmata->flush();
+    _firmata->unlock();
+}
+
+
+void
+RemoteDevice::onPinCapabilityResponseReceived(
+    UwpFirmata ^caller_,
+    SysexCallbackEventArgs ^argv_
+    )
+{
+    auto reader = Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() );
+    auto size = argv_->getDataBuffer()->Length;
+
+    uint8_t *data = (uint8_t *)malloc( sizeof( uint8_t ) * size );
+    for( int i = 0; i < size; ++i )
+    {
+        data[i] = reader->ReadByte();
+    }
+
+    _total_pins = 0;
+    _analog_offset = 0;
+    _num_analog_pins = 0;
+
+    int END_OF_PIN_VALUE = 0x7F;
+    for( int i = 0; i < size; ++i )
+    {
+        while( i < size && data[i] != END_OF_PIN_VALUE )
+        {
+            PinMode mode = static_cast<PinMode>( data[i] );
+            switch( mode )
+            {
+            case PinMode::INPUT:
+                i += 4;
+
+                break;
+
+            case PinMode::ANALOG:
+
+                //analog offset keeps track of the first pin found that supports analog read, allows us to convert analog pins like "A0" to the correct pin number
+                if( _analog_offset == 0 )
+                {
+                    _analog_offset = _total_pins;
+                }
+                ++_num_analog_pins;
+
+                //this statement intentionally left unbroken
+
+            case PinMode::PWM:
+            case PinMode::SERVO:
+            case PinMode::I2C:
+                i += 2;
+
+                break;
+
+            default:
+                ++i;
+
+                break;
+            }
+        }
+        _total_pins++;
+    }
+
+    initialize();
+    DeviceReadyEvent();
+}
+
+uint8_t
+RemoteDevice::parsePinFromAnalogString(
+    Platform::String^ string_
+    )
+{
+    //a valid string must contain at least 2 characters, 'a' or 'A' followed by a number
+    if( string_ == nullptr || string_->Length() < 2 )
+    {
+        return -1;
+    }
+
+    const wchar_t *data = string_->Data();
+    if( !( data[0] == 'a' || data[0] == 'A' ) )
+    {
+        return -1;
+    }
+
+    long int parsed_num = wcstol( data + 1, nullptr, 10 );
+
+    //wcstol returns 0 on error condition, but 0 is also a valid pin. one last verification step
+    if( parsed_num == 0 && data[1] != L'0' )
+    {
+        return -1;
+    }
+    return static_cast<uint8_t>( parsed_num );
 }

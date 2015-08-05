@@ -71,9 +71,9 @@ public:
     event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
     event SysexMessageReceivedCallback ^ SysexMessageReceivedEvent;
     event StringMessageReceivedCallback ^ StringMessageReceivedEvent;
-    event RemoteDeviceConnectionCallback^ RemoteDeviceReadyEvent;
-    event RemoteDeviceConnectionCallbackWithMessage^ RemoteDeviceConnectionFailedEvent;
-    event RemoteDeviceConnectionCallbackWithMessage^ RemoteDeviceConnectionLostEvent;
+    event RemoteDeviceConnectionCallback^ DeviceReadyEvent;
+    event RemoteDeviceConnectionCallbackWithMessage^ DeviceConnectionFailedEvent;
+    event RemoteDeviceConnectionCallbackWithMessage^ DeviceConnectionLostEvent;
 
     property I2c::TwoWire ^ I2c
     {
@@ -167,7 +167,12 @@ private:
     //constant members
     static const int MAX_PORTS = 16;
     static const int MAX_PINS = 128;
-    static const int ANALOG_PINS = 6;
+    static const int MAX_ANALOG_PINS = 16;
+
+    //stateful members received from the device
+    int _analog_offset;
+    int _num_analog_pins;
+    int _total_pins;
 
     //initialization for constructor
     void const initialize();
@@ -184,7 +189,7 @@ private:
     //state-tracking cache variables
     uint8_t volatile _subscribed_ports[MAX_PORTS];
     uint8_t volatile _digital_port[MAX_PORTS];
-    uint16_t volatile _analog_pins[ANALOG_PINS];
+    uint16_t volatile _analog_pins[MAX_ANALOG_PINS];
     uint8_t _pin_mode[MAX_PINS];
 
     //connection callbacks
@@ -223,6 +228,12 @@ private:
     onStringMessage(
         Firmata::StringCallbackEventArgs ^argv
         );
+
+    void
+    onPinCapabilityResponseReceived(
+        Microsoft::Maker::Firmata::UwpFirmata ^caller_,
+        Microsoft::Maker::Firmata::SysexCallbackEventArgs ^argv_
+    );
 };
 
 } // namespace Wiring
