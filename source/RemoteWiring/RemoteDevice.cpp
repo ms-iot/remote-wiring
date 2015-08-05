@@ -95,23 +95,40 @@ RemoteDevice::analogRead(
     std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
     uint16_t val = -1;
+    uint8_t analog_pin_num = pin_ + _analog_offset;
 
-    if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::ANALOG)) {
-        if (_pin_mode[pin_] == static_cast<uint8_t>(PinMode::INPUT)) {
-            pinMode(pin_, PinMode::ANALOG);
-            _pin_mode[pin_] = static_cast<uint8_t>(PinMode::ANALOG);
+    if( _pin_mode[ analog_pin_num ] != static_cast<uint8_t>( PinMode::ANALOG ) )
+    {
+        if( _pin_mode[ analog_pin_num ] == static_cast<uint8_t>( PinMode::INPUT ) )
+        {
+            pinMode( analog_pin_num, PinMode::ANALOG );
         }
-        else {
-            return static_cast<uint16_t>(val);
+        else
+        {
+            return static_cast<uint16_t>( val );
         }
     }
 
-    if( pin_ < MAX_PINS )
+    if( pin_ < _num_analog_pins )
     {
         val = _analog_pins[ pin_ ];
     }
 
     return val;
+}
+
+uint16_t
+RemoteDevice::analogRead(
+    Platform::String^ analog_pin_
+    )
+{
+    uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
+    if( parsed_pin == static_cast<uint8_t>( -1 ) )
+    {
+        return static_cast<uint16_t>( -1 );
+    }
+
+    return analogRead( static_cast<uint8_t>( parsed_pin ) + _analog_offset );
 }
 
 void
@@ -202,6 +219,20 @@ RemoteDevice::getPinMode(
     return static_cast<PinMode>( _pin_mode[ pin_ ] );
 }
 
+PinMode
+RemoteDevice::getPinMode(
+    Platform::String ^analog_pin_
+    )
+{
+    uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
+    if( parsed_pin == static_cast<uint8_t>( -1 ) )
+    {
+        return PinMode::IGNORED;
+    }
+
+    return getPinMode( parsed_pin + _analog_offset );
+}
+
 
 void
 RemoteDevice::pinMode(
@@ -247,6 +278,21 @@ RemoteDevice::pinMode(
         //finally, update the cached pin mode
         _pin_mode[pin_] = static_cast<uint8_t>( mode_ );
     }
+}
+
+void
+RemoteDevice::pinMode(
+    Platform::String ^analog_pin_,
+    PinMode mode_
+    )
+{
+    uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
+    if( parsed_pin == static_cast<uint8_t>( -1 ) )
+    {
+        return;
+    }
+
+    pinMode( parsed_pin + _analog_offset, mode_ );
 }
 
 

@@ -106,6 +106,16 @@ public:
     uint16_t
     analogRead(
         uint8_t pin_
+        );
+
+    ///<summary>
+    ///Returns the most recently-reported value for the given analog pin.
+    ///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
+    ///<param name="analog_pin_">The analog pin string, where "A0" refers to the first analog pin A0, "A1" refers to A1, and so on.</param>
+    ///</summary>
+    uint16_t
+    analogRead(
+        Platform::String ^analog_pin_
     );
 
     ///<summary>
@@ -153,6 +163,19 @@ public:
     );
 
     ///<summary>
+    ///Sets the given pin to the given PinMode.
+    ///<para>This function accepts a string which should always represent an analog pin, like "A0". It will convert the given string to the correct pin number
+    ///based on the configuration reported by the device. The given string must be exactly 'A' followed by a number, or the request will be ignored.</para>
+    ///<param name="analog_pin_">The analog pin string, where "A0" refers to the first analog pin A0, "A1" refers to A1, and so on.</param>
+    ///<param name="mode_">The desired mode for the given analog pin.</param>
+    ///</summary>
+    void
+    pinMode(
+        Platform::String ^analog_pin_,
+        PinMode mode_
+    );
+
+    ///<summary>
     ///Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
     ///<para>This is not a function you will find in the Arduino API, but is an extremely helpful function 
     ///that allows the RemoteDevice class to maintain consistency with your apps.</para>
@@ -161,6 +184,17 @@ public:
     getPinMode(
         uint8_t pin_
     );
+
+    ///<summary>
+    ///Retrieves the mode of the given pin from the cache stored by RemoteDevice class. 
+    ///<para>This is not a function you will find in the Arduino API, but is an extremely helpful function 
+    ///that allows the RemoteDevice class to maintain consistency with your apps.</para>
+    ///<param name="analog_pin_">The analog pin string, where "A0" refers to the first analog pin A0, "A1" refers to A1, and so on.</param>
+    ///</summary>
+    PinMode
+    getPinMode(
+        Platform::String ^analog_pin_
+        );
 
 
 private:
@@ -183,14 +217,24 @@ private:
     //a mutex for thread safety
     std::recursive_mutex _device_mutex;
 
-    //maps the given pin number to the correct port and mask
-    void getPinMap( uint8_t, int *, uint8_t * );
-
     //state-tracking cache variables
     uint8_t volatile _subscribed_ports[MAX_PORTS];
     uint8_t volatile _digital_port[MAX_PORTS];
     uint16_t volatile _analog_pins[MAX_ANALOG_PINS];
     uint8_t _pin_mode[MAX_PINS];
+
+    //maps the given pin number to the correct port and mask
+    void
+    getPinMap(
+        uint8_t, int *,
+        uint8_t *
+    );
+
+    //returns a uint8_t type parsed from a Platform::String ^
+    uint8_t
+    parsePinFromAnalogString(
+        Platform::String^ string_
+    );
 
     //connection callbacks
     void
