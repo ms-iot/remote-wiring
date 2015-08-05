@@ -358,7 +358,7 @@ UwpFirmata::onConnectionEstablished(
         _connection_ready = true;
     }
 
-    FirmataConnectionReadyEvent();
+    FirmataConnectionReady();
 }
 
 void
@@ -366,7 +366,7 @@ UwpFirmata::onConnectionFailed(
     Platform::String ^message
     )
 {
-    FirmataConnectionFailedEvent( message );
+    FirmataConnectionFailed( message );
 }
 
 void
@@ -375,7 +375,7 @@ UwpFirmata::onConnectionLost(
     )
 {
     _connection_ready = false;
-    FirmataConnectionLostEvent( message );
+    FirmataConnectionLost( message );
 }
 
 void

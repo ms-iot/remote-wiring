@@ -67,13 +67,13 @@ public ref class RemoteDevice sealed {
     I2c::TwoWire ^_twoWire;
 
 public:
-    event DigitalPinUpdatedCallback ^ DigitalPinUpdatedEvent;
-    event AnalogPinUpdatedCallback ^ AnalogPinUpdatedEvent;
-    event SysexMessageReceivedCallback ^ SysexMessageReceivedEvent;
-    event StringMessageReceivedCallback ^ StringMessageReceivedEvent;
-    event RemoteDeviceConnectionCallback^ DeviceReadyEvent;
-    event RemoteDeviceConnectionCallbackWithMessage^ DeviceConnectionFailedEvent;
-    event RemoteDeviceConnectionCallbackWithMessage^ DeviceConnectionLostEvent;
+    event DigitalPinUpdatedCallback ^ DigitalPinUpdated;
+    event AnalogPinUpdatedCallback ^ AnalogPinUpdated;
+    event SysexMessageReceivedCallback ^ SysexMessageReceived;
+    event StringMessageReceivedCallback ^ StringMessageReceived;
+    event RemoteDeviceConnectionCallback ^ DeviceReady;
+    event RemoteDeviceConnectionCallbackWithMessage ^ DeviceConnectionFailed;
+    event RemoteDeviceConnectionCallbackWithMessage ^ DeviceConnectionLost;
 
     property I2c::TwoWire ^ I2c
     {

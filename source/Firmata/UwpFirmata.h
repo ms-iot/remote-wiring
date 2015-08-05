@@ -176,16 +176,16 @@ public delegate void FirmataConnectionCallbackWithMessage( Platform::String ^mes
 public ref class UwpFirmata sealed
 {
 public:
-    event CallbackFunction^ DigitalPortValueEvent;
-    event CallbackFunction^ AnalogValueEvent;
-    event StringCallbackFunction^ StringEvent;
-    event SysexCallbackFunction^ SysexEvent;
-    event SysexCallbackFunction^ PinCapabilityResponseReceivedEvent;
-    event I2cReplyCallbackFunction^ I2cReplyEvent;
-    event SystemResetCallbackFunction^ SystemResetEvent;
-    event FirmataConnectionCallback^ FirmataConnectionReadyEvent;
-    event FirmataConnectionCallbackWithMessage^ FirmataConnectionFailedEvent;
-    event FirmataConnectionCallbackWithMessage^ FirmataConnectionLostEvent;
+    event CallbackFunction^ DigitalPortValueUpdated;
+    event CallbackFunction^ AnalogValueUpdated;
+    event StringCallbackFunction^ StringMessageReceived;
+    event SysexCallbackFunction^ SysexMessageReceived;
+    event SysexCallbackFunction^ PinCapabilityResponseReceived;
+    event I2cReplyCallbackFunction^ I2cReplyReceived;
+    event SystemResetCallbackFunction^ SystemResetRequested;
+    event FirmataConnectionCallback^ FirmataConnectionReady;
+    event FirmataConnectionCallbackWithMessage^ FirmataConnectionFailed;
+    event FirmataConnectionCallbackWithMessage^ FirmataConnectionLost;
 
     UwpFirmata(
         void
@@ -387,7 +387,7 @@ internal:
         int value_
     )
     {
-        caller_->AnalogValueEvent( caller_, ref new CallbackEventArgs( pin_, value_ ) );
+        caller_->AnalogValueUpdated( caller_, ref new CallbackEventArgs( pin_, value_ ) );
     }
 
     ///<summary>
@@ -401,7 +401,7 @@ internal:
         int value_
     )
     {
-        caller_->DigitalPortValueEvent( caller_, ref new CallbackEventArgs( port_, value_ ) );
+        caller_->DigitalPortValueUpdated( caller_, ref new CallbackEventArgs( port_, value_ ) );
     }
 
     ///<summary>
@@ -420,7 +420,7 @@ internal:
 
         size_t c;
         mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>(string_data_), len + 1 );
-        caller_->StringEvent( caller_, ref new StringCallbackEventArgs( ref new String(wstr_data) ) );
+        caller_->StringMessageReceived( caller_, ref new StringCallbackEventArgs( ref new String(wstr_data) ) );
         delete[](wstr_data);
     }
 
@@ -446,7 +446,7 @@ internal:
             {
                 writer->WriteByte( argv_[i] );
             }
-            caller_->PinCapabilityResponseReceivedEvent( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
+            caller_->PinCapabilityResponseReceived( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
             return;
         }
 
@@ -473,7 +473,7 @@ internal:
                 writer->WriteByte( argv_[i] );
             }
 
-            caller_->I2cReplyEvent( caller_, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
+            caller_->I2cReplyReceived( caller_, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
         }
         else
         {
@@ -483,7 +483,7 @@ internal:
                 writer->WriteByte( argv_[i] );
             }
 
-            caller_->SysexEvent( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
+            caller_->SysexMessageReceived( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
         }
     }
 

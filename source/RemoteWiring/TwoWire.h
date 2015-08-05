@@ -118,7 +118,7 @@ private:
         _data_buffer( new uint8_t[ MAX_MESSAGE_LEN ] ),
         _firmata( firmata_ )
     {
-        _firmata->I2cReplyEvent += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UwpFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
+        _firmata->I2cReplyReceived += ref new Firmata::I2cReplyCallbackFunction( [this]( Firmata::UwpFirmata ^caller, Firmata::I2cCallbackEventArgs^ args ) -> void { onI2cReply( args ); } );
     }
     
     //a reference to the UAP firmata interface

@@ -42,9 +42,9 @@ RemoteDevice::RemoteDevice(
     _twoWire( nullptr )
 {
     //subscribe to all relevant connection changes from our new Firmata object and then attach the given IStream object
-    _firmata->FirmataConnectionReadyEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
-    _firmata->FirmataConnectionFailedEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
-    _firmata->FirmataConnectionLostEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
+    _firmata->FirmataConnectionReady += ref new Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
+    _firmata->FirmataConnectionFailed += ref new Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
+    _firmata->FirmataConnectionLost += ref new Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
     _firmata->begin( serial_connection_ );
 }
 
@@ -64,12 +64,12 @@ RemoteDevice::RemoteDevice(
     else
     {
         //we only care about these status changes if the connection is not already established
-        _firmata->FirmataConnectionReadyEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
-        _firmata->FirmataConnectionFailedEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
+        _firmata->FirmataConnectionReady += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
+        _firmata->FirmataConnectionFailed += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
     }
 
     //we always care about the connection being lost
-    _firmata->FirmataConnectionLostEvent += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
+    _firmata->FirmataConnectionLost += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
 
     _firmata->unlock();
 }
@@ -329,7 +329,7 @@ RemoteDevice::onDigitalReport(
     {
         if( port_xor & 0x01 )
         {
-            DigitalPinUpdatedEvent( ( port * 8 ) + i, ( ( port_val >> i ) & 0x01 ) > 0 ? PinState::HIGH : PinState::LOW );
+            DigitalPinUpdated( ( port * 8 ) + i, ( ( port_val >> i ) & 0x01 ) > 0 ? PinState::HIGH : PinState::LOW );
         }
         port_xor >>= 1;
         ++i;
@@ -351,7 +351,7 @@ RemoteDevice::onAnalogReport(
     }
 
     //throw an event for the pin value update
-    AnalogPinUpdatedEvent( pin, val );
+    AnalogPinUpdated( pin, val );
 }
 
 
@@ -360,7 +360,7 @@ RemoteDevice::onSysexMessage(
     Firmata::SysexCallbackEventArgs ^argv_
     )
 {
-    SysexMessageReceivedEvent( argv_->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() ) );
+    SysexMessageReceived( argv_->getCommand(), Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() ) );
 }
 
 
@@ -369,7 +369,7 @@ RemoteDevice::onStringMessage(
     Firmata::StringCallbackEventArgs ^argv_
     )
 {
-    StringMessageReceivedEvent( argv_->getString() );
+    StringMessageReceived( argv_->getString() );
 }
 
 
@@ -382,10 +382,10 @@ RemoteDevice::initialize(
     void
     )
 {
-    _firmata->DigitalPortValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
-    _firmata->AnalogValueEvent += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
-    _firmata->SysexEvent += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
-    _firmata->StringEvent += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
+    _firmata->DigitalPortValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
+    _firmata->AnalogValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+    _firmata->SysexMessageReceived += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
+    _firmata->StringMessageReceived += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
 
     memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
     memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
@@ -415,7 +415,7 @@ RemoteDevice::onConnectionFailed(
     Platform::String^ message_
     )
 {
-    DeviceConnectionFailedEvent( message_ );
+    DeviceConnectionFailed( message_ );
 }
 
 void
@@ -423,7 +423,7 @@ RemoteDevice::onConnectionLost(
     Platform::String^ message_
     )
 {
-    DeviceConnectionLostEvent( message_ );
+    DeviceConnectionLost( message_ );
 }
 
 void
@@ -434,7 +434,7 @@ RemoteDevice::onConnectionReady(
     //manually sending a sysex message asking for the pin configuration will guarantee it is sent properly even if a user has started a sysex message themselves
     _firmata->lock();
     _firmata->startListening();
-    _firmata->PinCapabilityResponseReceivedEvent += ref new Microsoft::Maker::Firmata::SysexCallbackFunction( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onPinCapabilityResponseReceived );
+    _firmata->PinCapabilityResponseReceived += ref new Microsoft::Maker::Firmata::SysexCallbackFunction( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onPinCapabilityResponseReceived );
     _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
     _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
     _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
@@ -503,7 +503,7 @@ RemoteDevice::onPinCapabilityResponseReceived(
     }
 
     initialize();
-    DeviceReadyEvent();
+    DeviceReady();
 }
 
 uint8_t
