@@ -23,7 +23,7 @@
 #define FIRMATA_MINOR_VERSION   4 // for backwards compatible changes
 #define FIRMATA_BUGFIX_VERSION  1 // for bugfix releases
 
-#define MAX_DATA_BYTES          64 // max number of data bytes in incoming messages
+#define MAX_DATA_BYTES          512 // max number of data bytes in incoming messages
 
 // message command bytes (128-255/0x80-0xFF)
 #define DIGITAL_MESSAGE         0x90 // send data for a digital pin
@@ -260,7 +260,7 @@ class FirmataClass
     byte waitForData; // this flag says the next serial input will be data
     byte executeMultiByteCommand; // execute this after getting multi-byte data
     byte multiByteChannel; // channel data for multiByteCommands
-    byte storedInputData[MAX_DATA_BYTES]; // multi-byte data
+    byte *storedInputData; // multi-byte data
 
     // sysex
     bool parsingSysex;
