@@ -41,14 +41,16 @@ This section lists boards which have been *well-tested* using all connection met
 2. Leonardo
 3. Mega
 
-####Note: There is a known issue with USB connections to Arduino Uno. The device will very often ignore up to 50 bytes of information being sent to the device only after a fresh connection is established. This issue does not exist with other connection methods. The best known work-around is to reset the Uno (using the physical reset button on the board) after the connection is established.
+####Note for USB:
+There is a known issue with USB connections to Arduino Uno. The device will very often ignore up to 50 bytes of information being sent to the device only after a fresh connection is established. This issue does not exist with other connection methods. This can cause increased delays while waiting for the RemoteDevice class to correctly handshake with the device.
 
 ##DFRobot
 
 1. Bluno
 2. Bluno Beetle
 
-####Note: There is a known issue with USB connections to DFRobot boards. Input (from the Arduino to the Windows device) does not work when connected via USB. This issue is not present under and other connection methods, and there is no known workaround at this time.
+####Note for USB:
+There is a known issue with USB connections to DFRobot boards. Input (from the Arduino to the Windows device) does not work when connected via USB. This issue is not present under and other connection methods, and there is no known workaround at this time.
 
 
 #Software Architecture
@@ -152,20 +154,33 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 ```c#
         using namespace Microsoft.Maker.RemoteWiring;
         using namespace Microsoft.Maker.Serial;
-
-		//create a bluetooth connection and pass it to the RemoteDevice
-		//I am using a constructor that accepts a device name or ID.
-		IStream connection = new BluetoothSerial( "MyBluetoothDevice" );
-        RemoteDevice arduino = new RemoteDevice( connection );
 		
-		//always begin your IStream
-		bt.begin( 115200, SerialConfig.SERIAL_8N1 );
+		IStream connection;
+		RemoteDevice arduino;
 
-        arduino.pinMode( 7, PinMode.OUTPUT );
-        arduino.pinMode( 9, PinMode.INPUT );
+		public void SetupRemoteArduino()
+		{
+			//create a bluetooth connection and pass it to the RemoteDevice
+			//I am using a constructor that accepts a device name or ID.
+			connection = new BluetoothSerial( "MyBluetoothDevice" );
+			arduino = new RemoteDevice( connection );
+			
+			//add a callback method (delegate) to be invoked when the device is ready, refer to the Events section for more info
+			arduino.DeviceReady += OnDeviceReady;
+			
+			//always begin your IStream
+			bt.begin( 115200, SerialConfig.SERIAL_8N1 );
+		}
+		
+		//treat this function like "setup()" in an Arduino sketch.
+		public void OnDeviceReady()
+		{
+			arduino.pinMode( 7, PinMode.OUTPUT );
+			arduino.pinMode( "A0", PinMode.ANALOG );
 
-        arduino.digitalWrite( 7, PinState.HIGH );
-        UInt16 val = arduino.analogRead( 9 );
+			arduino.digitalWrite( 7, PinState.HIGH );
+			UInt16 val = arduino.analogRead( "A0" );
+		}
 ```
 
 #####C++ Example:
@@ -175,46 +190,49 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
         using namespace Microsoft::Maker::RemoteWiring;
         using namespace Microsoft::Maker::Serial;
 		
-		//create a bluetooth connection and pass it to the RemoteDevice
-		IStream ^connection = ref new BluetoothSerial( "MyBluetoothDevice" );
-        RemoteDevice ^arduino = ref new RemoteDevice( connection );
+		IStream ^connection;
+		RemoteDevice ^arduino;
 		
-		//always begin your IStream
-		connection->begin( 115200, SerialConfig::SERIAL_8N1 );
+		public void setupRemoteArduino()
+		{
+			//create a bluetooth connection and pass it to the RemoteDevice
+			connection = ref new BluetoothSerial( "MyBluetoothDevice" );
+			arduino = ref new RemoteDevice( connection );
+			
+			//add a callback method (delegate) to be invoked when the device is ready, refer to the Events section for more info
+			arduino->DeviceReady += ref new Microsoft::Maker::RemoteWiring::RemoteDeviceConnectionCallback( this, &MyNamespace::MyClass::onDeviceReady );
+		
+			//always begin your IStream
+			connection->begin( 115200, SerialConfig::SERIAL_8N1 );
+		}
 
-        arduino->pinMode( 7, PinMode::OUTPUT );
-        arduino->pinMode( 9, PinMode::INPUT );
+		//treat this function like "setup()" in an Arduino sketch.
+		public void onDeviceReady()
+		{
+			arduino->pinMode( 7, PinMode::OUTPUT );
+			arduino->pinMode( 9, PinMode::INPUT );
 
-        arduino->digitalWrite( 7, PinState::HIGH );
-        uint16_t val = arduino->analogRead( 9 );
+			arduino->digitalWrite( 7, PinState::HIGH );
+			uint16_t val = arduino->analogRead( 9 );
+		}
 ```
 
 ###Working with Analog
 
-Analog input pins (A0, A1, A2, etc) have some unique properties which can cause some confusion working with them for the first time. This is mainly due to the contextualization the digital and analog pins when using Firmata. The Arduino IDE #defines special keywords for using these analog pins which basically tries to hide the issue from you, which can cause complications from another device when communicating with an Arduino over Firmata.
+Analog input pins (A0, A1, A2, etc) have some unique properties which can cause some confusion working with them for the first time.
 
-Let's consider the `pinMode` function for a moment...
+These pins support analogRead, but also digital functions like digitalRead and digitalWrite. Therefore, you need to consider the pinMode a little differently than you would in an Arduino IDE.
 
-An Arduino Uno has 14 digital pins numbered from 0 to 13. If you want to set the mode of pin 5 to `INPUT`, you would write `pinMode( 5, INPUT );` in the Arduino IDE. If you wanted to do the same thing with analog pin 0, you would write `pinMode( A0, ANALOG );`. First, notice that we used ANALOG instead of INPUT. This is the first discrepancy of analog pins; Setting `A0` to `INPUT` doesn't do what you think it would!
+`arduino.pinMode( "A0", PinMode.INPUT );    //sets mode of pin A0 to DIGITAL input.`
+`arduino.pinMode( "A0", PinMode.OUTPUT );   //sets mode of pin A0 to DIGITAL output.`
+`arduino.pinMode( "A0", PinMode.ANALOG );   //sets mode of pin A0 to ANALOG input.`
 
-An Arduino only speaks binary. It understands numbers very well, but does not understand words like INPUT or ANALOG. `INPUT`, `OUTPUT`, `HIGH`, `LOW`, and many others are examples of macros defined by the Arduino IDE. These values are mapped to meaningful numbers without your knowledge or intervention. It is taken care of for you for simplicity and makes your code much more readable. However, the same is true for `A0`, therefore both arguments to the function call `pinMode( A0, ANALOG );` are converted to numbers before the code is compiled to run on the Arduino. The value of ANALOG is always the same, but the value of A0 varies depending on the board you are using!
+Therefore, if you want to read analog values from these pins, you must set the pinmode to ANALOG, not simply INPUT or OUTPUT.
 
-All pins are assigned a number. Analog pins are always numbered higher than the digital pins, so the pin number of A0 is actually different depending on *how many* digital pins your Arduino has. Since an Uno has 14 digital pins numbered from 0 to 13, pin A0 is actually pin 14, A1 is 15, A2 is 16, etc. A Mega has 54 digital pins, so A0 refers to pin 54.
+Last, when referring to analog pins, make sure to always use strings with the format "A#" (where # is the analog pin number) for the functions pinMode, analogRead, and getPinMode.
 
-Here is where this gets interesting: when using Remote Arduino, you need to be concious of the actual pin number when using generic functions like `pinMode`. Since we do not (currently) have any knowledge of what board is on the other end, we can't define A0 for you. Therefore, if you want to enable pin A0 for analogRead or analog events, you'll need to create your `RemoteDevice` object (called arduino here) and invoke the function like `arduino.pinMode( 14, PinMode.ANALOG );`
-
-When reading the values, however, the context is clear. Since you cannot be referring to a digital pin when you invoke a function like `analogRead`, A0 is just 0, regardless of which type of board you are using. To be clear, this is not a design decision that this library has taken, this is how Firmata works. We are actively working to improve this in the future. For now, here is an example to help illustrate the issue:
-
-```c#
-	//We know that we have an Arduino Uno connected at the other end, which has 14 digital pins.
-	//We want to read from a photocell connected to pin A4. Since A0 = 14, then A4 = 18
-	
-	byte NUM_DIGITAL_PINS = 14;
-	byte photoPin = 4;
-	
-	arduino.pinMode( photoPin + NUM_DIGITAL_PINS, PinMode.ANALOG );	//sets the mode of A4 to ANALOG, 
-	arduino.analogRead( photoPin );									//reads the value of A4
-```
+`arduino.pinMode( "A3", PinMode.ANALOG );   //will correctly set pin A3 to ANALOG INPUT mode.`
+`arduino.pinMode( 3, PinMode.ANALOG );      //will do nothing, since pin 3 refers to a digital pin and does not support ANALOG INPUT.`
 
 ###Events
 
@@ -235,43 +253,41 @@ public MyObject()
 	connection = new BluetoothSerial( "MyBluetoothDevice" ); //Directly providing my device name to connect to
 	arduino = new RemoteDevice( connection );
 
+	//subscribe to the ConnectionEstablished event with the name of the function to be called.
+	arduino.DeviceReady += MyDeviceReadyCallback;
+
 	//subscribe to the DigitalPinUpdateEvent with the name of the function to be called.
-	arduino.DigitalPinUpdateEvent += MyDigitalPinUpdateCallback;
+	arduino.DigitalPinUpdated += MyDigitalPinUpdateCallback;
 	
 	//subscribe to the AnalogPinUpdateEvent with the name of the function to be called.
-	arduino.AnalogPinUpdateEvent += MyAnalogPinUpdateCallback;
-
-	//subscribe to the ConnectionEstablished event with the name of the function to be called.
-	connection.ConnectionEstablished += MyConnectionEstablishedCallback;
+	arduino.AnalogPinUpdated += MyAnalogPinUpdateCallback;
 	
 	//always begin your IStream object
 	connection.begin( 115200, 0 );
 }
 
-//this function will automatically be called when the bluetooth connection is established
+//this function will automatically be called when a device connection is established and the device is ready
 //you may think of this like setup() in an Arduino sketch. It is the best place to prepare your
 //Arduino for the logic that the rest of your program will execute
-public void MyConnectionEstablishedCallback()
+public void MyDeviceReadyCallback()
 {
-	//set pin 7 to input mode to automatically receive callbacks when it changes
+	//set pin 7 to INPUT mode to automatically receive callbacks when it changes
 	arduino.pinMode( 7, PinMode.INPUT );
 	
-	arduino.pinMode( 8, OUTPUT );
-	
-	//you will also get a pin event when you change the value yourself.
-	arduino.digitalWrite( 8, PinState.HIGH );
+	//set pin 7 to ANALOG mode to automatically receive callbacks when it changes
+	arduino.pinMode( "A2", PinMode.ANALOG );
 }
 
 //this function will automatically be called whenever a digital pin value changes
 public void MyDigitalPinUpdateCallback( byte pin, PinState state )
 {
-	Debug.WriteLine( "Pin D" + pin + " is now " + ( state == PinState.HIGH ? "HIGH" + "LOW" ) );
+	Debug.WriteLine( "Digital pin " + pin + " is now " + ( state == PinState.HIGH ? "HIGH" + "LOW" ) );
 }
 
 //this function will automatically be called whenever the analog values are reported. This is usually every few ms.
 public void MyAnalogPinUpdateCallback( byte pin, UInt16 value )
 {
-	Debug.WriteLine( "Pin A" + pin + " is now " + value );
+	Debug.WriteLine( "Analog pin A" + pin + " is now " + value );
 }
 
 ```
