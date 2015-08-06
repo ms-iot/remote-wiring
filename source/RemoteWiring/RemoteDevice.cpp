@@ -38,7 +38,7 @@ using namespace Microsoft::Maker::RemoteWiring;
 RemoteDevice::RemoteDevice(
     Serial::IStream ^serial_connection_
     ) :
-    _initialized( false ),
+    _initialized( ATOMIC_VAR_INIT(false) ),
     _firmata( ref new Firmata::UwpFirmata ),
     _twoWire( nullptr )
 {
@@ -52,7 +52,7 @@ RemoteDevice::RemoteDevice(
 RemoteDevice::RemoteDevice(
     Firmata::UwpFirmata ^firmata_
     ) :
-    _initialized( false ),
+    _initialized( ATOMIC_VAR_INIT(false) ),
     _firmata( firmata_ ),
     _twoWire( nullptr )
 {
@@ -442,18 +442,27 @@ RemoteDevice::onConnectionReady(
     _firmata->PinCapabilityResponseReceived += ref new Microsoft::Maker::Firmata::SysexCallbackFunction( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onPinCapabilityResponseReceived );
     _firmata->startListening();
 
+	//this async task will send a request for pin capability report from the device, wait for increasing intervals as long as the device
+	//has not correctly responded. If, after a set amount of time, it is determined that no response has been received, it will repeat
+	//the process for a set number of attempts. A device response will be received in the form of a PinCapabilityResponseReceived event.
     Concurrency::create_task( [ this ]
     {
         {   //critical section
             std::lock_guard<std::recursive_mutex> lock( _device_mutex );
-            _total_pins = 0;
-            _analog_offset = 0;
-            _num_analog_pins = 0;
+            _total_pins = ATOMIC_VAR_INIT( 0 );
+            _analog_offset = ATOMIC_VAR_INIT( 0 );
+            _num_analog_pins = ATOMIC_VAR_INIT( 0 );
         }
 
         const int MAX_ATTEMPTS = 30;
+		const int MAX_DELAY_LOOP = 5;
+		const int INIT_DELAY_MS = 10;
         int attempts = 0;
+		int delay_loop = 0;
+		int delay_ms = INIT_DELAY_MS;
         
+		//this loop will send the pin capability report and repeatedly lock the _device_mutex while checking the state of the object's initialization.
+		//locking guarantees that the state is able to be read only entirely before or after a complete initialization.
         for( ;; )
         {
             {   //critical section
@@ -472,7 +481,17 @@ RemoteDevice::onConnectionReady(
             _firmata->unlock();
             
             ++attempts;
-            Sleep( 500 );
+			
+			//this loop is responsible for waiting at increasing intervals until the response is received or MAX_DELAY_LOOP number of iterations have occurred.
+			for( delay_loop = 0, delay_ms = INIT_DELAY_MS; delay_loop < MAX_DELAY_LOOP; ++delay_loop, delay_ms *= 2 )
+			{
+				Sleep( delay_ms );
+				
+				{   //critical section
+					std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+					if( _initialized ) return true;
+				}
+			}
         }
 
         return false;

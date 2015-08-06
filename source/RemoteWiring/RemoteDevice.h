@@ -213,10 +213,10 @@ private:
     static const int MAX_ANALOG_PINS = 16;
 
     //stateful members received from the device
-    int _analog_offset;
-    int _num_analog_pins;
-    int _total_pins;
-    bool _initialized;
+    std::atomic_int _analog_offset;
+    std::atomic_int _num_analog_pins;
+    std::atomic_int _total_pins;
+    std::atomic_bool _initialized;
 
     //initialization for constructor
     void const initialize();
