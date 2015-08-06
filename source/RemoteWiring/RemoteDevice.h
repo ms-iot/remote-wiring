@@ -104,6 +104,7 @@ public:
     ///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
     ///<param name="pin_">The analog pin number, where 0 refers to the first analog pin A0, 1 refers to A1, and so on.</param>
     ///</summary>
+    [Windows::Foundation::Metadata::DefaultOverload]
     uint16_t
     analogRead(
         uint8_t pin_
@@ -164,6 +165,7 @@ public:
     ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///<param name="mode_">The desired mode for the given pin.</param>
     ///</summary>
+    [Windows::Foundation::Metadata::DefaultOverload]
     void
     pinMode(
         uint8_t pin_,
@@ -189,6 +191,7 @@ public:
     ///that allows the RemoteDevice class to maintain consistency with your apps.</para>
     ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///</summary>
+    [Windows::Foundation::Metadata::DefaultOverload]
     PinMode
     getPinMode(
         uint8_t pin_
