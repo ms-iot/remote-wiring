@@ -112,21 +112,28 @@ UwpFirmata::begin(
     //lock the IStream object to guarantee its state won't change while we check if it is already connected.
     _firmata_stream->lock();
 
-    if( _firmata_stream->connectionReady() )
+    try
     {
-        onConnectionEstablished();
+        if( _firmata_stream->connectionReady() )
+        {
+            onConnectionEstablished();
+        }
+        else
+        {
+            //we only care about these status changes if the connection is not already established
+            _firmata_stream->ConnectionEstablished += ref new Microsoft::Maker::Serial::IStreamConnectionCallback( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionEstablished );
+            _firmata_stream->ConnectionFailed += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionFailed );
+        }
+
+        //we always care about the connection being lost
+        _firmata_stream->ConnectionLost += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionLost );
+        _firmata_stream->unlock();
     }
-    else
+    catch( Platform::Exception ^e )
     {
-        //we only care about these status changes if the connection is not already established
-        _firmata_stream->ConnectionEstablished += ref new Microsoft::Maker::Serial::IStreamConnectionCallback( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionEstablished );
-        _firmata_stream->ConnectionFailed += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionFailed );
+        FirmataConnectionFailed( L"An unexpected fatal error occurred in UwpFirmata::begin( IStream ). Message: " + e->Message );
+        _firmata_stream->unlock();
     }
-
-    //we always care about the connection being lost
-    _firmata_stream->ConnectionLost += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionLost );
-
-    _firmata_stream->unlock();
 }
 
 bool
@@ -168,15 +175,19 @@ UwpFirmata::finish(
     void
     )
 {
-    _firmata_lock.lock();
-    _firmata_stream->flush();
-    stopThreads();
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        stopThreads();
 
-    _firmata_stream = nullptr;
-    _sys_command = 0;
-    _sys_position = 0;
-    _data_buffer = nullptr;
-    _firmata_lock.unlock();
+        _connection_ready = false;
+        _firmata_stream = nullptr;
+        _sys_command = 0;
+        _sys_position = 0;
+        _data_buffer = nullptr;
+
+        _firmata_stream->flush();
+    }
+
     return ::RawFirmata.finish();
 }
 

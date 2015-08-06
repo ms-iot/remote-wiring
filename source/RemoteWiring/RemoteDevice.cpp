@@ -247,28 +247,36 @@ RemoteDevice::pinMode(
 
     {   //critial section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
-        _firmata->lock();
-        _firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
-        _firmata->write( pin_ );
-        _firmata->write( static_cast<uint8_t>( mode_ ) );
 
-        //lets subscribe to this port if we're setting it to input
-        if( mode_ == PinMode::INPUT )
+        _firmata->lock();
+        try
         {
-            _subscribed_ports[port] |= port_mask;
-            _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
-            _firmata->write( _subscribed_ports[port] );
+            _firmata->write( static_cast<uint8_t>( Firmata::Command::SET_PIN_MODE ) );
+            _firmata->write( pin_ );
+            _firmata->write( static_cast<uint8_t>( mode_ ) );
+
+            //lets subscribe to this port if we're setting it to input
+            if( mode_ == PinMode::INPUT )
+            {
+                _subscribed_ports[port] |= port_mask;
+                _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
+                _firmata->write( _subscribed_ports[port] );
+            }
+            //if the selected mode is NOT input and we WERE subscribed to it, unsubscribe
+            else if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::INPUT ) )
+            {
+                //make sure we aren't subscribed to this port
+                _subscribed_ports[port] &= ~port_mask;
+                _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
+                _firmata->write( _subscribed_ports[port] );
+            }
+            _firmata->flush();
+            _firmata->unlock();
         }
-        //if the selected mode is NOT input and we WERE subscribed to it, unsubscribe
-        else if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::INPUT ) )
+        catch( ... )
         {
-            //make sure we aren't subscribed to this port
-            _subscribed_ports[port] &= ~port_mask;
-            _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
-            _firmata->write( _subscribed_ports[port] );
+            _firmata->unlock();
         }
-        _firmata->flush();
-        _firmata->unlock();
 
         //if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
         if( mode_ == PinMode::OUTPUT && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
@@ -474,11 +482,18 @@ RemoteDevice::onConnectionReady(
 
             //manually sending a sysex message asking for the pin configuration will guarantee it is sent properly even if a user has started a sysex message themselves
             _firmata->lock();
-            _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-            _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
-            _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
-            _firmata->flush();
-            _firmata->unlock();
+            try
+            {
+                _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+                _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
+                _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+                _firmata->flush();
+                _firmata->unlock();
+            }
+            catch( ... )
+            {
+                _firmata->unlock();
+            }
             
             ++attempts;
 			
