@@ -216,6 +216,7 @@ private:
     int _analog_offset;
     int _num_analog_pins;
     int _total_pins;
+    bool _initialized;
 
     //initialization for constructor
     void const initialize();

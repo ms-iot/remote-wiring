@@ -38,6 +38,7 @@ using namespace Microsoft::Maker::RemoteWiring;
 RemoteDevice::RemoteDevice(
     Serial::IStream ^serial_connection_
     ) :
+    _initialized( false ),
     _firmata( ref new Firmata::UwpFirmata ),
     _twoWire( nullptr )
 {
@@ -51,6 +52,7 @@ RemoteDevice::RemoteDevice(
 RemoteDevice::RemoteDevice(
     Firmata::UwpFirmata ^firmata_
     ) :
+    _initialized( false ),
     _firmata( firmata_ ),
     _twoWire( nullptr )
 {
@@ -381,15 +383,22 @@ RemoteDevice::initialize(
     void
     )
 {
-    _firmata->DigitalPortValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
-    _firmata->AnalogValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
-    _firmata->SysexMessageReceived += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
-    _firmata->StringMessageReceived += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
+    {   //critical section equivalent to function scope
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
-    memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
-    memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
-    memset( (void*)_analog_pins, 0, sizeof( _analog_pins ) );
-    memset( (void*)_pin_mode, static_cast<uint8_t>( PinMode::OUTPUT ), sizeof( _pin_mode ) );
+        if( _initialized ) return;
+        _firmata->DigitalPortValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
+        _firmata->AnalogValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
+        _firmata->SysexMessageReceived += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
+        _firmata->StringMessageReceived += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
+
+        memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
+        memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
+        memset( (void*)_analog_pins, 0, sizeof( _analog_pins ) );
+        memset( (void*)_pin_mode, static_cast<uint8_t>( PinMode::OUTPUT ), sizeof( _pin_mode ) );
+
+        _initialized = true;
+    }
 }
 
 void
@@ -430,15 +439,58 @@ RemoteDevice::onConnectionReady(
     void
     )
 {
-    //manually sending a sysex message asking for the pin configuration will guarantee it is sent properly even if a user has started a sysex message themselves
-    _firmata->lock();
-    _firmata->startListening();
     _firmata->PinCapabilityResponseReceived += ref new Microsoft::Maker::Firmata::SysexCallbackFunction( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onPinCapabilityResponseReceived );
-    _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-    _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
-    _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
-    _firmata->flush();
-    _firmata->unlock();
+    _firmata->startListening();
+
+    Concurrency::create_task( [ this ]
+    {
+        {   //critical section
+            std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+            _total_pins = 0;
+            _analog_offset = 0;
+            _num_analog_pins = 0;
+        }
+
+        const int MAX_ATTEMPTS = 30;
+        int attempts = 0;
+        
+        for( ;; )
+        {
+            {   //critical section
+                std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+                if( _initialized ) return true;
+            }
+
+            if( attempts >= MAX_ATTEMPTS ) return false;
+
+            //manually sending a sysex message asking for the pin configuration will guarantee it is sent properly even if a user has started a sysex message themselves
+            _firmata->lock();
+            _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+            _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
+            _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+            _firmata->flush();
+            _firmata->unlock();
+            
+            ++attempts;
+            Sleep( 500 );
+        }
+
+        return false;
+    } )
+        .then( [ this ] ( task<bool> t )
+    {
+        try
+        {
+            bool result = t.get();
+            if( !result ) throw ref new Platform::Exception( E_UNEXPECTED, L"Pin configuration not received." );
+
+            DeviceReady();
+        }
+        catch( Platform::Exception ^e )
+        {
+            DeviceConnectionFailed( L"A device connection was established, but the device failed handshaking procedures. Verify that your device is configured with StandardFirmata. Message: " + e->Message );
+        }
+    } );
 }
 
 
@@ -457,14 +509,14 @@ RemoteDevice::onPinCapabilityResponseReceived(
         data[i] = reader->ReadByte();
     }
 
-    _total_pins = 0;
-    _analog_offset = 0;
-    _num_analog_pins = 0;
+    byte total_pins = 0;
+    byte analog_offset = 0;
+    byte num_analog_pins = 0;
 
-    int END_OF_PIN_VALUE = 0x7F;
+    int END_OF_PIN_DESCRIPTION = 0x7F;
     for( int i = 0; i < size; ++i )
     {
-        while( i < size && data[i] != END_OF_PIN_VALUE )
+        while( i < size && data[i] != END_OF_PIN_DESCRIPTION )
         {
             PinMode mode = static_cast<PinMode>( data[i] );
             switch( mode )
@@ -477,11 +529,11 @@ RemoteDevice::onPinCapabilityResponseReceived(
             case PinMode::ANALOG:
 
                 //analog offset keeps track of the first pin found that supports analog read, allows us to convert analog pins like "A0" to the correct pin number
-                if( _analog_offset == 0 )
+                if( analog_offset == 0 )
                 {
-                    _analog_offset = _total_pins;
+                    analog_offset = total_pins;
                 }
-                ++_num_analog_pins;
+                ++num_analog_pins;
 
                 //this statement intentionally left unbroken
 
@@ -498,11 +550,16 @@ RemoteDevice::onPinCapabilityResponseReceived(
                 break;
             }
         }
-        _total_pins++;
+        total_pins++;
     }
 
-    initialize();
-    DeviceReady();
+    {   //critical section
+        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+        _total_pins = total_pins;
+        _analog_offset = analog_offset;
+        _num_analog_pins = num_analog_pins;
+        initialize();
+    }
 }
 
 uint8_t
