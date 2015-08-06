@@ -260,7 +260,7 @@ class FirmataClass
     byte waitForData; // this flag says the next serial input will be data
     byte executeMultiByteCommand; // execute this after getting multi-byte data
     byte multiByteChannel; // channel data for multiByteCommands
-    byte *storedInputData; // multi-byte data
+    byte storedInputData[MAX_DATA_BYTES]; // multi-byte data
 
     // sysex
     bool parsingSysex;

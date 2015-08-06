@@ -217,7 +217,7 @@ RemoteDevice::getPinMode(
 {
     //critical section equivalent to function scope
     std::lock_guard<std::recursive_mutex> lock( _device_mutex );
-    return static_cast<PinMode>( _pin_mode[ pin_ ] );
+    return static_cast<PinMode>( _pin_mode[ pin_ ].load() );
 }
 
 PinMode
@@ -392,10 +392,10 @@ RemoteDevice::initialize(
         _firmata->SysexMessageReceived += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
         _firmata->StringMessageReceived += ref new Firmata::StringCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::StringCallbackEventArgs^ args ) -> void { onStringMessage( args ); } );
 
-        memset( (void*)_digital_port, 0, sizeof( _digital_port ) );
-        memset( (void*)_subscribed_ports, 0, sizeof( _subscribed_ports ) );
-        memset( (void*)_analog_pins, 0, sizeof( _analog_pins ) );
-        memset( (void*)_pin_mode, static_cast<uint8_t>( PinMode::OUTPUT ), sizeof( _pin_mode ) );
+        std::fill( _digital_port.begin(), _digital_port.end(), 0 );
+        std::fill( _subscribed_ports.begin(), _subscribed_ports.end(), 0 );
+        std::fill( _analog_pins.begin(), _analog_pins.end(), 0 );
+        std::fill( _pin_mode.begin(), _pin_mode.end(), static_cast<uint8_t>( PinMode::OUTPUT ) );
 
         _initialized = true;
     }

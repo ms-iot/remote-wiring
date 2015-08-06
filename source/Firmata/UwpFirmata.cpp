@@ -45,7 +45,7 @@ namespace {
 UwpFirmata::UwpFirmata(
     void
 ) :
-    _data_buffer(new uint8_t[31]),
+    _data_buffer(new uint8_t[DATA_BUFFER_SIZE]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
     _connection_ready(ATOMIC_VAR_INIT(false)),

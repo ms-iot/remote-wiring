@@ -494,6 +494,7 @@ internal:
     uint8_t _sys_position;
 
     //common buffer
+    const size_t DATA_BUFFER_SIZE = 31;
     std::unique_ptr<uint8_t> _data_buffer;
 
     //member variables to hold the current input thread & communications

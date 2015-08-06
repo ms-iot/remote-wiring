@@ -58,7 +58,6 @@ FirmataClass::FirmataClass(
     void
     )
 {
-    storedInputData = (byte *)malloc( sizeof( byte ) * MAX_DATA_BYTES );
     firmwareVersionCount = 0;
     firmwareVersionVector = nullptr;
     systemReset();

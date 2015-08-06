@@ -211,9 +211,9 @@ public:
 
 private:
     //constant members
-    static const int MAX_PORTS = 16;
-    static const int MAX_PINS = 128;
-    static const int MAX_ANALOG_PINS = 16;
+    static const size_t MAX_PORTS = 16;
+    static const size_t MAX_PINS = 128;
+    static const size_t MAX_ANALOG_PINS = 16;
 
     //stateful members received from the device
     std::atomic_int _analog_offset;
@@ -231,10 +231,10 @@ private:
     std::recursive_mutex _device_mutex;
 
     //state-tracking cache variables
-    uint8_t volatile _subscribed_ports[MAX_PORTS];
-    uint8_t volatile _digital_port[MAX_PORTS];
-    uint16_t volatile _analog_pins[MAX_ANALOG_PINS];
-    uint8_t _pin_mode[MAX_PINS];
+    std::array<std::atomic_uint8_t, MAX_PORTS> _subscribed_ports;
+    std::array<std::atomic_uint8_t, MAX_PORTS> _digital_port;
+    std::array<std::atomic_uint16_t, MAX_ANALOG_PINS> _analog_pins;
+    std::array<std::atomic_uint8_t, MAX_PINS> _pin_mode;
 
     //maps the given pin number to the correct port and mask
     void
