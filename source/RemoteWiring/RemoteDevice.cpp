@@ -59,19 +59,18 @@ RemoteDevice::RemoteDevice(
 
     if( _firmata->connectionReady() )
     {
+        _firmata->FirmataConnectionLost += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
+        _firmata->unlock();
+
         onConnectionReady();
     }
     else
     {
-        //we only care about these status changes if the connection is not already established
         _firmata->FirmataConnectionReady += ref new Microsoft::Maker::Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
         _firmata->FirmataConnectionFailed += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionFailed );
+        _firmata->FirmataConnectionLost += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
+        _firmata->unlock();
     }
-
-    //we always care about the connection being lost
-    _firmata->FirmataConnectionLost += ref new Microsoft::Maker::Firmata::FirmataConnectionCallbackWithMessage( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionLost );
-
-    _firmata->unlock();
 }
 
 RemoteDevice::~RemoteDevice(
