@@ -41,9 +41,10 @@ using namespace Microsoft::Maker::Serial;
 UsbSerial::UsbSerial(
     Platform::String ^vid_
     ) :
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _usb_lock(_usbutex, std::defer_lock),
     _baud(57600),
     _config(SerialConfig::SERIAL_8N1),
-    _connection_ready(0),
     _current_load_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
@@ -59,9 +60,10 @@ UsbSerial::UsbSerial(
     Platform::String ^vid_,
     Platform::String ^pid_
     ) :
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _usb_lock(_usbutex, std::defer_lock),
     _baud(57600),
     _config(SerialConfig::SERIAL_8N1),
-    _connection_ready(false),
     _current_load_operation(nullptr),
     _device(nullptr),
     _device_collection(nullptr),
@@ -76,9 +78,10 @@ UsbSerial::UsbSerial(
 UsbSerial::UsbSerial(
     Windows::Devices::Enumeration::DeviceInformation ^device_
     ) :
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _usb_lock(_usbutex, std::defer_lock),
     _baud(57600),
     _config(SerialConfig::SERIAL_8N1),
-    _connection_ready(false),
     _current_load_operation(nullptr),
     _device(device_),
     _device_collection(nullptr),
@@ -93,6 +96,7 @@ UsbSerial::UsbSerial(
 //******************************************************************************
 //* Destructors
 //******************************************************************************
+
 UsbSerial::~UsbSerial(
     void
     )
@@ -240,6 +244,14 @@ UsbSerial::listAvailableDevicesAsync(
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(device_aqs);
 }
 
+void
+UsbSerial::lock(
+    void
+    )
+{
+    _usb_lock.lock();
+}
+
 uint16_t
 UsbSerial::read(
     void
@@ -267,6 +279,14 @@ UsbSerial::read(
     }
 
     return c;
+}
+
+void
+UsbSerial::unlock(
+    void
+    )
+{
+    _usb_lock.unlock();
 }
 
 uint32_t

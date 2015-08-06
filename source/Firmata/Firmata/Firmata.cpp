@@ -482,7 +482,7 @@ FirmataClass::systemReset(
     void
     )
 {
-    byte i;
+    int i;
 
     waitForData = 0; // this flag says the next serial input will be data
     executeMultiByteCommand = 0; // execute this after getting multi-byte data

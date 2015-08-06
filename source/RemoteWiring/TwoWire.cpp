@@ -87,22 +87,29 @@ TwoWire::sendI2cSysex(
     )
 {
     _firmata->lock();
-    _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-    _firmata->write( static_cast<uint8_t>( Microsoft::Maker::Firmata::SysexCommand::I2C_REQUEST ) );
-    _firmata->write( address_ );
-    _firmata->write( rw_mask_ );
-
-    if( data_ != nullptr )
+    try
     {
-        for( size_t i = 0; i < len_; ++i )
-        {
-            _firmata->sendValueAsTwo7bitBytes( data_[i] );
-        }
-    }
+        _firmata->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+        _firmata->write( static_cast<uint8_t>( Microsoft::Maker::Firmata::SysexCommand::I2C_REQUEST ) );
+        _firmata->write( address_ );
+        _firmata->write( rw_mask_ );
 
-    _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
-    _firmata->flush();
-    _firmata->unlock();
+        if( data_ != nullptr )
+        {
+            for( size_t i = 0; i < len_; ++i )
+            {
+                _firmata->sendValueAsTwo7bitBytes( data_[i] );
+            }
+        }
+
+        _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+        _firmata->flush();
+        _firmata->unlock();
+    }
+    catch( ... )
+    {
+        _firmata->unlock();
+    }
 }
 
 

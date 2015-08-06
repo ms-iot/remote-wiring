@@ -58,14 +58,14 @@ public enum class SerialConfig {
     SERIAL_CONFIG_COUNT,
 };
 
-public delegate void RemoteWiringConnectionCallback();
-public delegate void RemoteWiringConnectionCallbackWithMessage(Platform::String ^message);
+public delegate void IStreamConnectionCallback();
+public delegate void IStreamConnectionCallbackWithMessage(Platform::String ^message);
 
 public interface struct IStream
 {
-    virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionLost;
-    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionFailed;
+    virtual event IStreamConnectionCallback ^ConnectionEstablished;
+    virtual event IStreamConnectionCallbackWithMessage ^ConnectionLost;
+    virtual event IStreamConnectionCallbackWithMessage ^ConnectionFailed;
 
     ///<summary>
     ///Returns the number of bytes available to be read
@@ -89,6 +89,15 @@ public interface struct IStream
         ) = 0;
 
     ///<summary>
+    ///Returns true if the connection is currently established
+    ///</summary>
+    virtual
+    bool
+    connectionReady(
+        void
+        ) = 0;
+
+    ///<summary>
     ///Closes the active connection
     ///</summary>
     virtual
@@ -108,6 +117,15 @@ public interface struct IStream
         ) = 0;
 
     ///<summary>
+    ///Locks this instance of the object, enabling thread safety
+    ///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
+    ///</summary>
+    void
+    lock(
+        void
+        ) = 0;
+
+    ///<summary>
     ///Attempts to read one byte
     ///</summary>
     virtual
@@ -123,6 +141,16 @@ public interface struct IStream
     uint32_t
     write(
         uint8_t c_
+        ) = 0;
+
+    ///<summary>
+    ///Unlocks this instance of the object, allowing other threads or actions to use it.
+    ///<para>This function must be explicitly invoked after each invocation of the lock() method, when the lock is no longer needed.</para>
+    ///</summary>
+    virtual
+    void
+    unlock(
+        void
         ) = 0;
 };
 

@@ -25,7 +25,6 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
-
 #include "Firmata\Firmata.h"
 #include <cstdlib>
 
@@ -45,11 +44,12 @@ namespace {
 
 UwpFirmata::UwpFirmata(
     void
-):
-    _data_buffer(new uint8_t[31]),
+) :
+    _data_buffer(new uint8_t[DATA_BUFFER_SIZE]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
-    _input_thread_should_exit(false),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
     _sys_command(0),
     _sys_position(0)
 {
@@ -67,7 +67,8 @@ UwpFirmata::UwpFirmata(
 
 UwpFirmata::~UwpFirmata(
     void
-) {
+    )
+{
     finish();
 }
 
@@ -76,50 +77,119 @@ UwpFirmata::~UwpFirmata(
 //* Public Methods
 //******************************************************************************
 
+bool
+UwpFirmata::appendSysex(
+    uint8_t byte_
+    )
+{
+    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
+    {
+        _data_buffer.get()[_sys_position] = byte_;
+        ++_sys_position;
+        return true;
+    }
+    return false;
+}
+
+int
+UwpFirmata::available(
+    void
+    )
+{
+    return ::RawFirmata.available();
+}
 
 void
 UwpFirmata::begin(
     Microsoft::Maker::Serial::IStream ^s_
     )
 {
+    if( s_ == nullptr ) return;
+
     _firmata_stream = s_;
     ::RawFirmata.begin( s_ );
+
+    //lock the IStream object to guarantee its state won't change while we check if it is already connected.
+    _firmata_stream->lock();
+
+    try
+    {
+        if( _firmata_stream->connectionReady() )
+        {
+            onConnectionEstablished();
+        }
+        else
+        {
+            //we only care about these status changes if the connection is not already established
+            _firmata_stream->ConnectionEstablished += ref new Microsoft::Maker::Serial::IStreamConnectionCallback( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionEstablished );
+            _firmata_stream->ConnectionFailed += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionFailed );
+        }
+
+        //we always care about the connection being lost
+        _firmata_stream->ConnectionLost += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionLost );
+        _firmata_stream->unlock();
+    }
+    catch( Platform::Exception ^e )
+    {
+        FirmataConnectionFailed( L"An unexpected fatal error occurred in UwpFirmata::begin( IStream ). Message: " + e->Message );
+        _firmata_stream->unlock();
+    }
 }
 
+bool
+UwpFirmata::beginSysex(
+    uint8_t command_
+    )
+{
+    _sys_command = command_;
+    _sys_position = 0;
+    return true;
+}
 
-void
-UwpFirmata::startListening(
+bool
+UwpFirmata::connectionReady(
     void
     )
 {
-    //is a thread currently running?
-    if (_input_thread.joinable()) { return; }
-
-    //prepare communications
-    _input_thread_should_exit = false;
-
-    //initialize the new input thread
-    _input_thread = std::thread( [ this ]() -> void { inputThread(); } );
+    return _connection_ready;
 }
 
+bool
+UwpFirmata::endSysex(
+    void
+    )
+{
+    if( _sys_command )
+    {
+        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get() );
+        _firmata_stream->flush();
+        _sys_command = 0;
+        _sys_position = 0;
+        return true;
+    }
+    return false;
+}
 
 void
 UwpFirmata::finish(
     void
     )
 {
-    _firmata_lock.lock();
-    _firmata_stream->flush();
-    stopThreads();
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        stopThreads();
 
-    _firmata_stream = nullptr;
-    _sys_command = 0;
-    _sys_position = 0;
-    _data_buffer = nullptr;
-    _firmata_lock.unlock();
+        _connection_ready = false;
+        _firmata_stream = nullptr;
+        _sys_command = 0;
+        _sys_position = 0;
+        _data_buffer = nullptr;
+
+        _firmata_stream->flush();
+    }
+
     return ::RawFirmata.finish();
 }
-
 
 void
 UwpFirmata::flush(
@@ -129,6 +199,13 @@ UwpFirmata::flush(
     return _firmata_stream->flush();
 }
 
+void
+UwpFirmata::lock(
+    void
+    )
+{
+    _firmata_lock.lock();
+}
 
 void
 UwpFirmata::printVersion(
@@ -141,7 +218,6 @@ UwpFirmata::printVersion(
     return;
 }
 
-
 void
 UwpFirmata::printFirmwareVersion(
     void
@@ -153,6 +229,13 @@ UwpFirmata::printFirmwareVersion(
     return;
 }
 
+void
+UwpFirmata::processInput(
+    void
+    )
+{
+    return ::RawFirmata.processInput();
+}
 
 void
 UwpFirmata::setFirmwareNameAndVersion(
@@ -165,25 +248,6 @@ UwpFirmata::setFirmwareNameAndVersion(
     std::string nameA( nameW.begin(), nameW.end() );
     return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
 }
-
-
-int
-UwpFirmata::available(
-    void
-    )
-{
-    return ::RawFirmata.available();
-}
-
-
-void
-UwpFirmata::processInput(
-    void
-    )
-{
-    return ::RawFirmata.processInput();
-}
-
 
 void
 UwpFirmata::sendAnalog(
@@ -239,66 +303,20 @@ UwpFirmata::sendValueAsTwo7bitBytes(
     return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
 }
 
-bool
-UwpFirmata::beginSysex(
-    uint8_t command_
-    )
-{
-    _sys_command = command_;
-    _sys_position = 0;
-    return true;
-}
-
-
-bool
-UwpFirmata::appendSysex(
-    uint8_t byte_
-    )
-{
-    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
-    {
-        _data_buffer.get()[_sys_position] = byte_;
-        ++_sys_position;
-        return true;
-    }
-    return false;
-}
-
-
-bool
-UwpFirmata::endSysex(
+void
+UwpFirmata::startListening(
     void
     )
 {
-    if( _sys_command )
-    {
-        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get());
-        _firmata_stream->flush();
-        _sys_command = 0;
-        _sys_position = 0;
-        return true;
-    }
-    return false;
+    //is a thread currently running?
+    if( _input_thread.joinable() ) { return; }
+
+    //prepare communications
+    _input_thread_should_exit = false;
+
+    //initialize the new input thread
+    _input_thread = std::thread( [ this ]() -> void { inputThread(); } );
 }
-
-
-void
-UwpFirmata::write(
-    uint8_t c_
-    )
-{
-    return ::RawFirmata.write( c_ );
-}
-
-
-void
-UwpFirmata::lock(
-    void
-    )
-{
-    _firmata_lock.lock();
-}
-
 
 void
 UwpFirmata::unlock(
@@ -306,6 +324,14 @@ UwpFirmata::unlock(
     )
 {
     _firmata_lock.unlock();
+}
+
+void
+UwpFirmata::write(
+    uint8_t c_
+    )
+{
+    return ::RawFirmata.write( c_ );
 }
 
 
@@ -333,6 +359,35 @@ UwpFirmata::inputThread(
     }
 }
 
+void
+UwpFirmata::onConnectionEstablished(
+    void
+    )
+{
+    {   //critical section guarantees state is only changed when it is not being modified elsewhere
+        std::lock_guard<std::mutex> lock( _firmutex );
+        _connection_ready = true;
+    }
+
+    FirmataConnectionReady();
+}
+
+void
+UwpFirmata::onConnectionFailed(
+    Platform::String ^message
+    )
+{
+    FirmataConnectionFailed( message );
+}
+
+void
+UwpFirmata::onConnectionLost(
+    Platform::String ^message
+    )
+{
+    _connection_ready = false;
+    FirmataConnectionLost( message );
+}
 
 void
 UwpFirmata::stopThreads(

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "IStream.h"
+#include <mutex>
 
 namespace Microsoft {
 namespace Maker {
@@ -33,9 +34,9 @@ namespace Serial {
 public ref class UsbSerial sealed : public IStream
 {
 public:
-    virtual event RemoteWiringConnectionCallback ^ConnectionEstablished;
-    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionLost;
-    virtual event RemoteWiringConnectionCallbackWithMessage ^ConnectionFailed;
+    virtual event IStreamConnectionCallback ^ConnectionEstablished;
+    virtual event IStreamConnectionCallbackWithMessage ^ConnectionLost;
+    virtual event IStreamConnectionCallbackWithMessage ^ConnectionFailed;
 
     [Windows::Foundation::Metadata::DefaultOverload]
     ///<summary>
@@ -79,6 +80,12 @@ public:
         );
 
     virtual
+    bool
+    connectionReady(
+        void
+        );
+
+    virtual
     void
     end(
         void
@@ -91,8 +98,20 @@ public:
         );
 
     virtual
+    void
+    lock(
+        void
+        );
+
+    virtual
     uint16_t
     read(
+        void
+        );
+
+    virtual
+    void
+    unlock(
         void
         );
 
@@ -100,14 +119,6 @@ public:
     uint32_t
     write(
         uint8_t c_
-        );
-
-    ///<summary>
-    ///Returns true if the connection is currently established
-    ///</summary>
-    bool
-    connectionReady(
-        void
         );
 
     ///<summary>
@@ -128,13 +139,17 @@ private:
     Platform::String ^_pid;
     Platform::String ^_vid;
 
+    //thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
+    std::mutex _usbutex;
+    std::unique_lock<std::mutex> _usb_lock;
+
     uint32_t _baud;
     SerialConfig _config;
     std::atomic_bool _connection_ready;
     Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
-    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
+    Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
 
     Concurrency::task<void>
