@@ -315,7 +315,7 @@ UsbSerial::connectToDeviceAsync(
     {
         if( serial_device_ == nullptr )
         {
-            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. SerialDevice::FromIdAsync returned null." ) );
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. Did you forget your USB device capabilities in the manifest? SerialDevice::FromIdAsync returned null." ) );
         }
 
         // Store parameter as a member to ensure the duration of object allocation
