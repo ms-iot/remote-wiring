@@ -9,12 +9,16 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="..\..\source\Serial\BluetoothSerial.cpp" />
+    <ClCompile Include="..\..\source\Serial\DfRobotBleSerial.cpp" />
+    <ClCompile Include="..\..\source\Serial\NetworkSerial.cpp" />
     <ClCompile Include="..\..\source\Serial\USBSerial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\..\source\Serial\BluetoothSerial.h" />
-    <ClInclude Include="..\..\source\Serial\USBSerial.h" />
+    <ClInclude Include="..\..\source\Serial\DfRobotBleSerial.h" />
     <ClInclude Include="..\..\source\Serial\IStream.h" />
+    <ClInclude Include="..\..\source\Serial\NetworkSerial.h" />
+    <ClInclude Include="..\..\source\Serial\USBSerial.h" />
   </ItemGroup>
 </Project>

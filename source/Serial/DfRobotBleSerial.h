@@ -23,15 +23,15 @@
 */
 
 #pragma once
-
 #include "IStream.h"
 #include <mutex>
+#include <queue>
 
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
 
-public ref class UsbSerial sealed : public IStream
+public ref class DfRobotBleSerial sealed : public IStream
 {
 public:
     virtual event IStreamConnectionCallback ^ConnectionEstablished;
@@ -40,29 +40,21 @@ public:
 
     [Windows::Foundation::Metadata::DefaultOverload]
     ///<summary>
-    ///A constructor which accepts a string corresponding to a device VID to connect to.
+    ///A constructor which accepts a string corresponding to a device name or ID to connect to.
     ///</summary>
-    UsbSerial(
-        Platform::String ^vid_
-        );
-
-    ///<summary>
-    ///A constructor which accepts two strings corresponding to a device VID and PID to connect to.
-    ///</summary>
-    UsbSerial(
-        Platform::String ^vid_,
-        Platform::String ^pid_
+    DfRobotBleSerial(
+        Platform::String ^device_name_
         );
 
     ///<summary>
     ///A constructor which accepts a DeviceInformation object to explicitly specify which device to connect to.
     ///</summary>
-    UsbSerial(
+    DfRobotBleSerial(
         Windows::Devices::Enumeration::DeviceInformation ^device_
         );
 
     virtual
-    ~UsbSerial(
+    ~DfRobotBleSerial(
         void
         );
 
@@ -122,7 +114,7 @@ public:
         );
 
     ///<summary>
-    ///Begins an asyncronous request for all USB devices that are connected and may be used to attempt a device connection.
+    ///Begins an asyncronous request for all Bluetooth LE devices that are paired and may be used to attempt a device connection.
     ///</summary>
     static
     Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^
@@ -131,25 +123,24 @@ public:
         );
 
 private:
-    //maximum amount of data that may be read at a time, allows efficient reads
-    static const uint8_t MAX_READ_SIZE = 100;
+    const uuid_t DFROBOT_BLE_SERVICE_UUID;
+    const uuid_t DFROBOT_BLE_SERIAL_CHARACTERISTIC_UUID;
 
     // Device specific members (set during instantation)
     Windows::Devices::Enumeration::DeviceInformation ^_device;
-    Platform::String ^_pid;
-    Platform::String ^_vid;
+    Platform::String ^_device_name;
 
     //thread-safe mechanisms. std::unique_lock used to manage the lifecycle of std::mutex
-    std::mutex _usbutex;
-    std::unique_lock<std::mutex> _usb_lock;
+    std::mutex _mutex;
+    std::unique_lock<std::mutex> _dfrobot_lock;
 
-    uint32_t _baud;
-    SerialConfig _config;
     std::atomic_bool _connection_ready;
-    Windows::Storage::Streams::DataReaderLoadOperation ^_current_load_operation;
     Windows::Devices::Enumeration::DeviceInformationCollection ^_device_collection;
-    Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
-    Windows::Storage::Streams::DataReader ^_rx;
+    Windows::Devices::Bluetooth::GenericAttributeProfile::GattCharacteristic ^_gatt_characteristic;
+    Windows::Devices::Bluetooth::BluetoothLEDevice ^_gatt_device;
+    Windows::Devices::Bluetooth::GenericAttributeProfile::GattDeviceService ^_gatt_service;
+    std::mutex _q_lock;
+    std::queue<byte> _rx;
     Windows::Storage::Streams::DataWriter ^_tx;
 
     Concurrency::task<void>
@@ -160,6 +151,12 @@ private:
     Windows::Devices::Enumeration::DeviceInformation ^
     identifyDeviceFromCollection(
         Windows::Devices::Enumeration::DeviceInformationCollection ^devices_
+        );
+
+    void
+    rxCallback(
+        Windows::Devices::Bluetooth::GenericAttributeProfile::GattCharacteristic ^sender,
+        Windows::Devices::Bluetooth::GenericAttributeProfile::GattValueChangedEventArgs ^args
         );
 };
 

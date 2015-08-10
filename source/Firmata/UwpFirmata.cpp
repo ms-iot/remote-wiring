@@ -25,7 +25,6 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
-
 #include "Firmata\Firmata.h"
 #include <cstdlib>
 
@@ -34,7 +33,7 @@ using namespace Microsoft::Maker::Firmata;
 using namespace std::placeholders;
 
 namespace {
-	FirmataClass RawFirmata;
+    FirmataClass RawFirmata;
 }
 
 
@@ -44,18 +43,33 @@ namespace {
 
 
 UwpFirmata::UwpFirmata(
-	void
-	)
+    void
+) :
+    _data_buffer(new uint8_t[DATA_BUFFER_SIZE]),
+    _firmata_lock(_firmutex, std::defer_lock),
+    _firmata_stream(nullptr),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
+    _sys_command(0),
+    _sys_position(0)
 {
-	_sysCommand = 0;
-	_dataBuffer = (uint8_t*)malloc( 31 );
-	_sysPosition = 0;
-	_blobStarted = false;
-	_blobPosition = 0;
+    RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::digitalInvoke, this, _1, _2 ) ) );
+    RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::analogInvoke, this, _1, _2 ) ) );
+    RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UwpFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
+    RawFirmata.attach( static_cast<uint8_t>( STRING_DATA ), static_cast<stringCallbackFunction>( std::bind( &UwpFirmata::stringInvoke, this, _1 ) ) );
+}
 
-	RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::digitalInvoke, this, _1, _2 ) ) );
-	RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::analogInvoke, this, _1, _2 ) ) );
-	RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UwpFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
+
+//******************************************************************************
+//* Destructors
+//******************************************************************************
+
+
+UwpFirmata::~UwpFirmata(
+    void
+    )
+{
+    finish();
 }
 
 
@@ -63,289 +77,261 @@ UwpFirmata::UwpFirmata(
 //* Public Methods
 //******************************************************************************
 
-
-void
-UwpFirmata::begin(
-	Microsoft::Maker::Serial::IStream ^s_
-	)
+bool
+UwpFirmata::appendSysex(
+    uint8_t byte_
+    )
 {
-	::RawFirmata.begin( s_ );
+    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
+    {
+        _data_buffer.get()[_sys_position] = byte_;
+        ++_sys_position;
+        return true;
+    }
+    return false;
 }
-
-void
-UwpFirmata::startListening(
-	void
-	)
-{
-	//initialize the input thread
-	create_async( [ this ]() -> void { inputThread(); } );
-}
-
-
-void
-UwpFirmata::finish(
-	void
-	)
-{
-	stopThreads();
-	while( !inputThreadExited );
-	return ::RawFirmata.finish();
-}
-
-
-void
-UwpFirmata::printVersion(
-	void
-	)
-{
-	return ::RawFirmata.printVersion();
-}
-
-
-void
-UwpFirmata::printFirmwareVersion(
-	void
-	)
-{
-	return ::RawFirmata.printFirmwareVersion();
-}
-
-
-void
-UwpFirmata::setFirmwareNameAndVersion(
-	String ^name_,
-	uint8_t major_,
-	uint8_t minor_
-	)
-{
-	std::wstring nameW = name_->ToString()->Begin();
-	std::string nameA( nameW.begin(), nameW.end() );
-	return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
-}
-
 
 int
 UwpFirmata::available(
-	void
-	)
+    void
+    )
 {
-	return ::RawFirmata.available();
+    return ::RawFirmata.available();
 }
 
+void
+UwpFirmata::begin(
+    Microsoft::Maker::Serial::IStream ^s_
+    )
+{
+    if( s_ == nullptr ) return;
+
+    _firmata_stream = s_;
+    ::RawFirmata.begin( s_ );
+
+    //lock the IStream object to guarantee its state won't change while we check if it is already connected.
+    _firmata_stream->lock();
+
+    try
+    {
+        if( _firmata_stream->connectionReady() )
+        {
+            onConnectionEstablished();
+        }
+        else
+        {
+            //we only care about these status changes if the connection is not already established
+            _firmata_stream->ConnectionEstablished += ref new Microsoft::Maker::Serial::IStreamConnectionCallback( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionEstablished );
+            _firmata_stream->ConnectionFailed += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionFailed );
+        }
+
+        //we always care about the connection being lost
+        _firmata_stream->ConnectionLost += ref new Microsoft::Maker::Serial::IStreamConnectionCallbackWithMessage( this, &Microsoft::Maker::Firmata::UwpFirmata::onConnectionLost );
+        _firmata_stream->unlock();
+    }
+    catch( Platform::Exception ^e )
+    {
+        FirmataConnectionFailed( L"An unexpected fatal error occurred in UwpFirmata::begin( IStream ). Message: " + e->Message );
+        _firmata_stream->unlock();
+    }
+}
+
+bool
+UwpFirmata::beginSysex(
+    uint8_t command_
+    )
+{
+    _sys_command = command_;
+    _sys_position = 0;
+    return true;
+}
+
+bool
+UwpFirmata::connectionReady(
+    void
+    )
+{
+    return _connection_ready;
+}
+
+bool
+UwpFirmata::endSysex(
+    void
+    )
+{
+    if( _sys_command )
+    {
+        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get() );
+        _firmata_stream->flush();
+        _sys_command = 0;
+        _sys_position = 0;
+        return true;
+    }
+    return false;
+}
+
+void
+UwpFirmata::finish(
+    void
+    )
+{
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        stopThreads();
+
+        _connection_ready = false;
+        _firmata_stream = nullptr;
+        _sys_command = 0;
+        _sys_position = 0;
+        _data_buffer = nullptr;
+
+        _firmata_stream->flush();
+    }
+
+    return ::RawFirmata.finish();
+}
+
+void
+UwpFirmata::flush(
+    void
+    )
+{
+    return _firmata_stream->flush();
+}
+
+void
+UwpFirmata::lock(
+    void
+    )
+{
+    _firmata_lock.lock();
+}
+
+void
+UwpFirmata::printVersion(
+    void
+    )
+{
+    std::lock_guard<std::mutex> lock(_firmutex);
+    ::RawFirmata.printVersion();
+    _firmata_stream->flush();
+    return;
+}
+
+void
+UwpFirmata::printFirmwareVersion(
+    void
+    )
+{
+    std::lock_guard<std::mutex> lock(_firmutex);
+    ::RawFirmata.printFirmwareVersion();
+    _firmata_stream->flush();
+    return;
+}
 
 void
 UwpFirmata::processInput(
-	void
-	)
+    void
+    )
 {
-	return ::RawFirmata.processInput();
+    return ::RawFirmata.processInput();
 }
 
+void
+UwpFirmata::setFirmwareNameAndVersion(
+    String ^name_,
+    uint8_t major_,
+    uint8_t minor_
+    )
+{
+    std::wstring nameW = name_->ToString()->Begin();
+    std::string nameA( nameW.begin(), nameW.end() );
+    return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
+}
 
 void
 UwpFirmata::sendAnalog(
-	uint8_t pin_,
-	int value_
-	)
+    uint8_t pin_,
+    uint16_t value_
+    )
 {
-	return ::RawFirmata.sendAnalog( pin_, value_ );
+    std::lock_guard<std::mutex> lock(_firmutex);
+    ::RawFirmata.sendAnalog(pin_, value_);
+    _firmata_stream->flush();
+    return;
 }
 
 
 void
 UwpFirmata::sendDigitalPort(
-	uint8_t portNumber_,
-	int portData_
-	)
+    uint8_t port_number_,
+    uint8_t port_data_
+    )
 {
-	return ::RawFirmata.sendDigitalPort( portNumber_, portData_ );
-}
-
-
-void
-UwpFirmata::setDigitalReadEnabled(
-	uint8_t portNumber,
-	int portData
-	)
-{
-	write( static_cast<uint8_t>( Command::REPORT_DIGITAL_PIN ) | ( portNumber & 0x0F ) );
-	write( static_cast<uint8_t>( portData ) );
+    std::lock_guard<std::mutex> lock(_firmutex);
+    ::RawFirmata.sendDigitalPort(port_number_, port_data_);
+    _firmata_stream->flush();
+    return;
 }
 
 
 void
 UwpFirmata::sendString(
-	String ^string_
-	)
+    String ^string_
+    )
 {
-	std::wstring stringW = string_->ToString()->Begin();
-	std::string stringA( stringW.begin(), stringW.end() );
-	return ::RawFirmata.sendString( stringA.c_str() );
+    return sendString(STRING_DATA, string_);
 }
 
 
 void
 UwpFirmata::sendString(
-	uint8_t command_,
-	String ^string_
-	)
+    uint8_t command_,
+    String ^string_
+    )
 {
-	std::wstring stringW = string_->ToString()->Begin();
-	std::string stringA( stringW.begin(), stringW.end() );
-	return ::RawFirmata.sendString( command_, stringA.c_str() );
+    std::wstring stringW = string_->ToString()->Begin();
+    std::string stringA( stringW.begin(), stringW.end() );
+    return ::RawFirmata.sendString(command_, stringA.c_str());
 }
 
-
-bool
-UwpFirmata::beginSysex(
-	uint8_t command_
-	)
+void
+UwpFirmata::sendValueAsTwo7bitBytes(
+    int value_
+    )
 {
-	if( _blobStarted ) return false;
-	_sysCommand = command_;
-	_sysPosition = 0;
-	return true;
+    return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
 }
 
-
-bool
-UwpFirmata::appendSysex(
-	uint8_t byte_
-	)
+void
+UwpFirmata::startListening(
+    void
+    )
 {
-	if( _sysCommand && ( _sysPosition < MAX_SYSEX_LEN ) && !_blobStarted )
-	{
-		_dataBuffer[ _sysPosition ] = byte_;
-		++_sysPosition;
-		return true;
-	}
-	return false;
+    //is a thread currently running?
+    if( _input_thread.joinable() ) { return; }
+
+    //prepare communications
+    _input_thread_should_exit = false;
+
+    //initialize the new input thread
+    _input_thread = std::thread( [ this ]() -> void { inputThread(); } );
 }
 
-
-bool
-UwpFirmata::endSysex(
-	void
-	)
+void
+UwpFirmata::unlock(
+    void
+    )
 {
-	if( _sysCommand && !_blobStarted )
-	{
-		::RawFirmata.sendSysex( _sysCommand, _sysPosition, _dataBuffer );
-		_sysCommand = 0;
-		_sysPosition = 0;
-		return true;
-	}
-	return false;
+    _firmata_lock.unlock();
 }
-
-
-bool
-UwpFirmata::beginBlob(
-	void
-	)
-{
-	if( _sysCommand ) return false;
-
-	_blobStarted = true;
-	_blobPosition = 0;
-	return true;
-}
-
-
-bool
-UwpFirmata::appendBlob(
-	uint8_t byte_
-	)
-{
-	if( !_blobStarted || _sysCommand ) return false;
-
-	if( _blobPosition >= MAX_BLOB_LEN )
-	{
-		endBlob();
-		beginBlob();
-	}
-
-	_dataBuffer[ _blobPosition ] = byte_ & 0x7F;
-	++_blobPosition;
-	return true;
-}
-
-
-bool
-UwpFirmata::endBlob(
-	void
-	)
-{
-	if( !_blobStarted || _sysCommand ) return false;
-
-	::RawFirmata.write( static_cast<byte>( START_SYSEX ) );
-	::RawFirmata.write( static_cast<byte>( SYSEX_BLOB_COMMAND ) );
-	for( uint8_t i = 0; i < _blobPosition; ++i )
-	{
-		::RawFirmata.write( _dataBuffer[ i ] );
-	}
-	::RawFirmata.write( static_cast<byte>( END_SYSEX ) );
-	_blobPosition = 0;
-	_blobStarted = false;
-	return true;
-}
-
 
 void
 UwpFirmata::write(
-	uint8_t c_
-	)
+    uint8_t c_
+    )
 {
-	return ::RawFirmata.write( c_ );
-}
-
-
-void
-UwpFirmata::enableI2c(
-	uint16_t i2cReadDelayMicros_
-	)
-{
-	::RawFirmata.startSysex();
-	::RawFirmata.write( static_cast<uint8_t>( I2C_CONFIG ) );
-	::RawFirmata.sendValueAsTwo7bitBytes( i2cReadDelayMicros_ );
-	::RawFirmata.endSysex();
-}
-
-
-void
-UwpFirmata::writeI2c(
-	uint8_t address_,
-	Platform::String ^message_
-	)
-{
-	std::wstring wstr( message_->Begin() );
-	std::string str( wstr.begin(), wstr.end() );
-	const size_t len = message_->Length();
-
-	sendI2cSysex( address_, 0, 0xFF, len, str.c_str() );
-}
-
-
-void
-UwpFirmata::readI2c(
-	uint8_t address_,
-	size_t numBytes_,
-	uint8_t reg_,
-	bool continuous_
-	)
-{
-	//if you want to do continuous reads, you must provide a register to prompt for new data
-	if( continuous_ && ( reg_ == 0xFF ) ) return;
-	sendI2cSysex( address_, ( continuous_ ? 0x10 : 0x08 ), reg_, 1, (const char*)&numBytes_ );
-}
-
-
-void
-UwpFirmata::stopI2c(
-	uint8_t address_
-	)
-{
-	sendI2cSysex( address_, 0x18, 0xFF, 0, nullptr );
+    return ::RawFirmata.write( c_ );
 }
 
 
@@ -353,62 +339,62 @@ UwpFirmata::stopI2c(
 //* Private Methods
 //******************************************************************************
 
-void
-UwpFirmata::sendI2cSysex(
-	const uint8_t address_,
-	const uint8_t rw_mask_,
-	const uint8_t reg_,
-	const size_t len,
-	const char * data
-	)
-{
-	::RawFirmata.startSysex();
-	::RawFirmata.write( static_cast<uint8_t>( I2C_REQUEST ) );
-	::RawFirmata.write( address_ );
-	::RawFirmata.write( rw_mask_ );
-
-	if( reg_ != 0xFF )
-	{
-		::RawFirmata.sendValueAsTwo7bitBytes( reg_ );
-	}
-
-	for( size_t i = 0; i < len; i++ )
-	{
-		::RawFirmata.sendValueAsTwo7bitBytes( data[ i ] );
-	}
-	::RawFirmata.endSysex();
-}
-
 
 void
 UwpFirmata::inputThread(
-	void
-	)
+    void
+    )
 {
-	if( inputThreadRunning ) return;
-
-	//set state-tracking member variables and begin processing input
-	inputThreadRunning = true;
-	inputThreadExited = false;
-	while( inputThreadRunning )
-	{
-		try
-		{
-			::RawFirmata.processInput();
-		}
-		catch( Platform::Exception ^e )
-		{
-			OutputDebugString( e->Message->Begin() );
-		}
-	}
-	inputThreadExited = true;
+    //set state-tracking member variables and begin processing input
+    while( !_input_thread_should_exit )
+    {
+        try
+        {
+            ::RawFirmata.processInput();
+        }
+        catch( Platform::Exception ^e )
+        {
+            OutputDebugString( e->Message->Begin() );
+        }
+    }
 }
 
+void
+UwpFirmata::onConnectionEstablished(
+    void
+    )
+{
+    {   //critical section guarantees state is only changed when it is not being modified elsewhere
+        std::lock_guard<std::mutex> lock( _firmutex );
+        _connection_ready = true;
+    }
+
+    FirmataConnectionReady();
+}
+
+void
+UwpFirmata::onConnectionFailed(
+    Platform::String ^message
+    )
+{
+    FirmataConnectionFailed( message );
+}
+
+void
+UwpFirmata::onConnectionLost(
+    Platform::String ^message
+    )
+{
+    _connection_ready = false;
+    FirmataConnectionLost( message );
+}
 
 void
 UwpFirmata::stopThreads(
-	void
-	)
+    void
+    )
 {
-	inputThreadRunning = false;
+    _input_thread_should_exit = true;
+    if( _input_thread.joinable() ) { _input_thread.join(); }
+    _input_thread_should_exit = false;
 }

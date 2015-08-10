@@ -16,10 +16,12 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\BluetoothSerial.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\IStream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\NetworkSerial.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\BluetoothSerial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\source\Serial\NetworkSerial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

@@ -36,6 +36,8 @@
     <AppContainerApplication>true</AppContainerApplication>
     <ApplicationType>Windows Store</ApplicationType>
     <ApplicationTypeRevision>8.2</ApplicationTypeRevision>
+    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -212,12 +214,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\Serial\BluetoothSerial.h" />
+    <ClInclude Include="..\..\source\Serial\DfRobotBleSerial.h" />
     <ClInclude Include="..\..\source\Serial\IStream.h" />
+    <ClInclude Include="..\..\source\Serial\NetworkSerial.h" />
     <ClInclude Include="..\..\source\Serial\USBSerial.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\Serial\BluetoothSerial.cpp" />
+    <ClCompile Include="..\..\source\Serial\DfRobotBleSerial.cpp" />
+    <ClCompile Include="..\..\source\Serial\NetworkSerial.cpp" />
     <ClCompile Include="..\..\source\Serial\USBSerial.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

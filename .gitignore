@@ -3,3 +3,4 @@ Debug/
 ipch/
 Release/
 *.opensdf
+*.suo
