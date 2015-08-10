@@ -124,7 +124,7 @@ BluetoothSerial::begin(
     {
         if( device_collection_ == nullptr )
         {
-            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. DeviceInformation::FindAllAsync returned null." ) );
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to enumerate available devices. Did you forget your Bluetooth device capabilities in the manifest? DeviceInformation::FindAllAsync returned null." ) );
         }
 
         // If a friendly name was specified, then identify the associated device

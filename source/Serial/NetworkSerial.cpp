@@ -110,7 +110,7 @@ NetworkSerial::begin(
         }
         catch( Platform::Exception ^e )
         {
-            ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a Platform::Exception type. Message: " ) + e->Message );
+            ConnectionFailed( ref new Platform::String( L"NetworkSerial::connectAsync failed with a Platform::Exception type. Did you forget your network capabilities in the manifest? Message: " ) + e->Message );
         }
         catch( ... )
         {

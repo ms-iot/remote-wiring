@@ -4,6 +4,8 @@ Windows Remote Arduino is an open-source [Windows Runtime Component](https://msd
 
 [View the open-source license](license.txt).
 
+**tl;dr:** [Quick start!](#5-steps-to-remote-arduino)
+
 ##Overview
 Windows Remote Arduino bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
 
@@ -21,6 +23,15 @@ Windows Remote Arduino enables the following functionality, right "out of the bo
   * Send/Receive data to devices over I2C.
   * Subscribe to a device, repeated queries and automatic reporting.
 3. Custom protocols via Firmata SysEx command
+
+##5 Steps to Remote Arduino
+You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
+
+1. [Upload StandardFirmata to your Arduino](#arduino-setup)
+2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
+3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify], while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
+4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
+5. Review the [usage](#usage) to get started writing your Remote Arduino code!
 
 
 ###The Microcontroller
@@ -148,6 +159,9 @@ For now, please refer to the [manual installation instructions](installation.md)
 #Usage
 This section explains the basic usage of Windows Remote Arduino. This is an excellent place to start if you are new to this library or Arduino Wiring itself. For advanced behaviors, see the [advanced readme](advanced.md).
 
+##Remote Arduino in 4 Lines
+This sample shows how to construct the two necessary objects, an `IStream` implementation (in this case: `BluetoothSerial`), and the `RemoteDevice`. We then add a delegate function to the `DeviceReady` event on the `RemoteDevice` which will be called as soon as the device is ready. Last, we call `begin()` on the IStream object to start the connection process.
+
 ####C# Example:
 
 
@@ -166,20 +180,34 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 			arduino = new RemoteDevice( connection );
 			
 			//add a callback method (delegate) to be invoked when the device is ready, refer to the Events section for more info
-			arduino.DeviceReady += OnDeviceReady;
+			arduino.DeviceReady += Setup;
 			
 			//always begin your IStream
 			bt.begin( 115200, SerialConfig.SERIAL_8N1 );
 		}
 		
 		//treat this function like "setup()" in an Arduino sketch.
-		public void OnDeviceReady()
+		public void Setup()
 		{
-			arduino.pinMode( 7, PinMode.OUTPUT );
+			//set digital pin 13 to OUTPUT
+			arduino.pinMode( 13, PinMode.OUTPUT );
+			
+			//set analog pin A0 to ANALOG INPUT
 			arduino.pinMode( "A0", PinMode.ANALOG );
-
-			arduino.digitalWrite( 7, PinState.HIGH );
+		}
+		
+		//This function will read a value from our ANALOG INPUT pin A0 (range: 0 - 1023) and set pin 13 HIGH if the value is >= 512.
+		public void ReadAndReport()
+		{
 			UInt16 val = arduino.analogRead( "A0" );
+			if( val >= 512 )
+			{
+				arduino.digitalWrite( 13, PinState.HIGH );
+			}
+			else
+			{
+				arduino.digitalWrite( 13, PinState.LOW );
+			}
 		}
 ```
 
@@ -200,20 +228,34 @@ This section explains the basic usage of Windows Remote Arduino. This is an exce
 			arduino = ref new RemoteDevice( connection );
 			
 			//add a callback method (delegate) to be invoked when the device is ready, refer to the Events section for more info
-			arduino->DeviceReady += ref new Microsoft::Maker::RemoteWiring::RemoteDeviceConnectionCallback( this, &MyNamespace::MyClass::onDeviceReady );
+			arduino->DeviceReady += ref new Microsoft::Maker::RemoteWiring::RemoteDeviceConnectionCallback( this, &MyNamespace::MyClass::setup );
 		
 			//always begin your IStream
 			connection->begin( 115200, SerialConfig::SERIAL_8N1 );
 		}
 
 		//treat this function like "setup()" in an Arduino sketch.
-		public void onDeviceReady()
+		public void setup()
 		{
-			arduino->pinMode( 7, PinMode::OUTPUT );
-			arduino->pinMode( 9, PinMode::INPUT );
-
-			arduino->digitalWrite( 7, PinState::HIGH );
-			uint16_t val = arduino->analogRead( 9 );
+			//set digital pin 13 to OUTPUT
+			arduino->pinMode( 13, PinMode::OUTPUT );
+			
+			//set analog pin A0 to ANALOG INPUT
+			arduino->pinMode( "A0", PinMode::ANALOG );
+		}
+		
+		//This function will read a value from our ANALOG INPUT pin A0 (range: 0 - 1023) and set pin 13 HIGH if the value is >= 512.
+		public void readAndReport()
+		{
+			uint16_t val = arduino->analogRead( "A0" );
+			if( val >= 512 )
+			{
+				arduino->digitalWrite( 13, PinState::HIGH );
+			}
+			else
+			{
+				arduino->digitalWrite( 13, PinState::LOW );
+			}
 		}
 ```
 
