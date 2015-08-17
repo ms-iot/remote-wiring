@@ -89,14 +89,19 @@ RemoteDevice::~RemoteDevice(
 
 uint16_t
 RemoteDevice::analogRead(
-    uint8_t pin_
+	Platform::String^ analog_pin_    
     )
 {
+	uint8_t parsed_pin = parsePinFromAnalogString(analog_pin_);
+	if (parsed_pin == static_cast<uint8_t>(-1))
+	{
+		return static_cast<uint16_t>(-1);
+	}
     //critical section equivalent to function scope
     std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
     uint16_t val = -1;
-    uint8_t analog_pin_num = pin_ + _analog_offset;
+    uint8_t analog_pin_num = parsed_pin + _analog_offset;
 
     if( _pin_mode[ analog_pin_num ] != static_cast<uint8_t>( PinMode::ANALOG ) )
     {
@@ -110,28 +115,12 @@ RemoteDevice::analogRead(
         }
     }
 
-    if( pin_ < _num_analog_pins )
+    if(parsed_pin < _num_analog_pins )
     {
-        val = _analog_pins[ pin_ ];
+        val = _analog_pins[parsed_pin];
     }
 
     return val;
-}
-
-uint16_t
-RemoteDevice::analogRead(
-    Platform::String^ analog_pin_
-    )
-{
-    uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
-    if( parsed_pin == static_cast<uint8_t>( -1 ) )
-    {
-        return static_cast<uint16_t>( -1 );
-    }
-
-    //return analogRead( static_cast<uint8_t>( parsed_pin ) + _analog_offset );
-	//remove double add of _analaog_offset (will be added in analogRead(uint8_t pin_)
-	return analogRead(static_cast<uint8_t>(parsed_pin));
 }
 
 void

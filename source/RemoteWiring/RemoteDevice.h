@@ -99,22 +99,13 @@ public:
 
     virtual ~RemoteDevice();
 
-    ///<summary>
-    ///Returns the most recently-reported value for the given analog pin.
-    ///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
-    ///<param name="pin_">The analog pin number, where 0 refers to the first analog pin A0, 1 refers to A1, and so on.</param>
-    ///</summary>
-    [Windows::Foundation::Metadata::DefaultOverload]
-    uint16_t
-    analogRead(
-        uint8_t pin_
-        );
 
     ///<summary>
     ///Returns the most recently-reported value for the given analog pin.
     ///<para>Analog pins must first be in PinMode.ANALOG before their values will be reported.</para>
     ///<param name="analog_pin_">The analog pin string, where "A0" refers to the first analog pin A0, "A1" refers to A1, and so on.</param>
     ///</summary>
+	[Windows::Foundation::Metadata::DefaultOverload]
     uint16_t
     analogRead(
         Platform::String ^analog_pin_
