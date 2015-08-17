@@ -129,7 +129,9 @@ RemoteDevice::analogRead(
         return static_cast<uint16_t>( -1 );
     }
 
-    return analogRead( static_cast<uint8_t>( parsed_pin ) + _analog_offset );
+    //return analogRead( static_cast<uint8_t>( parsed_pin ) + _analog_offset );
+	//remove double add of _analaog_offset (will be added in analogRead(uint8_t pin_)
+	return analogRead(static_cast<uint8_t>(parsed_pin));
 }
 
 void
