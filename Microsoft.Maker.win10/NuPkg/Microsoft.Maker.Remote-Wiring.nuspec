@@ -2,33 +2,30 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Windows-Remote-Arduino</id>
-        <version>0.1.0.1</version>
-        <title>Remote wiring for Arduino and Windows 10 IoT core</title>
+        <version>1.1.0.1</version>
+        <title>Windows Remote Arduino for Windows 10 and Windows 10 IoT core</title>
         <authors>Microsoft</authors>
         <licenseUrl>https://github.com/ms-iot/remote-wiring/blob/develop/license.txt</licenseUrl>
         <projectUrl>https://github.com/ms-iot/remote-wiring</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <summary>Control an Arduino or compatible device using the Firmata protocol from a Universal Windows Application.</summary>
-        <description>Windows Remote Arduino is a set of open-source Windows Runtime Component libraries which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for Windows Runtime (WinRT) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the Firmata protocol, which is implemented in a pre-packaged Firmata library included in the Arduino software obtained from http://arduino.cc. This software uses libraries from the Firmata project https://github.com/firmata/arduino under the LGPLv2.1</description>
+        <description>Windows Remote Arduino is an open-source Windows Runtime Component library which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for Windows Runtime (WinRT) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the Firmata protocol, which is implemented in a pre-packaged Firmata library included in the Arduino software obtained from http://arduino.cc.</description>
     </metadata>
     <files>
-        <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />
         <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Firmata.dll" />
-        <file src="..\x64\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Firmata.dll" />
-        <file src="..\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Firmata.dll" />
+        <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />
 
-        <file src="..\ARM\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.winmd" target="lib\uap10.0\Microsoft.Maker.RemoteWiring.winmd" />
         <file src="..\ARM\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-arm\native\Microsoft.Maker.RemoteWiring.dll" />
-        <file src="..\x64\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x64\native\Microsoft.Maker.RemoteWiring.dll" />
-        <file src="..\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x86\native\Microsoft.Maker.RemoteWiring.dll" />
+        <file src="..\ARM\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.winmd" target="lib\uap10.0\Microsoft.Maker.RemoteWiring.winmd" />
 
         <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Serial.dll" />
         <file src="..\ARM\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.winmd" target="lib\uap10.0\Microsoft.Maker.Serial.winmd" />
-        <file src="..\x64\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Serial.dll" />
-        <file src="..\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Serial.dll" />
 
-        <file src="..\..\source\Firmata\Firmata\license.txt" target="src\Firmata\license.txt" />
-        <file src="..\..\license.txt" target="src\RemoteWiring\license.txt" />
-        <file src="..\..\license.txt" target="src\Serial\license.txt" />
+        <file src="..\x64\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Firmata.dll" />
+        <file src="..\x64\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x64\native\Microsoft.Maker.RemoteWiring.dll" />
+        <file src="..\x64\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x64\native\Microsoft.Maker.Serial.dll" />
+
+        <file src="..\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Firmata.dll" />
+        <file src="..\Release\Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.dll" target="runtimes\win10-x86\native\Microsoft.Maker.RemoteWiring.dll" />
+        <file src="..\Release\Microsoft.Maker.Serial\Microsoft.Maker.Serial.dll" target="runtimes\win10-x86\native\Microsoft.Maker.Serial.dll" />
     </files>
 </package>
