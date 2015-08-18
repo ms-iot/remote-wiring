@@ -89,47 +89,40 @@ RemoteDevice::~RemoteDevice(
 
 uint16_t
 RemoteDevice::analogRead(
-    uint8_t pin_
-    )
+	Platform::String^ analog_pin_
+	)
 {
-    //critical section equivalent to function scope
-    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+	uint8_t parsed_pin = parsePinFromAnalogString(analog_pin_);
+	if (parsed_pin == static_cast<uint8_t>(-1))
+	{
+		return static_cast<uint16_t>(-1);
+	}
+	uint16_t val = -1;
+	uint8_t analog_pin_num = parsed_pin + _analog_offset;
 
-    uint16_t val = -1;
-    uint8_t analog_pin_num = pin_ + _analog_offset;
+	{//critical section 
+		std::lock_guard<std::recursive_mutex> lock(_device_mutex);
 
-    if( _pin_mode[ analog_pin_num ] != static_cast<uint8_t>( PinMode::ANALOG ) )
-    {
-        if( _pin_mode[ analog_pin_num ] == static_cast<uint8_t>( PinMode::INPUT ) )
-        {
-            pinMode( analog_pin_num, PinMode::ANALOG );
-        }
-        else
-        {
-            return static_cast<uint16_t>( val );
-        }
-    }
 
-    if( pin_ < _num_analog_pins )
-    {
-        val = _analog_pins[ pin_ ];
-    }
+		if (_pin_mode[analog_pin_num] != static_cast<uint8_t>(PinMode::ANALOG))
+		{
+			if (_pin_mode[analog_pin_num] == static_cast<uint8_t>(PinMode::INPUT))
+			{
+				pinMode(analog_pin_num, PinMode::ANALOG);
+			}
+			else
+			{
+				return static_cast<uint16_t>(val);
+			}
+		}
 
-    return val;
-}
+		if (parsed_pin < _num_analog_pins)
+		{
+			val = _analog_pins[parsed_pin];
+		}
 
-uint16_t
-RemoteDevice::analogRead(
-    Platform::String^ analog_pin_
-    )
-{
-    uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
-    if( parsed_pin == static_cast<uint8_t>( -1 ) )
-    {
-        return static_cast<uint16_t>( -1 );
-    }
-
-    return analogRead( static_cast<uint8_t>( parsed_pin ) + _analog_offset );
+		return val;
+	}
 }
 
 void
