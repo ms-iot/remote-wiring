@@ -531,7 +531,7 @@ RemoteDevice::onPinCapabilityResponseReceived(
     auto size = argv_->getDataBuffer()->Length;
 
     uint8_t *data = (uint8_t *)malloc( sizeof( uint8_t ) * size );
-    for( int i = 0; i < size; ++i )
+    for( unsigned int i = 0; i < size; ++i )
     {
         data[i] = reader->ReadByte();
     }
@@ -541,7 +541,7 @@ RemoteDevice::onPinCapabilityResponseReceived(
     byte num_analog_pins = 0;
 
     int END_OF_PIN_DESCRIPTION = 0x7F;
-    for( int i = 0; i < size; ++i )
+    for( unsigned int i = 0; i < size; ++i )
     {
         while( i < size && data[i] != END_OF_PIN_DESCRIPTION )
         {
