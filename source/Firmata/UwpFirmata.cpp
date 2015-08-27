@@ -25,16 +25,13 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
-#include "Firmata\Firmata.h"
 #include <cstdlib>
 
 using namespace Microsoft::Maker::Serial;
 using namespace Microsoft::Maker::Firmata;
 using namespace std::placeholders;
 
-namespace {
-    FirmataClass RawFirmata;
-}
+
 
 
 //******************************************************************************
