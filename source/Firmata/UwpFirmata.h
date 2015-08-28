@@ -201,7 +201,7 @@ public:
     ///</summary>
     bool
     appendSysex(
-        uint8_t byte_
+        uint16_t byte_
     );
 
     ///<summary>
@@ -390,7 +390,7 @@ public:
 
     //common buffer for outgoing messages, limited by the message size that can be read by Android's implementation of Firmata
     const size_t DATA_BUFFER_SIZE = 31;
-    std::unique_ptr<uint8_t> _data_buffer;
+    std::unique_ptr<uint16_t> _data_buffer;
 
     //member variables to hold the current input thread & communications
     Serial::IStream ^_firmata_stream;
@@ -436,7 +436,7 @@ public:
     sendSysex(
         uint8_t command_,
         uint8_t length_,
-        uint8_t *buffer_
+        uint16_t *buffer_
     );
 
     void

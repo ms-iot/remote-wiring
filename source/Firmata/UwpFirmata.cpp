@@ -42,7 +42,7 @@ using namespace std::placeholders;
 UwpFirmata::UwpFirmata(
     void
 ) :
-    _data_buffer(new uint8_t[DATA_BUFFER_SIZE]),
+    _data_buffer(new uint16_t[DATA_BUFFER_SIZE]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
     _connection_ready(ATOMIC_VAR_INIT(false)),
@@ -74,7 +74,7 @@ UwpFirmata::~UwpFirmata(
 
 bool
 UwpFirmata::appendSysex(
-    uint8_t byte_
+    uint16_t byte_
     )
 {
     if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
@@ -600,7 +600,7 @@ void
 UwpFirmata::sendSysex(
     uint8_t command_,
     uint8_t length_,
-    uint8_t *buffer_
+    uint16_t *buffer_
     )
 {
     //critical section equivalent to function scope
