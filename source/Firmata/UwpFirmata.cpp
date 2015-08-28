@@ -261,6 +261,7 @@ UwpFirmata::processInput(
         return;
 
         //commands that require 2 additional bytes
+    case Command::DIGITAL_MESSAGE:
     case Command::ANALOG_MESSAGE:
     case Command::SET_PIN_MODE:
     case Command::PROTOCOL_VERSION:
@@ -268,7 +269,6 @@ UwpFirmata::processInput(
         break;
 
         //commands that require 1 additional byte
-    case Command::DIGITAL_MESSAGE:
     case Command::REPORT_ANALOG_PIN:
     case Command::REPORT_DIGITAL_PIN:
         bytes_remaining = 1;
@@ -288,13 +288,15 @@ UwpFirmata::processInput(
     //read the remaining message
     std::vector<uint8_t> vector;
     size_t bytes_read = 0;
-    while( bytes_remaining || ( isMessageSysex && data != static_cast<uint16_t>( Command::END_SYSEX ) ) )
+    while( bytes_remaining || isMessageSysex )
     {
         data = _firmata_stream->read();
         if( data == static_cast<uint16_t>( -1 ) ) continue;
+        if( isMessageSysex && ( data == static_cast<uint16_t>( Command::END_SYSEX ) ) ) break;
 
         vector.push_back( static_cast<uint8_t>( data & 0xFF ) );
         ++bytes_read;
+        --bytes_remaining;
     }
 
     //process the message
@@ -417,7 +419,7 @@ UwpFirmata::sendAnalog(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) & ( pin_ & 0x0F ) );
+    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) | ( pin_ & 0x0F ) );
     _firmata_stream->write( static_cast<uint8_t>( value_ & 0x007F ) );
     _firmata_stream->write( static_cast<uint8_t>( ( value_ >> 7 ) & 0x007F ) );
     _firmata_stream->flush();
@@ -431,7 +433,7 @@ UwpFirmata::sendDigitalPort(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) & ( port_number_ & 0x0F ) );
+    _firmata_stream->write( static_cast<uint8_t>( Command::DIGITAL_MESSAGE ) | ( port_number_ & 0x0F ) );
     _firmata_stream->write( port_data_ & 0x007F );
     _firmata_stream->write( port_data_ >> 7 );
     _firmata_stream->flush();
