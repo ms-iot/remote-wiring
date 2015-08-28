@@ -423,9 +423,10 @@ UwpFirmata::sendAnalog(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.sendAnalog(pin_, value_);
+    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) & ( pin_ & 0x0F ) );
+    _firmata_stream->write( static_cast<uint8_t>( value_ & 0x007F ) );
+    _firmata_stream->write( static_cast<uint8_t>( ( value_ >> 7 ) & 0x007F ) );
     _firmata_stream->flush();
-    return;
 }
 
 
@@ -436,9 +437,10 @@ UwpFirmata::sendDigitalPort(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.sendDigitalPort(port_number_, port_data_);
+    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) & ( port_number_ & 0x0F ) );
+    _firmata_stream->write( port_data_ & 0x007F );
+    _firmata_stream->write( port_data_ >> 7 );
     _firmata_stream->flush();
-    return;
 }
 
 
