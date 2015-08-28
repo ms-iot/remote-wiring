@@ -461,7 +461,19 @@ UwpFirmata::sendString(
 {
     std::wstring stringW = string_->ToString()->Begin();
     std::string stringA( stringW.begin(), stringW.end() );
-    return ::RawFirmata.sendString(command_, stringA.c_str());
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+        _firmata_stream->write( static_cast<uint8_t>( SysexCommand::STRING_DATA ) );
+
+        for( int i = 0; i < stringA.length(); ++i )
+        {
+            sendAsTwoBytes( stringA.at( i ) );
+        }
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    }
 }
 
 void
