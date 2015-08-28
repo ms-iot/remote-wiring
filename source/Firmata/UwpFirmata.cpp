@@ -525,8 +525,8 @@ UwpFirmata::createStringFromMbs(
     )
 {
     size_t c;
-    wchar_t *wstr_data = new wchar_t[len];
-    mbstowcs_s( &c, wstr_data, len, reinterpret_cast<char *>( mbs ), len + 1 );
+    wchar_t *wstr_data = new wchar_t[len + 1];
+    mbstowcs_s( &c, wstr_data, len + 1, reinterpret_cast<char *>( mbs ), len + 1 );
     String ^str = ref new String( wstr_data );
     delete[]( wstr_data );
     return str;
