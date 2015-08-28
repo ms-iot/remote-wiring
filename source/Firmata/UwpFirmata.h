@@ -335,7 +335,7 @@ public:
     ///</summary>
     void
     sendValueAsTwo7bitBytes(
-        int value_
+        uint16_t value_
     );
 
     ///<summary>
@@ -424,11 +424,6 @@ public:
     void
     onConnectionLost(
         Platform::String ^message_
-    );
-
-    void
-    sendAsTwoBytes(
-        uint8_t byte_
     );
 
     void

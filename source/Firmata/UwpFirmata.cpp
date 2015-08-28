@@ -225,7 +225,7 @@ UwpFirmata::printFirmwareVersion(
 
         for( int i = 0; i < firmwareName->length(); ++i )
         {
-            sendAsTwoBytes( firmwareName->at( i ) );
+            sendValueAsTwo7bitBytes( firmwareName->at( i ) );
         }
 
         _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
@@ -469,7 +469,7 @@ UwpFirmata::sendString(
 
         for( int i = 0; i < stringA.length(); ++i )
         {
-            sendAsTwoBytes( stringA.at( i ) );
+            sendValueAsTwo7bitBytes( stringA.at( i ) );
         }
 
         _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
@@ -478,10 +478,11 @@ UwpFirmata::sendString(
 
 void
 UwpFirmata::sendValueAsTwo7bitBytes(
-    int value_
+    uint16_t value_
     )
 {
-    return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
+    _firmata_stream->write( value_ & 0x7F );
+    _firmata_stream->write( ( value_ >> 7 ) & 0x7F );
 }
 
 void
@@ -577,21 +578,12 @@ UwpFirmata::reassembleByteString(
     )
 {
     //each char must be reassembled from the two 7-bit bytes received, therefore length should always be an even number.
-    int i;
+    int i, j;
     for( i = 0, j = 0; j < length_ - 1; ++i, j += 2 )
     {
         byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
     }
     byte_string_[i] = 0;
-}
-
-void
-UwpFirmata::sendAsTwoBytes(
-    uint8_t byte
-    )
-{
-    _firmata_stream->write( byte & 0x7F );
-    _firmata_stream->write( byte >> 7 );
 }
 
 void
@@ -609,7 +601,7 @@ UwpFirmata::sendSysex(
 
     for( uint8_t i = 0; i < length_; ++i )
     {
-        sendAsTwoBytes( buffer_[i] );
+        sendValueAsTwo7bitBytes( buffer_[i] );
     }
 
     _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
