@@ -406,6 +406,12 @@ public:
     std::thread _input_thread;
     std::atomic_bool _input_thread_should_exit;
 
+    String ^
+    createStringFromMbs(
+        uint8_t *mbs,
+        size_t len
+    );
+
     void
     inputThread(
         void

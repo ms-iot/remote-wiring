@@ -338,13 +338,7 @@ UwpFirmata::processInput(
             //condense back into 1-byte data
             reassembleByteString( arr, bytes_read );
 
-            size_t c;
-            size_t wlen = bytes_read / 2;
-            wchar_t *wstr_data = new wchar_t[wlen];
-            mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>( arr ), wlen + 1 );
-
-            StringMessageReceived( this, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
-            delete[]( wstr_data );
+            StringMessageReceived( this, ref new StringCallbackEventArgs( createStringFromMbs( arr, bytes_read / 2 ) ) );
 
         break;
 
@@ -521,6 +515,20 @@ UwpFirmata::write(
 //* Private Methods
 //******************************************************************************
 
+
+String ^
+UwpFirmata::createStringFromMbs(
+    uint8_t *mbs,
+    size_t len
+    )
+{
+    size_t c;
+    wchar_t *wstr_data = new wchar_t[len];
+    mbstowcs_s( &c, wstr_data, len, reinterpret_cast<char *>( mbs ), len + 1 );
+    String ^str = ref new String( wstr_data );
+    delete[]( wstr_data );
+    return str;
+}
 
 void
 UwpFirmata::inputThread(
