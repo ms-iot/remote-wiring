@@ -48,7 +48,9 @@ UwpFirmata::UwpFirmata(
     _connection_ready(ATOMIC_VAR_INIT(false)),
     _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
     _sys_command(0),
-    _sys_position(0)
+    _sys_position(0),
+    firmwareVersionMajor(0),
+    firmwareVersionMinor(0)
 {
 }
 
@@ -202,9 +204,10 @@ UwpFirmata::printVersion(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.printVersion();
+    _firmata_stream->write( static_cast<uint8_t>( Command::PROTOCOL_VERSION ) );
+    _firmata_stream->write( FIRMATA_PROTOCOL_MAJOR_VERSION );
+    _firmata_stream->write( FIRMATA_PROTOCOL_MINOR_VERSION );
     _firmata_stream->flush();
-    return;
 }
 
 void
@@ -213,9 +216,21 @@ UwpFirmata::printFirmwareVersion(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.printFirmwareVersion();
-    _firmata_stream->flush();
-    return;
+    if( firmwareName )
+    {
+        _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+        _firmata_stream->write( static_cast<uint8_t>( SysexCommand::REPORT_FIRMWARE ) );
+        _firmata_stream->write( firmwareVersionMajor );
+        _firmata_stream->write( firmwareVersionMinor );
+
+        for( int i = 0; i < firmwareName->length(); ++i )
+        {
+            sendAsTwoBytes( firmwareName->at( i ) );
+        }
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+        _firmata_stream->flush();
+    }
 }
 
 void
@@ -387,8 +402,18 @@ UwpFirmata::setFirmwareNameAndVersion(
     )
 {
     std::wstring nameW = name_->ToString()->Begin();
-    std::string nameA( nameW.begin(), nameW.end() );
-    return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
+
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        if( firmwareName )
+        {
+            free( firmwareName );
+        }
+
+        firmwareName = new std::string( nameW.begin(), nameW.end() );
+        firmwareVersionMajor = major_;
+        firmwareVersionMinor = minor_;
+    }
 }
 
 void

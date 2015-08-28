@@ -375,6 +375,14 @@ public:
     );
 
   private:
+    const uint8_t FIRMATA_PROTOCOL_MAJOR_VERSION = 2;
+    const uint8_t FIRMATA_PROTOCOL_MINOR_VERSION = 3;
+
+    //version number and name array used with set/printFirmwareVersion
+    uint8_t firmwareVersionMajor;
+    uint8_t firmwareVersionMinor;
+    std::string *firmwareName;
+
     //sysex-building
     const size_t MAX_SYSEX_LEN = 15;
     uint8_t _sys_command;
