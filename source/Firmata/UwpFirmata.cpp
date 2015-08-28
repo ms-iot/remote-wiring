@@ -153,8 +153,7 @@ UwpFirmata::endSysex(
 {
     if( _sys_command )
     {
-        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get() );
-        _firmata_stream->flush();
+        sendSysex( _sys_command, _sys_position, _data_buffer.get() );
         _sys_command = 0;
         _sys_position = 0;
         return true;
@@ -332,45 +331,45 @@ UwpFirmata::processInput(
             StringMessageReceived( this, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
             delete[]( wstr_data );
 
+        break;
+
+        case SysexCommand::CAPABILITY_RESPONSE:
+
+            //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
+            for( int i = 0; i < bytes_read; ++i )
+            {
+                writer->WriteByte( arr[i] );
+            }
+            PinCapabilityResponseReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+
             break;
 
-            case SysexCommand::CAPABILITY_RESPONSE:
+        case SysexCommand::I2C_REPLY:
 
-                //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
-                for( int i = 0; i < bytes_read; ++i )
-                {
-                    writer->WriteByte( arr[i] );
-                }
-                PinCapabilityResponseReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+            //condense back into 1-byte data
+            reassembleByteString( arr, bytes_read );
 
-                break;
+            //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
+            for( int i = 2; i < bytes_read / 2; ++i )
+            {
+                writer->WriteByte( arr[i] );
+            }
 
-            case SysexCommand::I2C_REPLY:
+            I2cReplyReceived( this, ref new I2cCallbackEventArgs( arr[0], arr[1], writer->DetachBuffer() ) );
+            break;
 
-                //condense back into 1-byte data
-                reassembleByteString( arr, bytes_read );
+        default:
 
-                //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
-                for( int i = 2; i < bytes_read; ++i )
-                {
-                    writer->WriteByte( arr[i] );
-                }
+            //condense back into 1-byte data
+            reassembleByteString( arr, bytes_read );
 
-                I2cReplyReceived( this, ref new I2cCallbackEventArgs( arr[0], arr[1], writer->DetachBuffer() ) );
-                break;
+            //we pass the data forward as-is for any other type of sysex command
+            for( int i = 0; i < bytes_read / 2; ++i )
+            {
+                writer->WriteByte( arr[i] );
+            }
 
-            default:
-
-                //condense back into 1-byte data
-                reassembleByteString( arr, bytes_read );
-
-                //we pass the data forward as-is for any other type of sysex command
-                for( int i = 0; i < bytes_read; ++i )
-                {
-                    writer->WriteByte( arr[i] );
-                }
-
-                SysexMessageReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+            SysexMessageReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
 
         }
 
@@ -517,19 +516,19 @@ UwpFirmata::onConnectionEstablished(
 
 void
 UwpFirmata::onConnectionFailed(
-    Platform::String ^message
+    Platform::String ^message_
     )
 {
-    FirmataConnectionFailed( message );
+    FirmataConnectionFailed( message_ );
 }
 
 void
 UwpFirmata::onConnectionLost(
-    Platform::String ^message
+    Platform::String ^message_
     )
 {
     _connection_ready = false;
-    FirmataConnectionLost( message );
+    FirmataConnectionLost( message_ );
 }
 
 void
@@ -545,6 +544,37 @@ UwpFirmata::reassembleByteString(
         byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
     }
     byte_string_[i] = 0;
+}
+
+void
+UwpFirmata::sendAsTwoBytes(
+    uint8_t byte
+    )
+{
+    _firmata_stream->write( byte & 0x7F );
+    _firmata_stream->write( byte >> 7 );
+}
+
+void
+UwpFirmata::sendSysex(
+    uint8_t command_,
+    uint8_t length_,
+    uint8_t *buffer_
+    )
+{
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _firmutex );
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+    _firmata_stream->write( command_ );
+
+    for( uint8_t i = 0; i < length_; ++i )
+    {
+        sendAsTwoBytes( buffer_[i] );
+    }
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    _firmata_stream->flush();
 }
 
 void

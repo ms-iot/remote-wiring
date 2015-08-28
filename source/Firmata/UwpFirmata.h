@@ -404,6 +404,33 @@ public:
     );
 
     void
+    onConnectionEstablished(
+        void
+    );
+
+    void
+    onConnectionFailed(
+        Platform::String ^message_
+    );
+
+    void
+    onConnectionLost(
+        Platform::String ^message_
+    );
+
+    void
+    sendAsTwoBytes(
+        uint8_t byte_
+    );
+
+    void
+    sendSysex(
+        uint8_t command_,
+        uint8_t length_,
+        uint8_t *buffer_
+    );
+
+    void
     stopThreads(
         void
     );
@@ -412,21 +439,6 @@ public:
     reassembleByteString(
         uint8_t *byte_string_,
         size_t length_
-    );
-
-    void
-    onConnectionEstablished(
-        void
-    );
-
-    void
-    onConnectionFailed(
-        Platform::String ^message
-    );
-
-    void
-    onConnectionLost(
-        Platform::String ^message
     );
 };
 
