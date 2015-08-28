@@ -89,7 +89,7 @@ UwpFirmata::available(
     void
     )
 {
-    return ::RawFirmata.available();
+    return _firmata_stream->available();
 }
 
 void
@@ -100,7 +100,6 @@ UwpFirmata::begin(
     if( s_ == nullptr ) return;
 
     _firmata_stream = s_;
-    ::RawFirmata.begin( s_ );
 
     //lock the IStream object to guarantee its state won't change while we check if it is already connected.
     _firmata_stream->lock();
@@ -180,8 +179,6 @@ UwpFirmata::finish(
 
         _firmata_stream->flush();
     }
-
-    return ::RawFirmata.finish();
 }
 
 void
@@ -426,7 +423,7 @@ UwpFirmata::sendString(
     String ^string_
     )
 {
-    return sendString(STRING_DATA, string_);
+    return sendString( static_cast<uint8_t>( SysexCommand::STRING_DATA ), string_);
 }
 
 
@@ -477,7 +474,7 @@ UwpFirmata::write(
     uint8_t c_
     )
 {
-    return ::RawFirmata.write( c_ );
+    _firmata_stream->write( c_ );
 }
 
 
