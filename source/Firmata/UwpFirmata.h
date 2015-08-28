@@ -245,15 +245,6 @@ public:
     );
 
     ///<summary>
-    ///Locks this instance of the UwpFirmata object, allowing for thread safety and guaranteeing that messages do not interfere with each other.
-    ///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
-    ///</summary>
-    void
-    lock(
-        void
-    );
-
-    ///<summary>
     ///Finishes the usage of this UwpFirmata instance. Any existing connections will be closed.
     ///</summary>
     void
@@ -267,6 +258,15 @@ public:
     ///</summary>
     void
     flush(
+        void
+    );
+
+    ///<summary>
+    ///Locks this instance of the UwpFirmata object, allowing for thread safety and guaranteeing that messages do not interfere with each other.
+    ///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
+    ///</summary>
+    void
+    lock(
         void
     );
 
@@ -493,7 +493,7 @@ internal:
     uint8_t _sys_command;
     uint8_t _sys_position;
 
-    //common buffer
+    //common buffer for outgoing messages, limited by the message size that can be read by Android's implementation of Firmata
     const size_t DATA_BUFFER_SIZE = 31;
     std::unique_ptr<uint8_t> _data_buffer;
 
@@ -519,6 +519,12 @@ internal:
     void
     stopThreads(
         void
+    );
+
+    void
+    reassembleByteString(
+        uint8_t *byte_string_,
+        size_t length_
     );
 
     void

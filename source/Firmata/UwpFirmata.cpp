@@ -231,7 +231,160 @@ UwpFirmata::processInput(
     void
     )
 {
-    return ::RawFirmata.processInput();
+    uint16_t data = _firmata_stream->read();
+    if( data == static_cast<uint16_t>( -1 ) ) return;
+    
+    uint8_t byte = data & 0x00FF;
+    uint8_t upper_nibble = data & 0xF0;
+    uint8_t lower_nibble = data & 0x0F;
+
+    /*
+     * the relevant bits in the command depends on the value of the data byte. If it is less than 0xF0 (start sysex), only the upper nibble identifies the command
+     * while the lower nibble contains additional data
+     */
+    Command command = static_cast<Command>( ( data < static_cast<uint16_t>( Command::START_SYSEX ) ? upper_nibble : byte ) );
+
+    //determine the number of bytes remaining in the message
+    size_t bytes_remaining = 0;
+    bool isMessageSysex = false;
+    switch( command )
+    {
+    default: //command not understood
+    case Command::END_SYSEX: //should never happen
+        return;
+
+        //commands that require 2 additional bytes
+    case Command::ANALOG_MESSAGE:
+    case Command::SET_PIN_MODE:
+    case Command::PROTOCOL_VERSION:
+        bytes_remaining = 2;
+        break;
+
+        //commands that require 1 additional byte
+    case Command::DIGITAL_MESSAGE:
+    case Command::REPORT_ANALOG_PIN:
+    case Command::REPORT_DIGITAL_PIN:
+        bytes_remaining = 1;
+        break;
+
+        //commands that do not require additional bytes
+    case Command::SYSTEM_RESET:
+        //do nothing, as there is nothing to reset
+        return;
+
+    case Command::START_SYSEX:
+        //this is a special case with no set number of bytes remaining
+        isMessageSysex = true;
+        break;
+    }
+
+    //read the remaining message
+    std::vector<uint8_t> vector;
+    size_t bytes_read = 0;
+    while( bytes_remaining || ( isMessageSysex && data != static_cast<uint16_t>( Command::END_SYSEX ) ) )
+    {
+        data = _firmata_stream->read();
+        if( data == static_cast<uint16_t>( -1 ) ) continue;
+
+        vector.push_back( static_cast<uint8_t>( data & 0xFF ) );
+        ++bytes_read;
+    }
+
+    //process the message
+    switch( command )
+    {
+        //ignore these message types
+    default:
+    case Command::REPORT_ANALOG_PIN:
+    case Command::REPORT_DIGITAL_PIN:
+    case Command::SET_PIN_MODE:
+    case Command::END_SYSEX:
+    case Command::SYSTEM_RESET:
+    case Command::PROTOCOL_VERSION:
+        return;
+
+    case Command::ANALOG_MESSAGE:
+        //report analog commands store the pin number in the lower nibble of the command byte, the value is split over two 7-bit bytes
+        AnalogValueUpdated( this, ref new CallbackEventArgs( lower_nibble, vector.at( 0 ) | ( vector.at( 1 ) << 7 ) ) );
+        break;
+
+    case Command::DIGITAL_MESSAGE:
+        //digital messages store the port number in the lower nibble of the command byte, the port value is split over two 7-bit bytes
+        DigitalPortValueUpdated( this, ref new CallbackEventArgs( lower_nibble, vector.at( 0 ) | ( vector.at( 1 ) << 7 ) ) );
+        break;
+
+    case Command::START_SYSEX:
+        //a sysex message must include at least one extended-command byte
+        if( bytes_read < 1 ) return;
+
+        //retrieve the raw data array & extract the extended-command byte
+        uint8_t *arr = vector.data();
+        SysexCommand sysCommand = static_cast<SysexCommand>( arr[0] );
+        ++arr;
+        --bytes_read;
+
+        DataWriter ^writer = ref new DataWriter();
+        switch( sysCommand )
+        {
+        case SysexCommand::STRING_DATA:
+
+            //condense back into 1-byte data
+            reassembleByteString( arr, bytes_read );
+
+            size_t c;
+            size_t wlen = bytes_read / 2;
+            wchar_t *wstr_data = new wchar_t[wlen];
+            mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>( arr ), wlen + 1 );
+
+            StringMessageReceived( this, ref new StringCallbackEventArgs( ref new String( wstr_data ) ) );
+            delete[]( wstr_data );
+
+            break;
+
+            case SysexCommand::CAPABILITY_RESPONSE:
+
+                //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
+                for( int i = 0; i < bytes_read; ++i )
+                {
+                    writer->WriteByte( arr[i] );
+                }
+                PinCapabilityResponseReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+
+                break;
+
+            case SysexCommand::I2C_REPLY:
+
+                //condense back into 1-byte data
+                reassembleByteString( arr, bytes_read );
+
+                //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
+                for( int i = 2; i < bytes_read; ++i )
+                {
+                    writer->WriteByte( arr[i] );
+                }
+
+                I2cReplyReceived( this, ref new I2cCallbackEventArgs( arr[0], arr[1], writer->DetachBuffer() ) );
+                break;
+
+            default:
+
+                //condense back into 1-byte data
+                reassembleByteString( arr, bytes_read );
+
+                //we pass the data forward as-is for any other type of sysex command
+                for( int i = 0; i < bytes_read; ++i )
+                {
+                    writer->WriteByte( arr[i] );
+                }
+
+                SysexMessageReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+
+        }
+
+        break;
+    }
+
+    //this library does not support digital write, but we need to consume the rest of the message
 }
 
 void
@@ -347,7 +500,7 @@ UwpFirmata::inputThread(
     {
         try
         {
-            ::RawFirmata.processInput();
+            processInput();
         }
         catch( Platform::Exception ^e )
         {
@@ -384,6 +537,21 @@ UwpFirmata::onConnectionLost(
 {
     _connection_ready = false;
     FirmataConnectionLost( message );
+}
+
+void
+UwpFirmata::reassembleByteString(
+    uint8_t *byte_string_,
+    size_t length_
+    )
+{
+    //each char must be reassembled from the two 7-bit bytes received, therefore length should always be an even number.
+    int i;
+    for( i = 0, j = 0; j < length_ - 1; ++i, j += 2 )
+    {
+        byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
+    }
+    byte_string_[i] = 0;
 }
 
 void
