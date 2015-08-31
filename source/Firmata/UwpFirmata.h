@@ -201,7 +201,7 @@ public:
     ///</summary>
     bool
     appendSysex(
-        uint8_t byte_
+        uint16_t byte_
     );
 
     ///<summary>
@@ -245,15 +245,6 @@ public:
     );
 
     ///<summary>
-    ///Locks this instance of the UwpFirmata object, allowing for thread safety and guaranteeing that messages do not interfere with each other.
-    ///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
-    ///</summary>
-    void
-    lock(
-        void
-    );
-
-    ///<summary>
     ///Finishes the usage of this UwpFirmata instance. Any existing connections will be closed.
     ///</summary>
     void
@@ -267,6 +258,15 @@ public:
     ///</summary>
     void
     flush(
+        void
+    );
+
+    ///<summary>
+    ///Locks this instance of the UwpFirmata object, allowing for thread safety and guaranteeing that messages do not interfere with each other.
+    ///<para>when explicitly invoking this method, unlock() must be called when the lock is no longer needed.</para>
+    ///</summary>
+    void
+    lock(
         void
     );
 
@@ -335,7 +335,7 @@ public:
     ///</summary>
     void
     sendValueAsTwo7bitBytes(
-        int value_
+        uint16_t value_
     );
 
     ///<summary>
@@ -374,128 +374,24 @@ public:
         uint8_t c_
     );
 
-internal:
-
-    ///<summary>
-    ///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
-    ///</summary>
-    static inline
-    void
-    analogInvoke(
-        UwpFirmata ^caller_,
-        uint8_t pin_,
-        int value_
-    )
-    {
-        caller_->AnalogValueUpdated( caller_, ref new CallbackEventArgs( pin_, value_ ) );
-    }
-
-    ///<summary>
-    ///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
-    ///</summary>
-    static inline
-    void
-    digitalInvoke(
-        UwpFirmata ^caller_,
-        uint8_t port_,
-        int value_
-    )
-    {
-        caller_->DigitalPortValueUpdated( caller_, ref new CallbackEventArgs( port_, value_ ) );
-    }
-
-    ///<summary>
-    ///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
-    ///</summary>
-    static inline
-    void
-    stringInvoke(
-        UwpFirmata ^caller_,
-        uint8_t *string_data_
-    )
-    {
-        size_t len = strlen( reinterpret_cast<char *>( string_data_ ) ) + 1;
-        size_t wlen = len * sizeof( wchar_t );
-        wchar_t *wstr_data = new wchar_t[wlen];
-
-        size_t c;
-        mbstowcs_s( &c, wstr_data, wlen, reinterpret_cast<char *>(string_data_), len + 1 );
-        caller_->StringMessageReceived( caller_, ref new StringCallbackEventArgs( ref new String(wstr_data) ) );
-        delete[](wstr_data);
-    }
-
-    ///<summary>
-    ///When used with std::bind, this allows the Firmata library to invoke the function in the standard way (non-member type) while we redirect it to an object reference.
-    ///</summary>
-    static inline
-    void
-    sysexInvoke(
-        UwpFirmata ^caller_,
-        uint8_t command_,
-        uint8_t argc_,
-        uint8_t *argv_
-    )
-    {
-        DataWriter ^writer = ref new DataWriter();
-        uint8_t i, len;
-
-        //Firmata does not handle capability responses in the typical way (separating bytes), so a special case is needed 
-        if( command_ == static_cast<uint8_t>( SysexCommand::CAPABILITY_RESPONSE ) )
-        {
-            for( i = 0; i < argc_; ++i )
-            {
-                writer->WriteByte( argv_[i] );
-            }
-            caller_->PinCapabilityResponseReceived( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
-            return;
-        }
-
-        /*
-         * data will be replied as 2 7-bit bytes for every actual byte. So we're going to reuse
-         *  the same memory space, since we can combine the two bytes back together.
-         */
-
-        //should never happen, but we'll correct for it just in case
-        if( argc_ % 2 == 1 ) --argc_;
-
-        //reassemble all the bytes (which were split into two seven-bit bytes) back into one byte each
-        for( i = 0, len = 0; i < argc_; i += 2, ++len )
-        {
-            argv_[len] = argv_[i] | ( argv_[i + 1] << 7 );
-        }
-        argv_[len] = 0;
-
-        if( command_ == static_cast<uint8_t>( SysexCommand::I2C_REPLY ) )
-        {
-            //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
-            for( i = 2; i < len; ++i )
-            {
-                writer->WriteByte( argv_[i] );
-            }
-
-            caller_->I2cReplyReceived( caller_, ref new I2cCallbackEventArgs( argv_[0], argv_[1], writer->DetachBuffer() ) );
-        }
-        else
-        {
-            //if this isn't an I2C reply, all of the bytes received are relevant
-            for( i = 0; i < len; ++i )
-            {
-                writer->WriteByte( argv_[i] );
-            }
-
-            caller_->SysexMessageReceived( caller_, ref new SysexCallbackEventArgs( command_, writer->DetachBuffer() ) );
-        }
-    }
-
   private:
+    const uint8_t FIRMATA_PROTOCOL_MAJOR_VERSION = 2;
+    const uint8_t FIRMATA_PROTOCOL_MINOR_VERSION = 3;
+    const double MESSAGE_TIMEOUT_MILLIS = 30.0;
+
+    //version number and name array used with set/printFirmwareVersion
+    uint8_t firmwareVersionMajor;
+    uint8_t firmwareVersionMinor;
+    std::string *firmwareName;
+
     //sysex-building
     const size_t MAX_SYSEX_LEN = 15;
     uint8_t _sys_command;
     uint8_t _sys_position;
 
-    //common buffer
+    //common buffer for outgoing messages, limited by the message size that can be read by Android's implementation of Firmata
     const size_t DATA_BUFFER_SIZE = 31;
-    std::unique_ptr<uint8_t> _data_buffer;
+    std::unique_ptr<uint16_t> _data_buffer;
 
     //member variables to hold the current input thread & communications
     Serial::IStream ^_firmata_stream;
@@ -511,13 +407,14 @@ internal:
     std::thread _input_thread;
     std::atomic_bool _input_thread_should_exit;
 
-    void
-    inputThread(
-        void
+    String ^
+    createStringFromMbs(
+        uint8_t *mbs,
+        size_t len
     );
 
     void
-    stopThreads(
+    inputThread(
         void
     );
 
@@ -528,12 +425,30 @@ internal:
 
     void
     onConnectionFailed(
-        Platform::String ^message
+        Platform::String ^message_
     );
 
     void
     onConnectionLost(
-        Platform::String ^message
+        Platform::String ^message_
+    );
+
+    void
+    sendSysex(
+        uint8_t command_,
+        uint8_t length_,
+        uint16_t *buffer_
+    );
+
+    void
+    stopThreads(
+        void
+    );
+
+    void
+    reassembleByteString(
+        uint8_t *byte_string_,
+        size_t length_
     );
 };
 
