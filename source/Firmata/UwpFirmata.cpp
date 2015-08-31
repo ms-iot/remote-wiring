@@ -25,6 +25,7 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
+#include <chrono>
 #include <cstdlib>
 
 using namespace Microsoft::Maker::Serial;
@@ -285,16 +286,29 @@ UwpFirmata::processInput(
         break;
     }
 
-    //read the remaining message
-    std::vector<uint8_t> vector;
+    //read the remaining message while keeping track of elapsed time to timeout in case of incomplete message
+    std::vector<uint8_t> message;
     size_t bytes_read = 0;
+    auto start_time = std::chrono::high_resolution_clock::now();
     while( bytes_remaining || isMessageSysex )
     {
         data = _firmata_stream->read();
-        if( data == static_cast<uint16_t>( -1 ) ) continue;
+
+        //if no data was available, check for timeout
+        if( data == static_cast<uint16_t>( -1 ) )
+        {
+            //get elapsed seconds, given as a double with resolution in nanoseconds
+            std::chrono::duration<double> elapsed_sec = std::chrono::high_resolution_clock::now() - start_time;
+
+            const double MILLIS_PER_SECOND = 1000.0;
+            if( ( elapsed_sec.count() * MILLIS_PER_SECOND ) > MESSAGE_TIMEOUT_MILLIS ) return;
+            else continue;
+        }
+
+        //if we're parsing sysex and we've just read the END_SYSEX command, we're done.
         if( isMessageSysex && ( data == static_cast<uint16_t>( Command::END_SYSEX ) ) ) break;
 
-        vector.push_back( static_cast<uint8_t>( data & 0xFF ) );
+        message.push_back( static_cast<uint8_t>( data & 0xFF ) );
         ++bytes_read;
         --bytes_remaining;
     }
@@ -314,12 +328,12 @@ UwpFirmata::processInput(
 
     case Command::ANALOG_MESSAGE:
         //report analog commands store the pin number in the lower nibble of the command byte, the value is split over two 7-bit bytes
-        AnalogValueUpdated( this, ref new CallbackEventArgs( lower_nibble, vector.at( 0 ) | ( vector.at( 1 ) << 7 ) ) );
+        AnalogValueUpdated( this, ref new CallbackEventArgs( lower_nibble, message.at( 0 ) | ( message.at( 1 ) << 7 ) ) );
         break;
 
     case Command::DIGITAL_MESSAGE:
         //digital messages store the port number in the lower nibble of the command byte, the port value is split over two 7-bit bytes
-        DigitalPortValueUpdated( this, ref new CallbackEventArgs( lower_nibble, vector.at( 0 ) | ( vector.at( 1 ) << 7 ) ) );
+        DigitalPortValueUpdated( this, ref new CallbackEventArgs( lower_nibble, message.at( 0 ) | ( message.at( 1 ) << 7 ) ) );
         break;
 
     case Command::START_SYSEX:
@@ -327,9 +341,9 @@ UwpFirmata::processInput(
         if( bytes_read < 1 ) return;
 
         //retrieve the raw data array & extract the extended-command byte
-        uint8_t *arr = vector.data();
-        SysexCommand sysCommand = static_cast<SysexCommand>( arr[0] );
-        ++arr;
+        uint8_t *raw_data = message.data();
+        SysexCommand sysCommand = static_cast<SysexCommand>( raw_data[0] );
+        ++raw_data;
         --bytes_read;
 
         DataWriter ^writer = ref new DataWriter();
@@ -338,9 +352,9 @@ UwpFirmata::processInput(
         case SysexCommand::STRING_DATA:
 
             //condense back into 1-byte data
-            reassembleByteString( arr, bytes_read );
+            reassembleByteString( raw_data, bytes_read );
 
-            StringMessageReceived( this, ref new StringCallbackEventArgs( createStringFromMbs( arr, bytes_read / 2 ) ) );
+            StringMessageReceived( this, ref new StringCallbackEventArgs( createStringFromMbs( raw_data, bytes_read / 2 ) ) );
 
         break;
 
@@ -349,7 +363,7 @@ UwpFirmata::processInput(
             //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
             for( int i = 0; i < bytes_read; ++i )
             {
-                writer->WriteByte( arr[i] );
+                writer->WriteByte( raw_data[i] );
             }
             PinCapabilityResponseReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
 
@@ -358,26 +372,26 @@ UwpFirmata::processInput(
         case SysexCommand::I2C_REPLY:
 
             //condense back into 1-byte data
-            reassembleByteString( arr, bytes_read );
+            reassembleByteString( raw_data, bytes_read );
 
             //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
             for( int i = 2; i < bytes_read / 2; ++i )
             {
-                writer->WriteByte( arr[i] );
+                writer->WriteByte( raw_data[i] );
             }
 
-            I2cReplyReceived( this, ref new I2cCallbackEventArgs( arr[0], arr[1], writer->DetachBuffer() ) );
+            I2cReplyReceived( this, ref new I2cCallbackEventArgs( raw_data[0], raw_data[1], writer->DetachBuffer() ) );
             break;
 
         default:
 
             //condense back into 1-byte data
-            reassembleByteString( arr, bytes_read );
+            reassembleByteString( raw_data, bytes_read );
 
             //we pass the data forward as-is for any other type of sysex command
             for( int i = 0; i < bytes_read / 2; ++i )
             {
-                writer->WriteByte( arr[i] );
+                writer->WriteByte( raw_data[i] );
             }
 
             SysexMessageReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
