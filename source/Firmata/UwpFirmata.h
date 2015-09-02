@@ -377,7 +377,7 @@ public:
   private:
     const uint8_t FIRMATA_PROTOCOL_MAJOR_VERSION = 2;
     const uint8_t FIRMATA_PROTOCOL_MINOR_VERSION = 3;
-    const double MESSAGE_TIMEOUT_MILLIS = 30.0;
+    const double MESSAGE_TIMEOUT_MILLIS = 500.0;
 
     //version number and name array used with set/printFirmwareVersion
     uint8_t firmwareVersionMajor;

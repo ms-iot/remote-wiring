@@ -289,7 +289,7 @@ UwpFirmata::processInput(
     //read the remaining message while keeping track of elapsed time to timeout in case of incomplete message
     std::vector<uint8_t> message;
     size_t bytes_read = 0;
-    auto start_time = std::chrono::high_resolution_clock::now();
+    auto timeout_start = std::chrono::high_resolution_clock::now();
     while( bytes_remaining || isMessageSysex )
     {
         data = _firmata_stream->read();
@@ -298,12 +298,14 @@ UwpFirmata::processInput(
         if( data == static_cast<uint16_t>( -1 ) )
         {
             //get elapsed seconds, given as a double with resolution in nanoseconds
-            std::chrono::duration<double> elapsed_sec = std::chrono::high_resolution_clock::now() - start_time;
+            std::chrono::duration<double> elapsed_sec = std::chrono::high_resolution_clock::now() - timeout_start;
 
             const double MILLIS_PER_SECOND = 1000.0;
             if( ( elapsed_sec.count() * MILLIS_PER_SECOND ) > MESSAGE_TIMEOUT_MILLIS ) return;
             else continue;
         }
+
+        timeout_start = std::chrono::high_resolution_clock::now();
 
         //if we're parsing sysex and we've just read the END_SYSEX command, we're done.
         if( isMessageSysex && ( data == static_cast<uint16_t>( Command::END_SYSEX ) ) ) break;
