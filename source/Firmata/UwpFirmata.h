@@ -409,8 +409,8 @@ public:
 
     String ^
     createStringFromMbs(
-        uint8_t *mbs,
-        size_t len
+        uint8_t *mbs_,
+        size_t len_
     );
 
     void
