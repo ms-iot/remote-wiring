@@ -181,7 +181,7 @@ UwpFirmata::printFirmwareVersion(
         _firmata_stream->write( firmwareVersionMajor );
         _firmata_stream->write( firmwareVersionMinor );
 
-        for( int i = 0; i < firmwareName->length(); ++i )
+        for( size_t i = 0; i < firmwareName->length(); ++i )
         {
             sendValueAsTwo7bitBytes( firmwareName->at( i ) );
         }
@@ -320,7 +320,7 @@ UwpFirmata::processInput(
         case SysexCommand::CAPABILITY_RESPONSE:
 
             //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
-            for( int i = 0; i < bytes_read; ++i )
+            for( size_t i = 0; i < bytes_read; ++i )
             {
                 writer->WriteByte( raw_data[i] );
             }
@@ -334,7 +334,7 @@ UwpFirmata::processInput(
             reassembleByteString( raw_data, bytes_read );
 
             //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
-            for( int i = 2; i < bytes_read / 2; ++i )
+            for( size_t i = 2; i < bytes_read / 2; ++i )
             {
                 writer->WriteByte( raw_data[i] );
             }
@@ -348,7 +348,7 @@ UwpFirmata::processInput(
             reassembleByteString( raw_data, bytes_read );
 
             //we pass the data forward as-is for any other type of sysex command
-            for( int i = 0; i < bytes_read / 2; ++i )
+            for( size_t i = 0; i < bytes_read / 2; ++i )
             {
                 writer->WriteByte( raw_data[i] );
             }
@@ -415,7 +415,7 @@ UwpFirmata::sendString(
         _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
         _firmata_stream->write( command_ & 0x7F );
 
-        for( int i = 0; i < stringA.length(); ++i )
+        for( size_t i = 0; i < stringA.length(); ++i )
         {
             sendValueAsTwo7bitBytes( stringA.at( i ) );
         }
@@ -592,7 +592,7 @@ UwpFirmata::reassembleByteString(
     )
 {
     //each char must be reassembled from the two 7-bit bytes received, therefore length should always be an even number.
-    int i, j;
+    size_t i, j;
     for( i = 0, j = 0; j < length_ - 1; ++i, j += 2 )
     {
         byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
