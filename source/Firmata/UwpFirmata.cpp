@@ -48,8 +48,6 @@ UwpFirmata::UwpFirmata(
     _firmata_stream(nullptr),
     _connection_ready(ATOMIC_VAR_INIT(false)),
     _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
-    _sys_command(0),
-    _sys_position(0),
     firmwareVersionMajor(0),
     firmwareVersionMinor(0)
 {
@@ -72,20 +70,6 @@ UwpFirmata::~UwpFirmata(
 //******************************************************************************
 //* Public Methods
 //******************************************************************************
-
-bool
-UwpFirmata::appendSysex(
-    uint16_t byte_
-    )
-{
-    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
-    {
-        _data_buffer.get()[_sys_position] = byte_;
-        ++_sys_position;
-        return true;
-    }
-    return false;
-}
 
 int
 UwpFirmata::available(
@@ -132,36 +116,11 @@ UwpFirmata::begin(
 }
 
 bool
-UwpFirmata::beginSysex(
-    uint8_t command_
-    )
-{
-    _sys_command = command_;
-    _sys_position = 0;
-    return true;
-}
-
-bool
 UwpFirmata::connectionReady(
     void
     )
 {
     return _connection_ready;
-}
-
-bool
-UwpFirmata::endSysex(
-    void
-    )
-{
-    if( _sys_command )
-    {
-        sendSysex( _sys_command, _sys_position, _data_buffer.get() );
-        _sys_command = 0;
-        _sys_position = 0;
-        return true;
-    }
-    return false;
 }
 
 void
@@ -175,8 +134,6 @@ UwpFirmata::finish(
 
         _connection_ready = false;
         _firmata_stream = nullptr;
-        _sys_command = 0;
-        _sys_position = 0;
         _data_buffer = nullptr;
 
         _firmata_stream->flush();

@@ -197,14 +197,6 @@ public:
     );
 
     ///<summary>
-    ///This function appends one byte to the current sysex message
-    ///</summary>
-    bool
-    appendSysex(
-        uint16_t byte_
-    );
-
-    ///<summary>
     ///Returns the number of bytes available to be read from the backing transport
     ///</summary>
     int
@@ -221,26 +213,10 @@ public:
     );
 
     ///<summary>
-    ///Begins a sysex message.
-    ///</summary>
-    bool
-    beginSysex(
-        uint8_t command_
-    );
-
-    ///<summary>
     ///Returns true if the connection is currently established
     ///</summary>
     bool
     connectionReady(
-        void
-    );
-
-    ///<summary>
-    ///Ends a sysex message, which will finalize and send the message.
-    ///</summary>
-    bool
-    endSysex(
         void
     );
 
@@ -383,11 +359,6 @@ public:
     uint8_t firmwareVersionMajor;
     uint8_t firmwareVersionMinor;
     std::string *firmwareName;
-
-    //sysex-building
-    const size_t MAX_SYSEX_LEN = 15;
-    uint8_t _sys_command;
-    uint8_t _sys_position;
 
     //common buffer for outgoing messages, limited by the message size that can be read by Android's implementation of Firmata
     const size_t DATA_BUFFER_SIZE = 31;
