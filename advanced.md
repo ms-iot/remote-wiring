@@ -69,30 +69,47 @@ Next, we define the function to send our sysex command.
 ```c#
 public void toggleAllDigitalPins( bool setPinsHigh )
 {
-	//begin our sysex command with our special command
-	firmata.beginSysex( ALL_PINS_COMMAND );
-	
+	//we're defining our own command, so we're free to encode it how we want.
 	//let's send a '1' if we want the pins HIGH, and a 0 for LOW
+	byte b;
 	if( setPinsHigh )
 	{
-		firmata.appendSysex( 1 );
+		b = 1;
 	}
 	else
 	{
-		firmata.appendSysex( 0 );
+		b = 0;
 	}
 	
-	//nothing is actually sent to the Arduino until the endSysex() function is invoked!
-	firmata.endSysex();
+	//invoke the sendSysex command with ALL_PINS_COMMAND and our data payload as an IBuffer
+	firmata.sendSysex( ALL_PINS_COMMAND, new byte[] { b }.AsBuffer() );
+}
+```
+
+sendSysex accepts an IBuffer object (from Windows.Storage.Streams namespace) There are several ways to create an IBuffer object. The above shows an easy way to generate one in C# from a byte array, but this doesn't work in C++! Let's take another look at how to generate an IBuffer using a method that works in either C# or C++.
+
+```C++
+public void toggleAllDigitalPins( bool setPinsHigh )
+{
+	//a DataWriter object uses an IBuffer as its backing storage
+	//we'll write our data to this object and detach the buffer to invoke sendSysex()
+	Windows::Storage::Streams::DataWriter ^writer = new Windows::Storage::Streams::DataWriter();
+	
+	//we're defining our own command, so we're free to encode it how we want.
+	//let's send a '1' if we want the pins HIGH, and a 0 for LOW
+	writer->WriteByte( setPinsHigh ? 1 : 0 );
+	
+	//invoke the sendSysex command with ALL_PINS_COMMAND and our data payload as an IBuffer
+	firmata->sendSysex( ALL_PINS_COMMAND, writer->DetachBuffer() );
 }
 ```
 
 ##Implementing the Arduino side
 
-locate the function `sysexCallback` in StandardFirmata. You'll notice that the function parameters already separate the command from the rest of the payload. This means that when our sysex command is sent the parameter `command` will be 0x42, where `argc` and `argv` will contain the *payload*, ie- anything that was added by calling `appendSysex` on the Remote Arduino side.
+locate the function `sysexCallback` in StandardFirmata. You'll notice that the function parameters already separate the command from the rest of the payload. This means that when our sysex command is sent the parameter `command` will be 0x42, where `argc` and `argv` will contain the *payload*, which in this case is either 1 or 0.
 
 **Note**
-Remember that Firmata is based on the MIDI standard. MIDI distinguishes *status* bytes from *data* bytes by using the MSB of each byte. If the MSB is set, then it is a status byte. If the MSB is not set, then it is a data byte. To comply with this standard and guarantee that a data byte is not mistaken as a command, all payload bytes sent with Firmata are sent as two bytes. This means that we must reassemble our bytes on the Arduino side.
+Remember that Firmata is based on the MIDI standard. MIDI distinguishes *status* bytes from *data* bytes by using the MSB of each byte. If the MSB is set, then it is a status byte. If the MSB is not set, then it is a data byte. To comply with this standard and guarantee that a data byte is not mistaken as a command, all payload bytes sent with Firmata *must not* have the MSB set. sendSysex will automatically clear the MSB from each byte in the payload, so if you are sending values which use more than 7 bits of resolution (can be greater than 127 in value), you must manually split them into two or more 7-bit bytes and reassemble them on the Arduino.
 
 The `sysexCallback` function contains a `switch (command)` statement, which will execute blocks of code depending on the value of command. We will add an additional case into this switch statement like so:
 
@@ -100,15 +117,22 @@ The `sysexCallback` function contains a `switch (command)` statement, which will
 switch (command) {	//this line already exists in the sketch
 
   case ALL_PINS_COMMAND:
-	if( argc == 2 )	//see note above
+	if( argc == 1 )	//verify we received the whole message
 	{
 		//the MSB is always sent in the LSB position 2nd byte
-		byte val = argv[0] | ( argv[1] << 7 );
+		byte val;
+		if( argv[0] == 1 )
+		{
+			val = HIGH;
+		}
+		else
+		{
+			val = LOW;
+		}
 		
 		//set the pins! On many Arduino devices (Uno, Leo, Yun, etc) there are 14 digital pins from 0 to 13.
 		for( byte i = 0; i < 14; ++i )
 		{
-			//digitalWrite will set the pin LOW if val is 0, and HIGH if it is anything else!
 			digitalWrite( i, val );
 		}
 	}

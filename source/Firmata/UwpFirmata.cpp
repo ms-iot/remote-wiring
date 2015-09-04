@@ -25,16 +25,14 @@
 
 #include "pch.h"
 #include "UwpFirmata.h"
-#include "Firmata\Firmata.h"
+#include <chrono>
 #include <cstdlib>
 
 using namespace Microsoft::Maker::Serial;
 using namespace Microsoft::Maker::Firmata;
 using namespace std::placeholders;
 
-namespace {
-    FirmataClass RawFirmata;
-}
+
 
 
 //******************************************************************************
@@ -45,18 +43,14 @@ namespace {
 UwpFirmata::UwpFirmata(
     void
 ) :
-    _data_buffer(new uint8_t[DATA_BUFFER_SIZE]),
+    _data_buffer(new uint16_t[DATA_BUFFER_SIZE]),
     _firmata_lock(_firmutex, std::defer_lock),
     _firmata_stream(nullptr),
     _connection_ready(ATOMIC_VAR_INIT(false)),
     _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
-    _sys_command(0),
-    _sys_position(0)
+    firmwareVersionMajor(0),
+    firmwareVersionMinor(0)
 {
-    RawFirmata.attach( static_cast<uint8_t>( DIGITAL_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::digitalInvoke, this, _1, _2 ) ) );
-    RawFirmata.attach( static_cast<uint8_t>( ANALOG_MESSAGE ), static_cast<callbackFunction>( std::bind( &UwpFirmata::analogInvoke, this, _1, _2 ) ) );
-    RawFirmata.attach( static_cast<uint8_t>( SYSEX_I2C_REPLY ), static_cast<sysexCallbackFunction>( std::bind( &UwpFirmata::sysexInvoke, this, _1, _2, _3 ) ) );
-    RawFirmata.attach( static_cast<uint8_t>( STRING_DATA ), static_cast<stringCallbackFunction>( std::bind( &UwpFirmata::stringInvoke, this, _1 ) ) );
 }
 
 
@@ -77,26 +71,12 @@ UwpFirmata::~UwpFirmata(
 //* Public Methods
 //******************************************************************************
 
-bool
-UwpFirmata::appendSysex(
-    uint8_t byte_
-    )
-{
-    if( _sys_command && ( _sys_position < MAX_SYSEX_LEN ) )
-    {
-        _data_buffer.get()[_sys_position] = byte_;
-        ++_sys_position;
-        return true;
-    }
-    return false;
-}
-
 int
 UwpFirmata::available(
     void
     )
 {
-    return ::RawFirmata.available();
+    return _firmata_stream->available();
 }
 
 void
@@ -107,7 +87,6 @@ UwpFirmata::begin(
     if( s_ == nullptr ) return;
 
     _firmata_stream = s_;
-    ::RawFirmata.begin( s_ );
 
     //lock the IStream object to guarantee its state won't change while we check if it is already connected.
     _firmata_stream->lock();
@@ -137,37 +116,11 @@ UwpFirmata::begin(
 }
 
 bool
-UwpFirmata::beginSysex(
-    uint8_t command_
-    )
-{
-    _sys_command = command_;
-    _sys_position = 0;
-    return true;
-}
-
-bool
 UwpFirmata::connectionReady(
     void
     )
 {
     return _connection_ready;
-}
-
-bool
-UwpFirmata::endSysex(
-    void
-    )
-{
-    if( _sys_command )
-    {
-        ::RawFirmata.sendSysex( _sys_command, _sys_position, _data_buffer.get() );
-        _firmata_stream->flush();
-        _sys_command = 0;
-        _sys_position = 0;
-        return true;
-    }
-    return false;
 }
 
 void
@@ -181,14 +134,10 @@ UwpFirmata::finish(
 
         _connection_ready = false;
         _firmata_stream = nullptr;
-        _sys_command = 0;
-        _sys_position = 0;
         _data_buffer = nullptr;
 
         _firmata_stream->flush();
     }
-
-    return ::RawFirmata.finish();
 }
 
 void
@@ -213,9 +162,10 @@ UwpFirmata::printVersion(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.printVersion();
+    _firmata_stream->write( static_cast<uint8_t>( Command::PROTOCOL_VERSION ) );
+    _firmata_stream->write( FIRMATA_PROTOCOL_MAJOR_VERSION );
+    _firmata_stream->write( FIRMATA_PROTOCOL_MINOR_VERSION );
     _firmata_stream->flush();
-    return;
 }
 
 void
@@ -224,9 +174,21 @@ UwpFirmata::printFirmwareVersion(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.printFirmwareVersion();
-    _firmata_stream->flush();
-    return;
+    if( firmwareName )
+    {
+        _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+        _firmata_stream->write( static_cast<uint8_t>( SysexCommand::REPORT_FIRMWARE ) );
+        _firmata_stream->write( firmwareVersionMajor );
+        _firmata_stream->write( firmwareVersionMinor );
+
+        for( size_t i = 0; i < firmwareName->length(); ++i )
+        {
+            sendValueAsTwo7bitBytes( firmwareName->at( i ) );
+        }
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+        _firmata_stream->flush();
+    }
 }
 
 void
@@ -234,19 +196,168 @@ UwpFirmata::processInput(
     void
     )
 {
-    return ::RawFirmata.processInput();
-}
+    uint16_t data = _firmata_stream->read();
+    if( data == static_cast<uint16_t>( -1 ) ) return;
+    
+    uint8_t byte = data & 0x00FF;
+    uint8_t upper_nibble = data & 0xF0;
+    uint8_t lower_nibble = data & 0x0F;
 
-void
-UwpFirmata::setFirmwareNameAndVersion(
-    String ^name_,
-    uint8_t major_,
-    uint8_t minor_
-    )
-{
-    std::wstring nameW = name_->ToString()->Begin();
-    std::string nameA( nameW.begin(), nameW.end() );
-    return ::RawFirmata.setFirmwareNameAndVersion( nameA.c_str(), major_, minor_ );
+    /*
+     * the relevant bits in the command depends on the value of the data byte. If it is less than 0xF0 (start sysex), only the upper nibble identifies the command
+     * while the lower nibble contains additional data
+     */
+    Command command = static_cast<Command>( ( data < static_cast<uint16_t>( Command::START_SYSEX ) ? upper_nibble : byte ) );
+
+    //determine the number of bytes remaining in the message
+    size_t bytes_remaining = 0;
+    bool isMessageSysex = false;
+    switch( command )
+    {
+    default: //command not understood
+    case Command::END_SYSEX: //should never happen
+        return;
+
+        //commands that require 2 additional bytes
+    case Command::DIGITAL_MESSAGE:
+    case Command::ANALOG_MESSAGE:
+    case Command::SET_PIN_MODE:
+    case Command::PROTOCOL_VERSION:
+        bytes_remaining = 2;
+        break;
+
+        //commands that require 1 additional byte
+    case Command::REPORT_ANALOG_PIN:
+    case Command::REPORT_DIGITAL_PIN:
+        bytes_remaining = 1;
+        break;
+
+        //commands that do not require additional bytes
+    case Command::SYSTEM_RESET:
+        //do nothing, as there is nothing to reset
+        return;
+
+    case Command::START_SYSEX:
+        //this is a special case with no set number of bytes remaining
+        isMessageSysex = true;
+        break;
+    }
+
+    //read the remaining message while keeping track of elapsed time to timeout in case of incomplete message
+    std::vector<uint8_t> message;
+    size_t bytes_read = 0;
+    auto timeout_start = std::chrono::high_resolution_clock::now();
+    while( bytes_remaining || isMessageSysex )
+    {
+        data = _firmata_stream->read();
+
+        //if no data was available, check for timeout
+        if( data == static_cast<uint16_t>( -1 ) )
+        {
+            //get elapsed seconds, given as a double with resolution in nanoseconds
+            std::chrono::duration<double> elapsed_sec = std::chrono::high_resolution_clock::now() - timeout_start;
+
+            const double MILLIS_PER_SECOND = 1000.0;
+            if( ( elapsed_sec.count() * MILLIS_PER_SECOND ) > MESSAGE_TIMEOUT_MILLIS ) return;
+            else continue;
+        }
+
+        timeout_start = std::chrono::high_resolution_clock::now();
+
+        //if we're parsing sysex and we've just read the END_SYSEX command, we're done.
+        if( isMessageSysex && ( data == static_cast<uint16_t>( Command::END_SYSEX ) ) ) break;
+
+        message.push_back( static_cast<uint8_t>( data & 0xFF ) );
+        ++bytes_read;
+        --bytes_remaining;
+    }
+
+    //process the message
+    switch( command )
+    {
+        //ignore these message types
+    default:
+    case Command::REPORT_ANALOG_PIN:
+    case Command::REPORT_DIGITAL_PIN:
+    case Command::SET_PIN_MODE:
+    case Command::END_SYSEX:
+    case Command::SYSTEM_RESET:
+    case Command::PROTOCOL_VERSION:
+        return;
+
+    case Command::ANALOG_MESSAGE:
+        //report analog commands store the pin number in the lower nibble of the command byte, the value is split over two 7-bit bytes
+        AnalogValueUpdated( this, ref new CallbackEventArgs( lower_nibble, message.at( 0 ) | ( message.at( 1 ) << 7 ) ) );
+        break;
+
+    case Command::DIGITAL_MESSAGE:
+        //digital messages store the port number in the lower nibble of the command byte, the port value is split over two 7-bit bytes
+        DigitalPortValueUpdated( this, ref new CallbackEventArgs( lower_nibble, message.at( 0 ) | ( message.at( 1 ) << 7 ) ) );
+        break;
+
+    case Command::START_SYSEX:
+        //a sysex message must include at least one extended-command byte
+        if( bytes_read < 1 ) return;
+
+        //retrieve the raw data array & extract the extended-command byte
+        uint8_t *raw_data = message.data();
+        SysexCommand sysCommand = static_cast<SysexCommand>( raw_data[0] );
+        ++raw_data;
+        --bytes_read;
+
+        DataWriter ^writer = ref new DataWriter();
+        switch( sysCommand )
+        {
+        case SysexCommand::STRING_DATA:
+
+            //condense back into 1-byte data
+            reassembleByteString( raw_data, bytes_read );
+
+            StringMessageReceived( this, ref new StringCallbackEventArgs( createStringFromMbs( raw_data, bytes_read / 2 ) ) );
+
+        break;
+
+        case SysexCommand::CAPABILITY_RESPONSE:
+
+            //Firmata does not handle capability responses in the typical way (separating bytes), so we write them directly to the DataWriter
+            for( size_t i = 0; i < bytes_read; ++i )
+            {
+                writer->WriteByte( raw_data[i] );
+            }
+            PinCapabilityResponseReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+
+            break;
+
+        case SysexCommand::I2C_REPLY:
+
+            //condense back into 1-byte data
+            reassembleByteString( raw_data, bytes_read );
+
+            //if we're receiving an I2C reply, the first two bytes in our reply are the address and register
+            for( size_t i = 2; i < bytes_read / 2; ++i )
+            {
+                writer->WriteByte( raw_data[i] );
+            }
+
+            I2cReplyReceived( this, ref new I2cCallbackEventArgs( raw_data[0], raw_data[1], writer->DetachBuffer() ) );
+            break;
+
+        default:
+
+            //we pass the data forward as-is for any other type of sysex command
+            for( size_t i = 0; i < bytes_read; ++i )
+            {
+                writer->WriteByte( raw_data[i] );
+            }
+
+            SysexMessageReceived( this, ref new SysexCallbackEventArgs( static_cast<uint8_t>( sysCommand ), writer->DetachBuffer() ) );
+
+        }
+
+        break;
+    }
+
+    //this library does not support digital write, but we need to consume the rest of the message
 }
 
 void
@@ -256,9 +367,10 @@ UwpFirmata::sendAnalog(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.sendAnalog(pin_, value_);
+    _firmata_stream->write( static_cast<uint8_t>( Command::ANALOG_MESSAGE ) | ( pin_ & 0x0F ) );
+    _firmata_stream->write( static_cast<uint8_t>( value_ & 0x007F ) );
+    _firmata_stream->write( static_cast<uint8_t>( ( value_ >> 7 ) & 0x007F ) );
     _firmata_stream->flush();
-    return;
 }
 
 
@@ -269,9 +381,10 @@ UwpFirmata::sendDigitalPort(
     )
 {
     std::lock_guard<std::mutex> lock(_firmutex);
-    ::RawFirmata.sendDigitalPort(port_number_, port_data_);
+    _firmata_stream->write( static_cast<uint8_t>( Command::DIGITAL_MESSAGE ) | ( port_number_ & 0x0F ) );
+    _firmata_stream->write( port_data_ & 0x007F );
+    _firmata_stream->write( port_data_ >> 7 );
     _firmata_stream->flush();
-    return;
 }
 
 
@@ -280,7 +393,7 @@ UwpFirmata::sendString(
     String ^string_
     )
 {
-    return sendString(STRING_DATA, string_);
+    return sendString( static_cast<uint8_t>( SysexCommand::STRING_DATA ), string_);
 }
 
 
@@ -292,15 +405,81 @@ UwpFirmata::sendString(
 {
     std::wstring stringW = string_->ToString()->Begin();
     std::string stringA( stringW.begin(), stringW.end() );
-    return ::RawFirmata.sendString(command_, stringA.c_str());
+
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+        _firmata_stream->write( command_ & 0x7F );
+
+        for( size_t i = 0; i < stringA.length(); ++i )
+        {
+            sendValueAsTwo7bitBytes( stringA.at( i ) );
+        }
+
+        _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    }
+}
+
+void
+UwpFirmata::sendSysex(
+    SysexCommand command_,
+    IBuffer ^buffer_
+    )
+{
+    return sendSysex( static_cast<uint8_t>( command_ ), buffer_ );
+}
+
+void
+UwpFirmata::sendSysex(
+    uint8_t command_,
+    IBuffer ^buffer_
+    )
+{
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _firmutex );
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+    _firmata_stream->write( command_ );
+
+    DataReader ^reader = DataReader::FromBuffer( buffer_ );
+    while( reader->UnconsumedBufferLength )
+    {
+        _firmata_stream->write( reader->ReadByte() & 0x7F );
+    }
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
 }
 
 void
 UwpFirmata::sendValueAsTwo7bitBytes(
-    int value_
+    uint16_t value_
     )
 {
-    return ::RawFirmata.sendValueAsTwo7bitBytes(value_);
+    _firmata_stream->write( value_ & 0x7F );
+    _firmata_stream->write( ( value_ >> 7 ) & 0x7F );
+}
+
+void
+UwpFirmata::setFirmwareNameAndVersion(
+    String ^name_,
+    uint8_t major_,
+    uint8_t minor_
+    )
+{
+    std::wstring nameW = name_->ToString()->Begin();
+
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        if( firmwareName )
+        {
+            free( firmwareName );
+        }
+
+        firmwareName = new std::string( nameW.begin(), nameW.end() );
+        firmwareVersionMajor = major_;
+        firmwareVersionMinor = minor_;
+    }
 }
 
 void
@@ -331,7 +510,7 @@ UwpFirmata::write(
     uint8_t c_
     )
 {
-    return ::RawFirmata.write( c_ );
+    _firmata_stream->write( c_ );
 }
 
 
@@ -339,6 +518,20 @@ UwpFirmata::write(
 //* Private Methods
 //******************************************************************************
 
+
+String ^
+UwpFirmata::createStringFromMbs(
+    uint8_t *mbs_,
+    size_t len_
+    )
+{
+    size_t c;
+    wchar_t *wstr_data = new wchar_t[len_ + 1];
+    mbstowcs_s( &c, wstr_data, len_ + 1, reinterpret_cast<char *>( mbs_ ), len_ + 1 );
+    String ^str = ref new String( wstr_data );
+    delete[]( wstr_data );
+    return str;
+}
 
 void
 UwpFirmata::inputThread(
@@ -350,7 +543,7 @@ UwpFirmata::inputThread(
     {
         try
         {
-            ::RawFirmata.processInput();
+            processInput();
         }
         catch( Platform::Exception ^e )
         {
@@ -374,19 +567,34 @@ UwpFirmata::onConnectionEstablished(
 
 void
 UwpFirmata::onConnectionFailed(
-    Platform::String ^message
+    Platform::String ^message_
     )
 {
-    FirmataConnectionFailed( message );
+    FirmataConnectionFailed( message_ );
 }
 
 void
 UwpFirmata::onConnectionLost(
-    Platform::String ^message
+    Platform::String ^message_
     )
 {
     _connection_ready = false;
-    FirmataConnectionLost( message );
+    FirmataConnectionLost( message_ );
+}
+
+void
+UwpFirmata::reassembleByteString(
+    uint8_t *byte_string_,
+    size_t length_
+    )
+{
+    //each char must be reassembled from the two 7-bit bytes received, therefore length should always be an even number.
+    size_t i, j;
+    for( i = 0, j = 0; j < length_ - 1; ++i, j += 2 )
+    {
+        byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
+    }
+    byte_string_[i] = 0;
 }
 
 void
