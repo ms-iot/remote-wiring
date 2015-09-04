@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Windows-Remote-Arduino</id>
-        <version>1.1.0.2</version>
+        <version>1.2.0</version>
         <title>Windows Remote Arduino for Windows 10 and Windows 10 IoT core</title>
         <authors>Microsoft</authors>
         <licenseUrl>https://github.com/ms-iot/remote-wiring/blob/develop/license.txt</licenseUrl>
