@@ -35,9 +35,12 @@ TwoWire::enable(
 {
 	i2cReadDelayMicros_ = (i2cReadDelayMicros_ > MAX_READ_DELAY_MICROS) ? MAX_READ_DELAY_MICROS : i2cReadDelayMicros_;
 
-    _firmata->beginSysex( static_cast<uint8_t>( SysexCommand::I2C_CONFIG ) );
-    _firmata->appendSysex( i2cReadDelayMicros_ );
-	_firmata->endSysex();
+    using Windows::Storage::Streams::DataWriter;
+    DataWriter ^writer = ref new DataWriter();
+    writer->WriteByte( i2cReadDelayMicros_ & 0x7F );
+    writer->WriteByte( ( i2cReadDelayMicros_ >> 7 ) & 0x7F );
+
+    _firmata->sendSysex( SysexCommand::I2C_CONFIG, writer->DetachBuffer() );
 }
 
 
