@@ -305,6 +305,16 @@ public:
         uint8_t command_,
         String ^string_
     );
+    
+    ///<summary>
+    ///This function will send a sysex message with one of the pre-defined command types reserved by the Firmata protocol
+    ///</summary>
+    [Windows::Foundation::Metadata::DefaultOverload]
+    void
+    sendSysex(
+        SysexCommand command_,
+        IBuffer ^buffer_
+    );
 
     ///<summary>
     ///This function will send a sysex message with the given command byte which must be greater than 0x00 and less than 0x7F.
@@ -415,13 +425,6 @@ public:
     void
     onConnectionLost(
         Platform::String ^message_
-    );
-
-    void
-    sendSysex(
-        uint8_t command_,
-        uint8_t length_,
-        uint16_t *buffer_
     );
 
     void

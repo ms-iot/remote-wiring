@@ -426,6 +426,15 @@ UwpFirmata::sendString(
 
 void
 UwpFirmata::sendSysex(
+    SysexCommand command_,
+    IBuffer ^buffer_
+    )
+{
+    return sendSysex( static_cast<uint8_t>( command_ ), buffer_ );
+}
+
+void
+UwpFirmata::sendSysex(
     uint8_t command_,
     IBuffer ^buffer_
     )
@@ -589,28 +598,6 @@ UwpFirmata::reassembleByteString(
         byte_string_[i] = byte_string_[j] | ( byte_string_[j + 1] << 7 );
     }
     byte_string_[i] = 0;
-}
-
-void
-UwpFirmata::sendSysex(
-    uint8_t command_,
-    uint8_t length_,
-    uint16_t *buffer_
-    )
-{
-    //critical section equivalent to function scope
-    std::lock_guard<std::mutex> lock( _firmutex );
-
-    _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-    _firmata_stream->write( command_ );
-
-    for( uint8_t i = 0; i < length_; ++i )
-    {
-        sendValueAsTwo7bitBytes( buffer_[i] );
-    }
-
-    _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
-    _firmata_stream->flush();
 }
 
 void
