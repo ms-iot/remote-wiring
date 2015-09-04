@@ -290,7 +290,7 @@ public:
     );
 
     ///<summary>
-    ///Sends a string across an active connection
+    ///Sends string data using the STRING_DATA command across an active connection
     ///</summary>
     void
     sendString(
@@ -298,7 +298,7 @@ public:
     );
 
     ///<summary>
-    ///Sends a command and a string across an active connection
+    ///Sends string data with a custom command across an active connection
     ///</summary>
     void
     sendString(

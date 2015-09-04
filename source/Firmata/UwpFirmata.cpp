@@ -364,28 +364,6 @@ UwpFirmata::processInput(
 }
 
 void
-UwpFirmata::setFirmwareNameAndVersion(
-    String ^name_,
-    uint8_t major_,
-    uint8_t minor_
-    )
-{
-    std::wstring nameW = name_->ToString()->Begin();
-
-    {   //critical section
-        std::lock_guard<std::mutex> lock( _firmutex );
-        if( firmwareName )
-        {
-            free( firmwareName );
-        }
-
-        firmwareName = new std::string( nameW.begin(), nameW.end() );
-        firmwareVersionMajor = major_;
-        firmwareVersionMinor = minor_;
-    }
-}
-
-void
 UwpFirmata::sendAnalog(
     uint8_t pin_,
     uint16_t value_
@@ -430,11 +408,12 @@ UwpFirmata::sendString(
 {
     std::wstring stringW = string_->ToString()->Begin();
     std::string stringA( stringW.begin(), stringW.end() );
+
     {   //critical section
         std::lock_guard<std::mutex> lock( _firmutex );
 
         _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
-        _firmata_stream->write( static_cast<uint8_t>( SysexCommand::STRING_DATA ) );
+        _firmata_stream->write( command_ & 0x7F );
 
         for( int i = 0; i < stringA.length(); ++i )
         {
@@ -452,6 +431,28 @@ UwpFirmata::sendValueAsTwo7bitBytes(
 {
     _firmata_stream->write( value_ & 0x7F );
     _firmata_stream->write( ( value_ >> 7 ) & 0x7F );
+}
+
+void
+UwpFirmata::setFirmwareNameAndVersion(
+    String ^name_,
+    uint8_t major_,
+    uint8_t minor_
+    )
+{
+    std::wstring nameW = name_->ToString()->Begin();
+
+    {   //critical section
+        std::lock_guard<std::mutex> lock( _firmutex );
+        if( firmwareName )
+        {
+            free( firmwareName );
+        }
+
+        firmwareName = new std::string( nameW.begin(), nameW.end() );
+        firmwareVersionMajor = major_;
+        firmwareVersionMinor = minor_;
+    }
 }
 
 void
