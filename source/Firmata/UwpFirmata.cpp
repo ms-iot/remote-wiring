@@ -344,11 +344,8 @@ UwpFirmata::processInput(
 
         default:
 
-            //condense back into 1-byte data
-            reassembleByteString( raw_data, bytes_read );
-
             //we pass the data forward as-is for any other type of sysex command
-            for( size_t i = 0; i < bytes_read / 2; ++i )
+            for( size_t i = 0; i < bytes_read; ++i )
             {
                 writer->WriteByte( raw_data[i] );
             }
