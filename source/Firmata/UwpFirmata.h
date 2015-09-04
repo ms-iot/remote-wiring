@@ -307,6 +307,19 @@ public:
     );
 
     ///<summary>
+    ///This function will send a sysex message with the given command byte which must be greater than 0x00 and less than 0x7F.
+    ///Custom commands should be in the range of [0x01-0x68], as the Firmata protocol defines commands 0x69 and above.
+    ///All data given in the buffer object must be less than or equal to 0x7F as the MSB will always be cleared so as not to be misinterpreted as a command.
+    ///It is typical practice to split your data into two or more bytes if the number of significant bits is greater than 7. You will need to reassemble this
+    ///data on the other end. The Firmata library defines and follows this behavior for all of its reserved command types.
+    ///</summary>
+    void
+    sendSysex(
+        uint8_t command_,
+        IBuffer ^buffer_
+    );
+
+    ///<summary>
     ///Sends a given byte value as two seven-bit bytes
     ///</summary>
     void

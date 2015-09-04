@@ -425,6 +425,27 @@ UwpFirmata::sendString(
 }
 
 void
+UwpFirmata::sendSysex(
+    uint8_t command_,
+    IBuffer ^buffer_
+    )
+{
+    //critical section equivalent to function scope
+    std::lock_guard<std::mutex> lock( _firmutex );
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::START_SYSEX ) );
+    _firmata_stream->write( command_ );
+
+    DataReader ^reader = DataReader::FromBuffer( buffer_ );
+    while( reader->UnconsumedBufferLength )
+    {
+        _firmata_stream->write( reader->ReadByte() & 0x7F );
+    }
+
+    _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+}
+
+void
 UwpFirmata::sendValueAsTwo7bitBytes(
     uint16_t value_
     )
