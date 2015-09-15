@@ -194,6 +194,11 @@ BluetoothSerial::flush(
     void
     )
 {
+    if( !connectionReady() )
+    {
+        return;
+    }
+
     auto async_operation_ = _tx->StoreAsync();
     create_task( _tx->StoreAsync() )
         .then( [ this, async_operation_ ]( unsigned int value_ )
