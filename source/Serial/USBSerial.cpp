@@ -208,6 +208,11 @@ UsbSerial::flush(
     void
     )
 {
+    if( !connectionReady() )
+    {
+        return;
+    }
+
     auto async_operation_ = _tx->StoreAsync();
     create_task( async_operation_ )
         .then( [ this, async_operation_ ]( task<unsigned int> task_ )

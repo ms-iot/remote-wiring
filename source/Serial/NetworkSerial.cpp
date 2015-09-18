@@ -150,6 +150,11 @@ NetworkSerial::flush(
     void
     )
 {
+    if( !connectionReady() )
+    {
+        return;
+    }
+
     auto async_operation_ = _tx->StoreAsync();
     create_task( async_operation_ )
         .then( [ this, async_operation_ ]( unsigned int value_ )
