@@ -136,7 +136,12 @@ UwpFirmata::finish(
         _firmata_stream = nullptr;
         _data_buffer = nullptr;
 
-        _firmata_stream->flush();
+        if( _firmata_stream != nullptr )
+        {
+            _firmata_stream->flush();
+            _firmata_stream->end();
+        }
+        _firmata_stream = nullptr;
     }
 }
 
