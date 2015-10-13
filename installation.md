@@ -9,7 +9,11 @@ Of these options, installing the NuGet package is by far the easiest.
 
 ##Option 1: Install the NuGet package
 
-NuGet is a quick and easy way to automatically install the packages and setup dependencies. Unfortunately, we do not yet have support for NuGet in Windows 10.
+NuGet is a quick and easy way to automatically install the packages and setup dependencies. Within Visual Studio simply open the Package Management Console and select the target project, then issue the following command:
+
+```PowerShell
+Install-Package Windows-Remote-Arduino
+```
 
 ##Option 2: Add the Windows Remote Arduino projects to your solution
 

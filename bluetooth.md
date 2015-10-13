@@ -1,6 +1,6 @@
 #Hooking up your Bluetooth device
 
-This guide walks you through the steps to hook up a Bluetooth device to your Arduino!
+This guide walks you through the steps to hook up a Bluetooth device to your Arduino!  We recommend the [SparkFun Bluetooth Mate Silver](https://www.sparkfun.com/products/12576) for this tutorial.
 
 ####Important Note:
 
