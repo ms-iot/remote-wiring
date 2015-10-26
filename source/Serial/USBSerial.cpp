@@ -329,6 +329,7 @@ UsbSerial::connectToDeviceAsync(
         // Configure the device properties
         _serial_device->Handshake = SerialHandshake::None;
         _serial_device->BaudRate = _baud;
+		_serial_device->IsDataTerminalReadyEnabled = true;
 
         switch (_config) {
         case SerialConfig::SERIAL_5E1:
