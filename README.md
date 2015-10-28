@@ -20,8 +20,7 @@ Windows Remote Arduino enables the following functionality, right "out of the bo
   * pinMode - Set the mode for any pins.
   * Eventing - receive events when values change / are reported.
 2. I2C/TwoWire
-  * Send/Receive data to devices over I2C.
-  * Subscribe to a device, repeated queries and automatic reporting.
+  * Send/Receive data to and from other devices over I2C.
 3. Custom protocols via Firmata SysEx command
 
 ##5 Steps to Remote Arduino
