@@ -51,17 +51,10 @@ This section lists boards which have been *well-tested* using all connection met
 2. Leonardo
 3. Mega
 
-####Note for USB:
-There is a known issue with USB connections to Arduino Uno. The device will very often ignore up to 50 bytes of information being sent to the device only after a fresh connection is established. This issue does not exist with other connection methods. This can cause increased delays while waiting for the RemoteDevice class to correctly handshake with the device.
-
 ##DFRobot
 
 1. Bluno
 2. Bluno Beetle
-
-####Note for USB:
-There is a known issue with USB connections to DFRobot boards. Input (from the Arduino to the Windows device) does not work when connected via USB. This issue is not present under and other connection methods, and there is no known workaround at this time.
-
 
 #Software Architecture
 The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
