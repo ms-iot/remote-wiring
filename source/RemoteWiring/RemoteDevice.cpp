@@ -139,7 +139,7 @@ RemoteDevice::analogWrite(
             pinMode( pin_, PinMode::PWM );
             _pin_mode[ pin_ ] = static_cast<uint8_t>( PinMode::PWM );
         }
-        else {
+        else if (_pin_mode[pin_] != static_cast<uint8_t>(PinMode::SERVO)) {
             return;
         }
     }
