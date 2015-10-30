@@ -4,12 +4,21 @@ Windows Remote Arduino is an open-source [Windows Runtime Component](https://msd
 
 [View the open-source license](license.txt).
 
-**tl;dr:** [Quick start!](#5-steps-to-remote-arduino)
+**tl;dr**  
+[Preview Remote Arduino with Windows Remote Arduino Experience!](#preview-windows-remote-arduino)  
+[Get started with your own project](#5-steps-to-your-remote-arduino-project)
 
 ##Overview
 Windows Remote Arduino bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
 
-##5 Steps to Remote Arduino
+##Preview Windows Remote Arduino
+We have released a Universal Windows Application (UWA) called [Windows Remote Arduino Experience](https://www.microsoft.com/store/apps/9nblggh2041m) which will allow you to explore GPIO, Analog, and PWM functionality from any device running Windows 10, including Windows IoT Core devices like Raspberry Pi 2! The app is [open source](https://github.com/ms-iot/remote-wiring-experience) and will allow you to connect to and control your Arduino without writing a single line of code!
+
+1. [Upload StandardFirmata to your Arduino](#arduino-setup) - take note of the [baud rate](https://github.com/turkycat/remote-wiring#notes-on-serial-communication) that StandardFirmata has set.
+2. Download [Windows Remote Arduino Experience](https://www.microsoft.com/store/apps/9nblggh2041m) from the Windows Store or download the [source code](https://github.com/ms-iot/remote-wiring-experience) and deploy it from Visual Studio!
+3. Make sure to choose the proper baud rate when connecting to your device. Bluetooth devices may require a specific baud rate, and both StandardFirmata and Windows Remote Arduino need to agree on this setting! 
+
+##5 Steps to Your Remote Arduino Project
 You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
 
 1. [Upload StandardFirmata to your Arduino](#arduino-setup)
