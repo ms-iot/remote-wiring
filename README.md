@@ -268,6 +268,52 @@ Last, when referring to analog pins, make sure to always use strings with the fo
 `arduino.pinMode( "A3", PinMode.ANALOG );   //will correctly set pin A3 to ANALOG INPUT mode.`
 `arduino.pinMode( 3, PinMode.ANALOG );      //will do nothing, since pin 3 refers to a digital pin and does not support ANALOG INPUT.`
 
+###Servo
+
+StandardFirmata includes Servo support, and it works through the `analogWrite` command. Hook up a servo to your Arduino as usual, set the pin mode on the input pin to `PinMode.SERVO` and use analogWrite to control the angle!
+
+Here is an example which will sweep a Servo motor back and forth:
+```c#
+
+public IStream connection;
+public RemoteDevice arduino;
+
+public MainPage()
+{
+    connection = new BluetoothSerial( "myDevice" );	//use the name directly or use BluetoothSerial.listAvailableDevicesAsync to enumerate all devices and provide one in this constructor
+    arduino = new RemoteDevice( connection );
+    arduino.DeviceReady += OnDeviceReady();
+    connection.begin( 115200, SerialConfig.SERIAL_8N1 ); //using my Bluetooth device's baud rate, StandardFirmata configured to match
+}
+
+private void OnDeviceReady()
+{
+	arduino.pinMode( 9, PinMode.SERVO );
+	loop();
+}
+
+//this async Task function will execute infinitely in the background
+private async Task loop()
+{
+    ushort pos;
+	
+	while( true )
+	{
+        for( pos = 0; pos <= 180; pos += 1 ) //sweep from 0 to 180 degrees
+        {
+            device.analogWrite( 6, pos );
+            await Task.Delay( 15 );			//delay 15 ms
+        }
+	
+        for( pos = 180; pos >= 0; pos -= 1 )     //sweep from 180 to 0 degrees
+        {
+            device.analogWrite( 6, pos );
+            await Task.Delay( 15 );
+        }
+	}
+}
+```
+
 ###Events
 
 As previously mentioned, the RemoteWiring layer allows interactions with the RemoteDevice class to feel like interacting with the device directly through the Wiring API. However, Windows `events` give us the power to respond immediately to changes reported by the Arduino. [Click here for more information about events.](https://msdn.microsoft.com/en-us/library/hh758286.aspx)
