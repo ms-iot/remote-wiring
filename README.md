@@ -19,7 +19,7 @@ We have released a Universal Windows Application (UWA) called [Windows Remote Ar
 3. Make sure to choose the proper baud rate when connecting to your device. Bluetooth devices may require a specific baud rate, and both StandardFirmata and Windows Remote Arduino need to agree on this setting! 
 
 ##5 Steps to Your Remote Arduino Project
-You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
+This section covers the basics of creating your own project to use Windows Remote Arduino. You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into some existing examples!
 
 1. [Upload StandardFirmata to your Arduino](#arduino-setup)
 2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
