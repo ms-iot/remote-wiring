@@ -9,6 +9,15 @@ Windows Remote Arduino is an open-source [Windows Runtime Component](https://msd
 ##Overview
 Windows Remote Arduino bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
 
+##5 Steps to Remote Arduino
+You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
+
+1. [Upload StandardFirmata to your Arduino](#arduino-setup)
+2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
+3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify], while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
+4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
+5. Review the [usage](#usage) to get started writing your Remote Arduino code!
+
 ##Functionality
 Windows Remote Arduino enables the following functionality, right "out of the box".
 
@@ -22,15 +31,6 @@ Windows Remote Arduino enables the following functionality, right "out of the bo
 2. I2C/TwoWire
   * Send/Receive data to and from other devices over I2C.
 3. Custom protocols via Firmata SysEx command
-
-##5 Steps to Remote Arduino
-You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
-
-1. [Upload StandardFirmata to your Arduino](#arduino-setup)
-2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
-3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify], while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
-4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
-5. Review the [usage](#usage) to get started writing your Remote Arduino code!
 
 
 ###The Microcontroller
