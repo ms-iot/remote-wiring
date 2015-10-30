@@ -4,10 +4,28 @@ Windows Remote Arduino is an open-source [Windows Runtime Component](https://msd
 
 [View the open-source license](license.txt).
 
-**tl;dr:** [Quick start!](#5-steps-to-remote-arduino)
+**tl;dr**  
+[Preview Remote Arduino with Windows Remote Arduino Experience!](#preview-windows-remote-arduino)  
+[Get started with your own project](#5-steps-to-your-remote-arduino-project)
 
 ##Overview
 Windows Remote Arduino bridges the gap between the software world and the physical world. By leveraging the power of Windows 10 we are able to expose new possibilities of Windows devices such as a Windows Phone, Surface Pro 3, Windows desktop, and even Raspberry Pi 2. Pair your device with an Arduino and gain access to a whole new set of realities with the world at your fingertips.
+
+##Preview Windows Remote Arduino
+We have released a Universal Windows Application (UWA) called [Windows Remote Arduino Experience](https://www.microsoft.com/store/apps/9nblggh2041m) which will allow you to explore GPIO, Analog, and PWM functionality from any device running Windows 10, including Windows IoT Core devices like Raspberry Pi 2! The app is [open source](https://github.com/ms-iot/remote-wiring-experience) and will allow you to connect to and control your Arduino without writing a single line of code!
+
+1. [Upload StandardFirmata to your Arduino](#arduino-setup) - take note of the [baud rate](https://github.com/turkycat/remote-wiring#notes-on-serial-communication) that StandardFirmata has set.
+2. Download [Windows Remote Arduino Experience](https://www.microsoft.com/store/apps/9nblggh2041m) from the Windows Store or download the [source code](https://github.com/ms-iot/remote-wiring-experience) and deploy it from Visual Studio!
+3. Make sure to choose the proper baud rate when connecting to your device. Bluetooth devices may require a specific baud rate, and both StandardFirmata and Windows Remote Arduino need to agree on this setting! 
+
+##5 Steps to Your Remote Arduino Project
+This section covers the basics of creating your own project to use Windows Remote Arduino. You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into some existing examples!
+
+1. [Upload StandardFirmata to your Arduino](#arduino-setup)
+2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
+3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify](https://github.com/turkycat/remote-wiring#notes-on-serial-communication), while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
+4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
+5. Review the [usage](#usage) to get started writing your Remote Arduino code!
 
 ##Functionality
 Windows Remote Arduino enables the following functionality, right "out of the box".
@@ -20,18 +38,8 @@ Windows Remote Arduino enables the following functionality, right "out of the bo
   * pinMode - Set the mode for any pins.
   * Eventing - receive events when values change / are reported.
 2. I2C/TwoWire
-  * Send/Receive data to devices over I2C.
-  * Subscribe to a device, repeated queries and automatic reporting.
+  * Send/Receive data to and from other devices over I2C.
 3. Custom protocols via Firmata SysEx command
-
-##5 Steps to Remote Arduino
-You can always [clone the samples repository](http://github.com/ms-iot/windows-remote-arduino-samples) for a quick dive into 
-
-1. [Upload StandardFirmata to your Arduino](#arduino-setup)
-2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
-3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify], while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
-4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
-5. Review the [usage](#usage) to get started writing your Remote Arduino code!
 
 
 ###The Microcontroller
@@ -52,17 +60,10 @@ This section lists boards which have been *well-tested* using all connection met
 2. Leonardo
 3. Mega
 
-####Note for USB:
-There is a known issue with USB connections to Arduino Uno. The device will very often ignore up to 50 bytes of information being sent to the device only after a fresh connection is established. This issue does not exist with other connection methods. This can cause increased delays while waiting for the RemoteDevice class to correctly handshake with the device.
-
 ##DFRobot
 
 1. Bluno
 2. Bluno Beetle
-
-####Note for USB:
-There is a known issue with USB connections to DFRobot boards. Input (from the Arduino to the Windows device) does not work when connected via USB. This issue is not present under and other connection methods, and there is no known workaround at this time.
-
 
 #Software Architecture
 The implementation is a three layer cake, where each layer provides an entry-point exposed as a Windows Runtime Component. A Maker can choose to use the topmost layer (RemoteWiring) which exposes an interface nearly identical to Arduino Wiring for all basic instructions like GPIO and communication to other devices through I2C. The vast majority of makers will likely never need more. However, a Maker can also choose to interface with the Firmata layer directly for creating [advanced behaviors](advanced.md) for all of those crazy creative ideas that you are bound to come up with. 
@@ -275,6 +276,52 @@ Last, when referring to analog pins, make sure to always use strings with the fo
 
 `arduino.pinMode( "A3", PinMode.ANALOG );   //will correctly set pin A3 to ANALOG INPUT mode.`
 `arduino.pinMode( 3, PinMode.ANALOG );      //will do nothing, since pin 3 refers to a digital pin and does not support ANALOG INPUT.`
+
+###Servo
+
+StandardFirmata includes Servo support, and it works through the `analogWrite` command. Hook up a servo to your Arduino as usual, set the pin mode on the input pin to `PinMode.SERVO` and use analogWrite to control the angle!
+
+Here is an example which will sweep a Servo motor back and forth:
+```c#
+
+public IStream connection;
+public RemoteDevice arduino;
+
+public MainPage()
+{
+    connection = new BluetoothSerial( "myDevice" );	//use the name directly or use BluetoothSerial.listAvailableDevicesAsync to enumerate all devices and provide one in this constructor
+    arduino = new RemoteDevice( connection );
+    arduino.DeviceReady += OnDeviceReady();
+    connection.begin( 115200, SerialConfig.SERIAL_8N1 ); //using my Bluetooth device's baud rate, StandardFirmata configured to match
+}
+
+private void OnDeviceReady()
+{
+	arduino.pinMode( 9, PinMode.SERVO );
+	loop();
+}
+
+//this async Task function will execute infinitely in the background
+private async Task loop()
+{
+    ushort pos;
+	
+	while( true )
+	{
+        for( pos = 0; pos <= 180; pos += 1 ) //sweep from 0 to 180 degrees
+        {
+            device.analogWrite( 6, pos );
+            await Task.Delay( 15 );			//delay 15 ms
+        }
+	
+        for( pos = 180; pos >= 0; pos -= 1 )     //sweep from 180 to 0 degrees
+        {
+            device.analogWrite( 6, pos );
+            await Task.Delay( 15 );
+        }
+	}
+}
+```
 
 ###Events
 
