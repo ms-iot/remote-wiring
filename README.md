@@ -14,7 +14,7 @@ You can always [clone the samples repository](http://github.com/ms-iot/windows-r
 
 1. [Upload StandardFirmata to your Arduino](#arduino-setup)
 2. [Create a project](installation.md/#installation) or use a [sample project](http://github.com/ms-iot/windows-remote-arduino-samples)
-3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify], while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
+3. Choose your connection method. Serial Commuinication like USB and Bluetooth have [a couple settings to verify](https://github.com/turkycat/remote-wiring#notes-on-serial-communication), while there is also an [entire guide on hooking up your Bluetooth device](bluetooth.md#hooking-up-your-bluetooth-device). You can also use [Ethernet or WiFi, but must have the appropriate hardware](#notes-on-wifi-and-ethernet).
 4. Verify your `package.appxmanifest` file in your Windows solution contains the necessary [device capabilities](installation.md#device-capabilities).
 5. Review the [usage](#usage) to get started writing your Remote Arduino code!
 
