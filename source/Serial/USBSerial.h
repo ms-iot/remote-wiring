@@ -152,6 +152,8 @@ private:
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
 
+    TimeSpan serialReadTimeOut;
+
     Concurrency::task<void>
     connectToDeviceAsync(
         Windows::Devices::Enumeration::DeviceInformation ^device_
