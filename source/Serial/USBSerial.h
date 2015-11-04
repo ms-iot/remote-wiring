@@ -27,6 +27,8 @@
 #include "IStream.h"
 #include <mutex>
 
+using namespace Windows::Foundation;
+
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
