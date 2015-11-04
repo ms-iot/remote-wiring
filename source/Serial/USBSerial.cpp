@@ -31,6 +31,7 @@ using namespace Concurrency;
 using namespace Windows::Devices::Enumeration;
 using namespace Windows::Devices::SerialCommunication;
 using namespace Windows::Storage::Streams;
+using namespace Windows::Foundation;
 
 using namespace Microsoft::Maker::Serial;
 
@@ -330,6 +331,10 @@ UsbSerial::connectToDeviceAsync(
         _serial_device->Handshake = SerialHandshake::None;
         _serial_device->BaudRate = _baud;
         _serial_device->IsDataTerminalReadyEnabled = true;
+
+        // 1ms read time out to avoid stucking in the LoadAsync() function.
+        serialReadTimeOut.Duration = 10000; 
+        _serial_device->ReadTimeout = serialReadTimeOut;
 
         switch (_config) {
         case SerialConfig::SERIAL_5E1:

@@ -27,6 +27,8 @@
 #include "IStream.h"
 #include <mutex>
 
+using namespace Windows::Foundation;
+
 namespace Microsoft {
 namespace Maker {
 namespace Serial {
@@ -151,6 +153,8 @@ private:
     Windows::Devices::SerialCommunication::SerialDevice ^_serial_device;
     Windows::Storage::Streams::DataReader ^_rx;
     Windows::Storage::Streams::DataWriter ^_tx;
+
+    TimeSpan serialReadTimeOut;
 
     Concurrency::task<void>
     connectToDeviceAsync(
