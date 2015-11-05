@@ -331,6 +331,11 @@ UsbSerial::connectToDeviceAsync(
         _serial_device->BaudRate = _baud;
         _serial_device->IsDataTerminalReadyEnabled = true;
 
+        //// 1ms read time out to avoid stucking in the LoadAsync() function.
+        Windows::Foundation::TimeSpan readTimeOut;
+        readTimeOut.Duration = 10000;
+        _serial_device->ReadTimeout = readTimeOut;
+
         switch (_config) {
         case SerialConfig::SERIAL_5E1:
             _serial_device->DataBits = 5;
