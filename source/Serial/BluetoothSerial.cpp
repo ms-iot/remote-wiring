@@ -315,7 +315,7 @@ BluetoothSerial::connectToDeviceAsync(
     {
         if( rfcomm_service_ == nullptr )
         {
-            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. RfcommDeviceService::FromIdAsync returned null." ) );
+            throw ref new Platform::Exception( E_UNEXPECTED, ref new Platform::String( L"Unable to initialize the device. Did you forget your Bluetooth device capabilities in the manifest? RfcommDeviceService::FromIdAsync returned null." ) );
         }
 
         // Store parameter as a member to ensure the duration of object allocation
