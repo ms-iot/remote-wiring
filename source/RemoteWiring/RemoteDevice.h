@@ -44,8 +44,9 @@ public enum class PinMode
     ONEWIRE = 0x07,
     STEPPER = 0x08,
     ENCODER = 0x09,
-    IGNORED = 0x7F,
-    TOTAL_PIN_MODES = 0x0B,
+    SERIAL = 0x0A,
+    PULLUP = 0x0B,
+    IGNORED = 0x7F
 };
 
 public enum class PinState
