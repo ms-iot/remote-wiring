@@ -527,6 +527,8 @@ RemoteDevice::onPinCapabilityResponseReceived(
     SysexCallbackEventArgs ^argv_
     )
 {
+    const uint8_t MODE_ENABLED = 1;
+
     auto reader = Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() );
     auto size = argv_->getDataBuffer()->Length;
 
@@ -549,7 +551,41 @@ RemoteDevice::onPinCapabilityResponseReceived(
             switch( mode )
             {
             case PinMode::INPUT:
-                i += 4;
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
+
+                break;
+
+            case PinMode::OUTPUT:
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
+
+                break;
+
+            case PinMode::PULLUP:
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
 
                 break;
 
