@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.Serial", "Microsoft.Maker.Serial", "{DF164236-82E3-4B94-A35E-20C15D977711}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.Serial", "..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial", "{DF164236-82E3-4B94-A35E-20C15D977711}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Shared", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems", "{E6EEFBC1-44D0-428B-B071-D70BAFAADC93}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Shared", "..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems", "{E6EEFBC1-44D0-428B-B071-D70BAFAADC93}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Windows", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj", "{02438027-2444-49CB-87BF-AC4D4DF8EF0F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.Windows", "..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj", "{02438027-2444-49CB-87BF-AC4D4DF8EF0F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.WindowsPhone", "Microsoft.Maker.Serial\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj", "{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.Serial.WindowsPhone", "..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj", "{E26CE8BA-B9DC-45F6-8D7D-D019A42ADE3F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Maker.Firmata", "Microsoft.Maker.Firmata", "{2E147377-A641-4AD8-BA34-1A9F3A3227E3}"
 EndProject
@@ -43,15 +43,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Maker.RemoteWirin
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{02438027-2444-49cb-87bf-ac4d4df8ef0f}*SharedItemsImports = 4
-		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e26ce8ba-b9dc-45f6-8d7d-d019a42ade3f}*SharedItemsImports = 4
+		..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{02438027-2444-49cb-87bf-ac4d4df8ef0f}*SharedItemsImports = 4
+		..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e26ce8ba-b9dc-45f6-8d7d-d019a42ade3f}*SharedItemsImports = 4
+		..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e6eefbc1-44d0-428b-b071-d70bafaadc93}*SharedItemsImports = 9
 		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{83a94c48-af35-4fd9-b6c2-b0c12254abff}*SharedItemsImports = 4
-		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{d161cbe5-d85b-4062-a9b0-af19940abcfe}*SharedItemsImports = 9
 		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{34bc66c7-cdff-4f9b-87a2-4789bd159016}*SharedItemsImports = 9
+		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{8c570513-5fb3-4586-a757-b910e56b66a9}*SharedItemsImports = 4
+		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{d161cbe5-d85b-4062-a9b0-af19940abcfe}*SharedItemsImports = 9
 		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{67adac13-ba28-4cb1-a706-17b0301171f1}*SharedItemsImports = 4
 		Microsoft.Maker.RemoteWiring\Microsoft.Maker.RemoteWiring.Shared\Microsoft.Maker.RemoteWiring.Shared.vcxitems*{2b16a0fe-ea4f-411d-b25e-2ff9605c875b}*SharedItemsImports = 4
-		Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Shared\Microsoft.Maker.Firmata.Shared.vcxitems*{8c570513-5fb3-4586-a757-b910e56b66a9}*SharedItemsImports = 4
-		Microsoft.Maker.Serial\Microsoft.Maker.Serial.Shared\Microsoft.Maker.Serial.Shared.vcxitems*{e6eefbc1-44d0-428b-b071-d70bafaadc93}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

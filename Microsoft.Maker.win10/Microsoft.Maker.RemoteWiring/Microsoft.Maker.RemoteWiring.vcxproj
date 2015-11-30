@@ -234,11 +234,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\source\Serial\Microsoft.Maker.Serial.win10\Microsoft.Maker.Serial.vcxproj">
+      <Project>{8376216c-282a-4927-b9ef-c2d545fe0bca}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.vcxproj">
       <Project>{f0a53bc9-c617-47dd-8b68-f91e3502d633}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.vcxproj">
-      <Project>{8376216c-282a-4927-b9ef-c2d545fe0bca}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

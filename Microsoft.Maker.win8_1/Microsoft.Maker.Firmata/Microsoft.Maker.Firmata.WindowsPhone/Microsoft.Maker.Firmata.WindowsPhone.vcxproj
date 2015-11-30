@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj">
+    <ProjectReference Include="..\..\..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.WindowsPhone\Microsoft.Maker.Serial.WindowsPhone.vcxproj">
       <Project>{e26ce8ba-b9dc-45f6-8d7d-d019a42ade3f}</Project>
     </ProjectReference>
   </ItemGroup>
