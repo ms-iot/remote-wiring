@@ -229,6 +229,7 @@ HardwareProfile::initializeWithFirmata(
                 break;
             }
         }
+        pinCapabilities->push_back( currentPinCapabilities );
         total_pins++;
     }
 
