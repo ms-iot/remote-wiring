@@ -122,6 +122,10 @@ private:
     std::atomic_int _analog_offset;
     std::atomic_int _num_analog_pins;
     std::atomic_int _total_pins;
+    std::vector<uint8_t> *_pinCapabilities;
+    std::vector<uint8_t> *_analogResolutions;
+    std::vector<uint8_t> *_pwmResolutions;
+    std::vector<uint8_t> *_servoResolutions;
 
     void
     initializeWithFirmata(

@@ -92,11 +92,17 @@ HardwareProfile::initializeWithFirmata(
     }
 
     byte total_pins = 0;
-    byte analog_offset = 0;
+    byte analog_offset = 0xFF;
     byte num_analog_pins = 0;
+    std::vector<uint8_t> *pinCapabilities = new std::vector<uint8_t>;
+    std::vector<uint8_t> *analogResolutions = new std::vector<uint8_t>;
+    std::vector<uint8_t> *pwmResolutions = new std::vector<uint8_t>;
+    std::vector<uint8_t> *servoResolutions = new std::vector<uint8_t>;
 
     for( unsigned int i = 0; i < size; ++i )
     {
+        uint8_t currentPinCapabilities = 0;
+
         while( i < size && data[i] != FIRMATA_END_OF_PIN_VALUE )
         {
             PinMode mode = static_cast<PinMode>( data[i] );
@@ -104,62 +110,120 @@ HardwareProfile::initializeWithFirmata(
             {
             case PinMode::INPUT:
 
+                //the next bit determines if the mode is enabled, this should always be true
                 ++i;
-                if( i < size && data[i] == MODE_ENABLED )
+                if( i < size )
                 {
-                    //this should always be true, but we're doing nothing for now.
+                    if( data[i] == MODE_ENABLED )
+                    {
+                        currentPinCapabilities |= static_cast<uint8_t>( PinCapability::INPUT );
+                    }
                 }
-
-                //skip over the 'enabled' value, which should always be 1
+                else return;    //we've failed to get all of the data
                 ++i;
 
                 break;
 
             case PinMode::OUTPUT:
 
+                //the next bit determines if the mode is enabled, this should always be true
                 ++i;
-                if( i < size && data[i] == MODE_ENABLED )
+                if( i < size )
                 {
-                    //this should always be true, but we're doing nothing for now.
+                    if( data[i] == MODE_ENABLED )
+                    {
+                        currentPinCapabilities |= static_cast<uint8_t>( PinCapability::OUTPUT );
+                    }
                 }
-
-                //skip over the 'enabled' value, which should always be 1
+                else return;    //we've failed to get all of the data
                 ++i;
 
                 break;
 
             case PinMode::PULLUP:
 
+                //the next bit determines if the mode is enabled, this should always be true
                 ++i;
-                if( i < size && data[i] == MODE_ENABLED )
+                if( i < size )
                 {
-                    //this should always be true, but we're doing nothing for now.
+                    if( data[i] == MODE_ENABLED )
+                    {
+                        currentPinCapabilities |= static_cast<uint8_t>( PinCapability::INPUT_PULLUP );
+                    }
                 }
-
-                //skip over the 'enabled' value, which should always be 1
+                else return;    //we've failed to get all of the data
                 ++i;
 
                 break;
 
             case PinMode::ANALOG:
 
-                //analog offset keeps track of the first pin found that supports analog read, allows us to convert analog pins like "A0" to the correct pin number
-                if( analog_offset == 0 )
+                //set the mode enabled & store the analog resolution of this pin
+                ++i;
+                if( i < size )
+                {
+                    currentPinCapabilities |= static_cast<uint8_t>( PinCapability::ANALOG );
+                    analogResolutions->push_back( data[i] );
+                }
+                else return;    //we've failed to get all of the data
+                ++i;
+
+                //analog offset keeps track of the first pin found that supports analog read, tells us how many digital pins we have,
+                //and allows us to convert analog pins like "A0" to the correct pin number
+                if( analog_offset == 0xFF )
                 {
                     analog_offset = total_pins;
                 }
                 ++num_analog_pins;
 
-                //this statement intentionally left unbroken
+                break;
 
             case PinMode::PWM:
+
+                //set the mode enabled & store the pwm resolution of this pin
+                ++i;
+                if( i < size )
+                {
+                    currentPinCapabilities |= static_cast<uint8_t>( PinCapability::PWM );
+                    pwmResolutions->push_back( data[i] );
+                }
+                else return;    //we've failed to get all of the data
+                ++i;
+
+                break;
+
             case PinMode::SERVO:
+
+                //set the mode enabled & store the servo resolution of this pin
+                ++i;
+                if( i < size )
+                {
+                    currentPinCapabilities |= static_cast<uint8_t>( PinCapability::SERVO );
+                    servoResolutions->push_back( data[i] );
+                }
+                else return;    //we've failed to get all of the data
+                ++i;
+
+                break;
+
             case PinMode::I2C:
-                i += 2;
+
+                //the next bit determines if the mode is enabled, this should always be true
+                ++i;
+                if( i < size )
+                {
+                    if( data[i] == MODE_ENABLED )
+                    {
+                        currentPinCapabilities |= static_cast<uint8_t>( PinCapability::I2C );
+                    }
+                }
+                else return;    //we've failed to get all of the data
+                ++i;
 
                 break;
 
             default:
+                //this value isn't recognized. it is likely fatal, but also possible that new data was added to the query response. We will attempt to continue
                 ++i;
 
                 break;
@@ -168,9 +232,13 @@ HardwareProfile::initializeWithFirmata(
         total_pins++;
     }
 
+    //we've successfully parsed a valid capability response. Set all members of this class and mark it as valid.
     _total_pins = total_pins;
     _analog_offset = analog_offset;
     _num_analog_pins = num_analog_pins;
+    _pinCapabilities = pinCapabilities;
+    _analogResolutions = analogResolutions;
+    _pwmResolutions = pwmResolutions;
+    _servoResolutions = servoResolutions;
     _is_valid = true;
-    //initialize();
 }
