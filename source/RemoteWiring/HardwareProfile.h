@@ -28,6 +28,11 @@ namespace Microsoft {
 namespace Maker {
 namespace RemoteWiring {
 
+public enum class Protocol
+{
+    FIRMATA
+};
+
 /*
  * This class represents a virtual piece of hardware. It can create a profile of pins and their capabilities, and can be
  * used to verify outgoing commands are valid and map incoming commands to specific pins.
@@ -37,23 +42,50 @@ public ref class HardwareProfile sealed
 
 public:
 
-    enum class Protocol
+    //this is a required property which must always be available
+    property int AnalogPinCount
     {
-        FIRMATA
-    };
+        int get()
+        {
+            return _num_analog_pins;
+        }
+    }
+
+    //this is a required property which must always be available
+    property int DigitalPinCount
+    {
+        int get()
+        {
+            return _analog_offset;
+        }
+    }
+
+    //this is a required property which must always be available
+    property int TotalPinCount
+    {
+        int get()
+        {
+            return _total_pins;
+        }
+    }
 
     [Windows::Foundation::Metadata::DefaultOverload]
-    /*inline
+    inline
     HardwareProfile(
         Windows::Storage::Streams::IBuffer ^buffer_
-        )
+        ) :
+        HardwareProfile( buffer_, Protocol::FIRMATA )
     {
-        this( buffer_, Protocol::FIRMATA );
-    }*/
+    }
 
     HardwareProfile(
         Windows::Storage::Streams::IBuffer ^buffer_,
-        Protocol protocol_ = Protocol::FIRMATA
+        Protocol protocol_
+        );
+
+    HardwareProfile(
+        int number_of_digital_pins_,
+        int number_of_analog_pins_
         );
 
 private:
@@ -67,10 +99,7 @@ private:
     void
     initializeWithFirmata(
         Windows::Storage::Streams::IBuffer ^buffer_
-        )
-    {
-
-    }
+        );
 };
 
 } // namespace Wiring

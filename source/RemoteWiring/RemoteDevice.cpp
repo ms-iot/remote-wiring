@@ -98,7 +98,7 @@ RemoteDevice::analogRead(
 		return static_cast<uint16_t>(-1);
 	}
 	uint16_t val = -1;
-	uint8_t analog_pin_num = parsed_pin + _analog_offset;
+	uint8_t analog_pin_num = parsed_pin + _hardwareProfile->DigitalPinCount;
 
 	{//critical section 
 		std::lock_guard<std::recursive_mutex> lock(_device_mutex);
@@ -116,7 +116,7 @@ RemoteDevice::analogRead(
 			}
 		}
 
-		if (parsed_pin < _num_analog_pins)
+		if( parsed_pin < _hardwareProfile->AnalogPinCount )
 		{
 			val = _analog_pins[parsed_pin];
 		}
@@ -224,7 +224,7 @@ RemoteDevice::getPinMode(
         return PinMode::IGNORED;
     }
 
-    return getPinMode( parsed_pin + _analog_offset );
+    return getPinMode( parsed_pin + _hardwareProfile->DigitalPinCount );
 }
 
 
@@ -294,7 +294,7 @@ RemoteDevice::pinMode(
         return;
     }
 
-    pinMode( parsed_pin + _analog_offset, mode_ );
+    pinMode( parsed_pin + _hardwareProfile->DigitalPinCount, mode_ );
 }
 
 

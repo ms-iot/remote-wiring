@@ -51,6 +51,17 @@ HardwareProfile::HardwareProfile(
     }
 }
 
+HardwareProfile::HardwareProfile(
+    int number_of_digital_pins_,
+    int number_of_analog_pins_
+    ) :
+    _is_valid( ATOMIC_VAR_INIT( false ) ),
+    _total_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ + number_of_digital_pins_ ) ),
+    _analog_offset( ATOMIC_VAR_INIT( number_of_digital_pins_ ) ),
+    _num_analog_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ ) )
+{
+}
+
 
 //******************************************************************************
 //* Public Methods
