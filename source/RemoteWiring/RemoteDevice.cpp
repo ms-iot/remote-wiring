@@ -474,13 +474,13 @@ RemoteDevice::onConnectionReady(
                 _firmata->write( static_cast<uint8_t>( SysexCommand::CAPABILITY_QUERY ) );
                 _firmata->write( static_cast<uint8_t>( Command::END_SYSEX ) );
                 _firmata->flush();
-                _firmata->unlock();
             }
             catch( ... )
             {
-                _firmata->unlock();
+                //do nothing
             }
-            
+
+            _firmata->unlock();
             ++attempts;
 			
 			//this loop is responsible for waiting at increasing intervals until the response is received or MAX_DELAY_LOOP number of iterations have occurred.
@@ -528,6 +528,10 @@ RemoteDevice::onPinCapabilityResponseReceived(
     }
 
     _hardwareProfile = ref new HardwareProfile( argv_->getDataBuffer() );
+    if( _hardwareProfile->IsValid )
+    {
+        initialize();
+    }
 }
 
 uint8_t

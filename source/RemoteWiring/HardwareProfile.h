@@ -61,6 +61,15 @@ public:
     }
 
     //this is a required property which must always be available
+    property bool IsValid
+    {
+        bool get()
+        {
+            return _is_valid;
+        }
+    }
+
+    //this is a required property which must always be available
     property int TotalPinCount
     {
         int get()
