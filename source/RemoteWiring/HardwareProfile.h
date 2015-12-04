@@ -32,12 +32,45 @@ namespace RemoteWiring {
  * This class represents a virtual piece of hardware. It can create a profile of pins and their capabilities, and can be
  * used to verify outgoing commands are valid and map incoming commands to specific pins.
  */
-public ref class HardwareProfile sealed {
+public ref class HardwareProfile sealed
+{
 
 public:
 
-private:
+    enum class Protocol
+    {
+        FIRMATA
+    };
 
+    [Windows::Foundation::Metadata::DefaultOverload]
+    /*inline
+    HardwareProfile(
+        Windows::Storage::Streams::IBuffer ^buffer_
+        )
+    {
+        this( buffer_, Protocol::FIRMATA );
+    }*/
+
+    HardwareProfile(
+        Windows::Storage::Streams::IBuffer ^buffer_,
+        Protocol protocol_ = Protocol::FIRMATA
+        );
+
+private:
+    std::atomic_bool _is_valid;
+
+    //stateful members received from the device
+    std::atomic_int _analog_offset;
+    std::atomic_int _num_analog_pins;
+    std::atomic_int _total_pins;
+
+    void
+    initializeWithFirmata(
+        Windows::Storage::Streams::IBuffer ^buffer_
+        )
+    {
+
+    }
 };
 
 } // namespace Wiring

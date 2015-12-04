@@ -24,6 +24,7 @@
 
 #include "pch.h"
 #include "HardwareProfile.h"
+#include "RemoteDevice.h"
 
 using namespace Microsoft::Maker::Firmata;
 using namespace Microsoft::Maker::RemoteWiring;
@@ -32,10 +33,133 @@ using namespace Microsoft::Maker::RemoteWiring;
 //* Constructors / Destructors
 //******************************************************************************
 
-
+HardwareProfile::HardwareProfile(
+    Windows::Storage::Streams::IBuffer ^buffer_,
+    Protocol protocol_
+    ) :
+    _is_valid( ATOMIC_VAR_INIT( false ) ),
+    _total_pins( ATOMIC_VAR_INIT( 0 ) ),
+    _analog_offset( ATOMIC_VAR_INIT( 0 ) ),
+    _num_analog_pins( ATOMIC_VAR_INIT( 0 ) )
+{
+    switch( protocol_ )
+    {
+    default:
+    case Protocol::FIRMATA:
+        initializeWithFirmata( buffer_ );
+        break;
+    }
+}
 
 
 //******************************************************************************
 //* Public Methods
 //******************************************************************************
 
+
+//******************************************************************************
+//* Private Methods
+//******************************************************************************
+
+void
+HardwareProfile::initializeWithFirmata(
+    Windows::Storage::Streams::IBuffer ^buffer_
+    )
+{
+    if( buffer_ == nullptr ) return;
+
+    const uint8_t MODE_ENABLED = 1;
+    const int FIRMATA_END_OF_PIN_VALUE = 0x7F;
+
+    auto reader = Windows::Storage::Streams::DataReader::FromBuffer( buffer_ );
+    auto size = buffer_->Length;
+
+    uint8_t *data = (uint8_t *)malloc( sizeof( uint8_t ) * size );
+    for( unsigned int i = 0; i < size; ++i )
+    {
+        data[i] = reader->ReadByte();
+    }
+
+    byte total_pins = 0;
+    byte analog_offset = 0;
+    byte num_analog_pins = 0;
+
+    for( unsigned int i = 0; i < size; ++i )
+    {
+        while( i < size && data[i] != FIRMATA_END_OF_PIN_VALUE )
+        {
+            PinMode mode = static_cast<PinMode>( data[i] );
+            switch( mode )
+            {
+            case PinMode::INPUT:
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
+
+                break;
+
+            case PinMode::OUTPUT:
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
+
+                break;
+
+            case PinMode::PULLUP:
+
+                ++i;
+                if( i < size && data[i] == MODE_ENABLED )
+                {
+                    //this should always be true, but we're doing nothing for now.
+                }
+
+                //skip over the 'enabled' value, which should always be 1
+                ++i;
+
+                break;
+
+            case PinMode::ANALOG:
+
+                //analog offset keeps track of the first pin found that supports analog read, allows us to convert analog pins like "A0" to the correct pin number
+                if( analog_offset == 0 )
+                {
+                    analog_offset = total_pins;
+                }
+                ++num_analog_pins;
+
+                //this statement intentionally left unbroken
+
+            case PinMode::PWM:
+            case PinMode::SERVO:
+            case PinMode::I2C:
+                i += 2;
+
+                break;
+
+            default:
+                ++i;
+
+                break;
+            }
+        }
+        total_pins++;
+    }
+
+    _total_pins = total_pins;
+    _analog_offset = analog_offset;
+    _num_analog_pins = num_analog_pins;
+    _is_valid = true;
+    //initialize();
+}

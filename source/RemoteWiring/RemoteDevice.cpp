@@ -448,13 +448,6 @@ RemoteDevice::onConnectionReady(
 	//the process for a set number of attempts. A device response will be received in the form of a PinCapabilityResponseReceived event.
     Concurrency::create_task( [ this ]
     {
-        {   //critical section
-            std::lock_guard<std::recursive_mutex> lock( _device_mutex );
-            _total_pins = ATOMIC_VAR_INIT( 0 );
-            _analog_offset = ATOMIC_VAR_INIT( 0 );
-            _num_analog_pins = ATOMIC_VAR_INIT( 0 );
-        }
-
         const int MAX_ATTEMPTS = 30;
 		const int MAX_DELAY_LOOP = 5;
 		const int INIT_DELAY_MS = 10;
@@ -527,102 +520,14 @@ RemoteDevice::onPinCapabilityResponseReceived(
     SysexCallbackEventArgs ^argv_
     )
 {
-    const uint8_t MODE_ENABLED = 1;
-
-    auto reader = Windows::Storage::Streams::DataReader::FromBuffer( argv_->getDataBuffer() );
-    auto size = argv_->getDataBuffer()->Length;
-
-    uint8_t *data = (uint8_t *)malloc( sizeof( uint8_t ) * size );
-    for( unsigned int i = 0; i < size; ++i )
-    {
-        data[i] = reader->ReadByte();
-    }
-
-    byte total_pins = 0;
-    byte analog_offset = 0;
-    byte num_analog_pins = 0;
-
-    int END_OF_PIN_DESCRIPTION = 0x7F;
-    for( unsigned int i = 0; i < size; ++i )
-    {
-        while( i < size && data[i] != END_OF_PIN_DESCRIPTION )
-        {
-            PinMode mode = static_cast<PinMode>( data[i] );
-            switch( mode )
-            {
-            case PinMode::INPUT:
-
-                ++i;
-                if( i < size && data[i] == MODE_ENABLED )
-                {
-                    //this should always be true, but we're doing nothing for now.
-                }
-
-                //skip over the 'enabled' value, which should always be 1
-                ++i;
-
-                break;
-
-            case PinMode::OUTPUT:
-
-                ++i;
-                if( i < size && data[i] == MODE_ENABLED )
-                {
-                    //this should always be true, but we're doing nothing for now.
-                }
-
-                //skip over the 'enabled' value, which should always be 1
-                ++i;
-
-                break;
-
-            case PinMode::PULLUP:
-
-                ++i;
-                if( i < size && data[i] == MODE_ENABLED )
-                {
-                    //this should always be true, but we're doing nothing for now.
-                }
-
-                //skip over the 'enabled' value, which should always be 1
-                ++i;
-
-                break;
-
-            case PinMode::ANALOG:
-
-                //analog offset keeps track of the first pin found that supports analog read, allows us to convert analog pins like "A0" to the correct pin number
-                if( analog_offset == 0 )
-                {
-                    analog_offset = total_pins;
-                }
-                ++num_analog_pins;
-
-                //this statement intentionally left unbroken
-
-            case PinMode::PWM:
-            case PinMode::SERVO:
-            case PinMode::I2C:
-                i += 2;
-
-                break;
-
-            default:
-                ++i;
-
-                break;
-            }
-        }
-        total_pins++;
-    }
+    if( caller_ == nullptr || argv_ == nullptr ) return;
 
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
-        _total_pins = total_pins;
-        _analog_offset = analog_offset;
-        _num_analog_pins = num_analog_pins;
-        initialize();
+        if( _initialized ) return;
     }
+
+    _hardwareProfile = ref new HardwareProfile( argv_->getDataBuffer() );
 }
 
 uint8_t

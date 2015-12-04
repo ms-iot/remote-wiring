@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <mutex>
 #include "TwoWire.h"
+#include "HardwareProfile.h"
 
 namespace Microsoft {
 namespace Maker {
@@ -206,11 +207,11 @@ private:
     static const size_t MAX_PINS = 128;
     static const size_t MAX_ANALOG_PINS = 16;
 
-    //stateful members received from the device
-    std::atomic_int _analog_offset;
-    std::atomic_int _num_analog_pins;
-    std::atomic_int _total_pins;
+    //initialized state member
     std::atomic_bool _initialized;
+
+    //hardware profile
+    HardwareProfile ^_hardwareProfile;
 
     //initialization for constructor
     void const initialize();

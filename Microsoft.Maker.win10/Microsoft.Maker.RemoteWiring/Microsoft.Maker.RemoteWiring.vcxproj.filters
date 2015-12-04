@@ -10,10 +10,12 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="..\..\source\RemoteWiring\RemoteDevice.cpp" />
     <ClCompile Include="..\..\source\RemoteWiring\TwoWire.cpp" />
+    <ClCompile Include="..\..\source\RemoteWiring\HardwareProfile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\..\source\RemoteWiring\RemoteDevice.h" />
     <ClInclude Include="..\..\source\RemoteWiring\TwoWire.h" />
+    <ClInclude Include="..\..\source\RemoteWiring\HardwareProfile.h" />
   </ItemGroup>
 </Project>
