@@ -123,9 +123,10 @@ private:
     std::atomic_int _num_analog_pins;
     std::atomic_int _total_pins;
     std::vector<uint8_t> *_pinCapabilities;
-    std::vector<uint8_t> *_analogResolutions;
-    std::vector<uint8_t> *_pwmResolutions;
-    std::vector<uint8_t> *_servoResolutions;
+    //for each of the following maps: K = pin number, V = resolution value in bits
+    std::map<uint8_t, uint8_t> *_analogResolutions;
+    std::map<uint8_t, uint8_t> *_pwmResolutions;
+    std::map<uint8_t, uint8_t> *_servoResolutions;
 
     void
     initializeWithFirmata(

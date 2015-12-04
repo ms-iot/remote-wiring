@@ -95,9 +95,9 @@ HardwareProfile::initializeWithFirmata(
     byte analog_offset = 0xFF;
     byte num_analog_pins = 0;
     std::vector<uint8_t> *pinCapabilities = new std::vector<uint8_t>;
-    std::vector<uint8_t> *analogResolutions = new std::vector<uint8_t>;
-    std::vector<uint8_t> *pwmResolutions = new std::vector<uint8_t>;
-    std::vector<uint8_t> *servoResolutions = new std::vector<uint8_t>;
+    std::map<uint8_t, uint8_t> *analogResolutions = new std::map<uint8_t, uint8_t>; //K = pin number, V = resolution value in bits
+    std::map<uint8_t, uint8_t> *pwmResolutions = new std::map<uint8_t, uint8_t>; //K = pin number, V = resolution value in bits
+    std::map<uint8_t, uint8_t> *servoResolutions = new std::map<uint8_t, uint8_t>; //K = pin number, V = resolution value in bits
 
     for( unsigned int i = 0; i < size; ++i )
     {
@@ -163,7 +163,7 @@ HardwareProfile::initializeWithFirmata(
                 if( i < size )
                 {
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::ANALOG );
-                    analogResolutions->push_back( data[i] );
+                    analogResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
                 else return;    //we've failed to get all of the data
                 ++i;
@@ -185,7 +185,7 @@ HardwareProfile::initializeWithFirmata(
                 if( i < size )
                 {
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::PWM );
-                    pwmResolutions->push_back( data[i] );
+                    pwmResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
                 else return;    //we've failed to get all of the data
                 ++i;
@@ -199,7 +199,7 @@ HardwareProfile::initializeWithFirmata(
                 if( i < size )
                 {
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::SERVO );
-                    servoResolutions->push_back( data[i] );
+                    servoResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
                 else return;    //we've failed to get all of the data
                 ++i;
@@ -230,6 +230,14 @@ HardwareProfile::initializeWithFirmata(
             }
         }
         total_pins++;
+    }
+
+    //last minute error-checking
+    if( total_pins != pinCapabilities->size() ||
+        num_analog_pins != analogResolutions->size() ||
+        ( num_analog_pins + analog_offset ) != total_pins )
+    {
+        return;
     }
 
     //we've successfully parsed a valid capability response. Set all members of this class and mark it as valid.
