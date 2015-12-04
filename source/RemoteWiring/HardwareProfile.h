@@ -28,9 +28,27 @@ namespace Microsoft {
 namespace Maker {
 namespace RemoteWiring {
 
+/*
+ * Protocol enum is used to recognize which protocol the initialization data represents.
+ * Currently, the only option is Firmata, which is the only protocol Remote Arduino currently supports
+ */
 public enum class Protocol
 {
     FIRMATA
+};
+
+/*
+ * Pin capabilities are stored as bitmasks, the PinCapability enum represents the bit value of each capability.
+ */
+public enum class PinCapability
+{
+    INPUT = 0x01,
+    INPUT_PULLUP = 0x02,
+    OUTPUT = 0x04,
+    ANALOG = 0x08,
+    PWM = 0x10,
+    SERVO = 0x20,
+    I2C = 0x40
 };
 
 /*
