@@ -40,7 +40,11 @@ HardwareProfile::HardwareProfile(
     _is_valid( ATOMIC_VAR_INIT( false ) ),
     _total_pins( ATOMIC_VAR_INIT( 0 ) ),
     _analog_offset( ATOMIC_VAR_INIT( 0 ) ),
-    _num_analog_pins( ATOMIC_VAR_INIT( 0 ) )
+    _num_analog_pins( ATOMIC_VAR_INIT( 0 ) ),
+    _pinCapabilities( nullptr ),
+    _analogResolutions( nullptr ),
+    _pwmResolutions( nullptr ),
+    _servoResolutions( nullptr )
 {
     switch( protocol_ )
     {
@@ -58,8 +62,38 @@ HardwareProfile::HardwareProfile(
     _is_valid( ATOMIC_VAR_INIT( false ) ),
     _total_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ + number_of_digital_pins_ ) ),
     _analog_offset( ATOMIC_VAR_INIT( number_of_digital_pins_ ) ),
-    _num_analog_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ ) )
+    _num_analog_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ ) ),
+    _pinCapabilities( nullptr ),
+    _analogResolutions( nullptr ),
+    _pwmResolutions( nullptr ),
+    _servoResolutions( nullptr )
 {
+}
+
+
+HardwareProfile::~HardwareProfile()
+{
+    _is_valid = false;
+
+    if( _pinCapabilities != nullptr )
+    {
+        delete( _pinCapabilities );
+    }
+
+    if( _analogResolutions != nullptr )
+    {
+        delete( _analogResolutions );
+    }
+
+    if( _pwmResolutions != nullptr )
+    {
+        delete( _pwmResolutions );
+    }
+
+    if( _servoResolutions != nullptr )
+    {
+        delete( _servoResolutions );
+    }
 }
 
 

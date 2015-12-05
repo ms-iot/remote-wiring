@@ -130,6 +130,8 @@ public:
         int number_of_analog_pins_
         );
 
+    ~HardwareProfile();
+
 private:
     std::atomic_bool _is_valid;
 
