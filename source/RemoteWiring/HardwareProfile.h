@@ -132,6 +132,46 @@ public:
 
     ~HardwareProfile();
 
+    uint8_t
+    getPinCapabilitiesBitmask(
+        uint8_t pin_
+        );
+
+    bool
+    isAnalogSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isDigitalInputSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isDigitalInputPullupSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isDigitalOutputSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isI2cSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isPwmSupported(
+        uint8_t pin_
+        );
+
+    bool
+    isServoSupported(
+        uint8_t pin_
+        );
+
 private:
     std::atomic_bool _is_valid;
 

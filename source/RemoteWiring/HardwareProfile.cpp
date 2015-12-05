@@ -101,6 +101,73 @@ HardwareProfile::~HardwareProfile()
 //* Public Methods
 //******************************************************************************
 
+uint8_t
+HardwareProfile::getPinCapabilitiesBitmask(
+    uint8_t pin_
+    )
+{
+    if( !_is_valid || _pinCapabilities == nullptr || pin_ < 0 || pin_ >= _total_pins )
+    {
+        return 0;
+    }
+    return _pinCapabilities->at( pin_ );
+}
+
+bool
+HardwareProfile::isAnalogSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::ANALOG );
+}
+
+bool
+HardwareProfile::isDigitalInputSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT );
+}
+
+bool
+HardwareProfile::isDigitalInputPullupSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT_PULLUP );
+}
+
+bool
+HardwareProfile::isDigitalOutputSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::OUTPUT );
+}
+
+bool
+HardwareProfile::isI2cSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::I2C );
+}
+
+bool
+HardwareProfile::isPwmSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::PWM );
+}
+
+bool
+HardwareProfile::isServoSupported(
+    uint8_t pin_
+    )
+{
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::SERVO );
+}
 
 //******************************************************************************
 //* Private Methods
