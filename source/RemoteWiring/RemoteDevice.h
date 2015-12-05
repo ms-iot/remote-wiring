@@ -214,7 +214,7 @@ private:
     HardwareProfile ^_hardwareProfile;
 
     //initialization for constructor
-    void const initialize();
+    void const initialize( HardwareProfile ^hardwareProfile_ );
 
     //a reference to the UAP firmata interface
     Firmata::UwpFirmata ^_firmata;

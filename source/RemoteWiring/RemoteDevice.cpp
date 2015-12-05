@@ -381,13 +381,14 @@ RemoteDevice::onStringMessage(
 
 void const
 RemoteDevice::initialize(
-    void
+    HardwareProfile ^hardwareProfile_
     )
 {
     {   //critical section equivalent to function scope
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
         if( _initialized ) return;
+        _hardwareProfile = hardwareProfile_;
         _firmata->DigitalPortValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onDigitalReport( args ); } );
         _firmata->AnalogValueUpdated += ref new Firmata::CallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::CallbackEventArgs^ args ) -> void { onAnalogReport( args ); } );
         _firmata->SysexMessageReceived += ref new Firmata::SysexCallbackFunction( [ this ]( Firmata::UwpFirmata ^caller, Firmata::SysexCallbackEventArgs^ args ) -> void { onSysexMessage( args ); } );
@@ -527,10 +528,10 @@ RemoteDevice::onPinCapabilityResponseReceived(
         if( _initialized ) return;
     }
 
-    _hardwareProfile = ref new HardwareProfile( argv_->getDataBuffer() );
-    if( _hardwareProfile->IsValid )
+    HardwareProfile ^hardwareProfile = ref new HardwareProfile( argv_->getDataBuffer() );
+    if( hardwareProfile->IsValid )
     {
-        initialize();
+        initialize( hardwareProfile );
     }
 }
 
