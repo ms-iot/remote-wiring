@@ -132,41 +132,82 @@ public:
 
     ~HardwareProfile();
 
+    ///<summary>
+    ///returns the raw capabilities bitmask for the given pin, which represents all of the functionality of the pin
+    ///an AND operation (&) can be performed with this bitmask and a PinCapability to determine if the given pin has the chosen capability.
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>the bitmask for the requested pin or 0 if the pin and/or this hardware profile are not valid</returns>
+    ///</summary>
     uint8_t
     getPinCapabilitiesBitmask(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the analog capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the analog (ADC) capability, false otherwise</returns>
+    ///</summary>
     bool
     isAnalogSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the digital input capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the digital input capability, false otherwise</returns>
+    ///</summary>
     bool
     isDigitalInputSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the digital input pullup capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the digital input pullup capability, false otherwise</returns>
+    ///</summary>
     bool
     isDigitalInputPullupSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the digital output capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the digital output capability, false otherwise</returns>
+    ///</summary>
     bool
     isDigitalOutputSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the I2C capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the I2C capability, false otherwise</returns>
+    ///</summary>
     bool
     isI2cSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the PWM capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the PWM capability, false otherwise</returns>
+    ///</summary>
     bool
     isPwmSupported(
         uint8_t pin_
         );
 
+    ///<summary>
+    ///returns true if the servo capability is supported by the given pin number
+    ///<param name="pin_">The requested pin</param>
+    ///<returns>true if the pin and this hardware profile are both valid and the pin supports the servo capability, false otherwise</returns>
+    ///</summary>
     bool
     isServoSupported(
         uint8_t pin_
