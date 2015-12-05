@@ -1,0 +1,3 @@
+[submodule "source/Serial"]
+	path = source/Serial
+	url = https://github.com/ms-iot/serial-wiring.git
