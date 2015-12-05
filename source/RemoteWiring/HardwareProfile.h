@@ -95,7 +95,11 @@ public:
             return _total_pins;
         }
     }
-
+    
+    ///<summary>
+    ///This default constructor accepts an IBuffer containing pin information which is assumed to be in the default Firmata protocol.
+    ///<param name="buffer_">The input IBuffer object reference</param>
+    ///</summary>
     [Windows::Foundation::Metadata::DefaultOverload]
     inline
     HardwareProfile(
@@ -105,11 +109,22 @@ public:
     {
     }
 
+    ///<summary>
+    ///this constructor accepts an IBuffer containing pin information which will be decomposed using the given protocol to attempt to construct a valid profile
+    ///<param name="buffer_">The input IBuffer object reference</param>
+    ///<param name="protocol_">The protocol used to describe the device configuration</param>
+    ///</summary>
     HardwareProfile(
         Windows::Storage::Streams::IBuffer ^buffer_,
         Protocol protocol_
         );
 
+    ///<summary>
+    ///this constructor accepts the absolute minimum required parameters for the class to function properly, but will not consider this instance 'valid'
+    ///and will not contain any capability information for the hardware
+    ///<param name="number_of_digital_pins_">The number of digital pins on the physical hardware device</param>
+    ///<param name="number_of_analog_pins_">The number of analog pins on the physical hardware device</param>
+    ///</summary>
     HardwareProfile(
         int number_of_digital_pins_,
         int number_of_analog_pins_
