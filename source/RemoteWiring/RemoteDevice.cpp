@@ -40,7 +40,8 @@ RemoteDevice::RemoteDevice(
     ) :
     _initialized( ATOMIC_VAR_INIT(false) ),
     _firmata( ref new Firmata::UwpFirmata ),
-    _twoWire( nullptr )
+    _twoWire( nullptr ),
+    _hardwareProfile( nullptr )
 {
     //subscribe to all relevant connection changes from our new Firmata object and then attach the given IStream object
     _firmata->FirmataConnectionReady += ref new Firmata::FirmataConnectionCallback( this, &Microsoft::Maker::RemoteWiring::RemoteDevice::onConnectionReady );
@@ -54,7 +55,8 @@ RemoteDevice::RemoteDevice(
     ) :
     _initialized( ATOMIC_VAR_INIT(false) ),
     _firmata( firmata_ ),
-    _twoWire( nullptr )
+    _twoWire( nullptr ),
+    _hardwareProfile( nullptr )
 {
     //since the UwpFirmata object is provided, we need to lock its state & verify it is not already in a connected state
     _firmata->lock();
@@ -95,17 +97,17 @@ RemoteDevice::analogRead(
     uint16_t val = -1;
 	uint8_t parsed_pin = parsePinFromAnalogString( analog_pin_ );
 
-    //verify that we were given a valid analog pin number, parsePinFromAnalogString returns -1 as uint if the string is invalid, so this will catch both cases
-	if( !_initialized || parsed_pin >= _hardwareProfile->AnalogPinCount )
-	{
-		return val;
-	}
-
-    //get the raw hardware pin number from the analog pin number by adding the digital pin count
-	uint8_t analog_pin_num = parsed_pin + _hardwareProfile->DigitalPinCount;
-
     {   //critical section 
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
+        //verify that we were given a valid analog pin number, parsePinFromAnalogString returns -1 as uint if the string is invalid, so this will catch both cases
+        if( !_initialized || parsed_pin >= _hardwareProfile->AnalogPinCount )
+        {
+            return val;
+        }
+
+        //get the raw hardware pin number from the analog pin number by adding the digital pin count
+        uint8_t analog_pin_num = parsed_pin + _hardwareProfile->DigitalPinCount;
 
         //input and analog modes can be ambiguous, so we perform a courtesy check for the incorrect mode
         if( _pin_mode[analog_pin_num] == static_cast<uint8_t>( PinMode::INPUT ) )
@@ -132,26 +134,25 @@ RemoteDevice::analogWrite(
     uint16_t value_
     )
 {
+    //critical section equivalent to function scope
+    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
     //digital pins perform PWM and servo functionality, so verify that the pin number is a valid digital pin
     if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
     {
         return;
     }
 
-    {   //critical section
-        std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+    //both PWM and SERVO are valid modes for this function, but OUTPUT is ambiguous with PWM. We perform a courtesy check for the correct mode
+    if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::OUTPUT ) )
+    {
+        //attempt to change the pin mode
+        pinMode( pin_, PinMode::PWM );
+    }
 
-        //both PWM and SERVO are valid modes for this function, but OUTPUT is ambiguous with PWM. We perform a courtesy check for the correct mode
-        if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::OUTPUT ) )
-        {
-            //attempt to change the pin mode
-            pinMode( pin_, PinMode::PWM );
-        }
-
-        if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::PWM ) || _pin_mode[pin_] == static_cast<uint8_t>( PinMode::SERVO ) )
-        {
-            _firmata->sendAnalog( pin_, value_ );
-        }
+    if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::PWM ) || _pin_mode[pin_] == static_cast<uint8_t>( PinMode::SERVO ) )
+    {
+        _firmata->sendAnalog( pin_, value_ );
     }
 }
 
@@ -163,17 +164,16 @@ RemoteDevice::digitalRead(
 {
     int port;
     uint8_t port_mask;
-
-    //verify we were given a valid digital pin number
-    if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
-    {
-        return;
-    }
-
     getPinMap( pin_, &port, &port_mask );
 
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
+        //verify we were given a valid digital pin number
+        if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
+        {
+            return;
+        }
 
         //input and analog modes can be ambiguous, so we perform a courtesy check for the incorrect mode
         if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::ANALOG ) )
@@ -201,17 +201,16 @@ RemoteDevice::digitalWrite(
 {
     int port;
     uint8_t port_mask;
-
-    //verify we were given a valid digital pin number
-    if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
-    {
-        return;
-    }
-
     getPinMap( pin_, &port, &port_mask );
 
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
+        //verify we were given a valid digital pin number
+        if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
+        {
+            return;
+        }
 
         //output can be ambiguous with PWM, so we perform a courtesy check for the incorrect mode
         if( _pin_mode[pin_] == static_cast<uint8_t>( PinMode::PWM ) )
