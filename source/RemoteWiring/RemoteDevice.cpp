@@ -182,7 +182,8 @@ RemoteDevice::digitalRead(
             pinMode( pin_, PinMode::INPUT );
         }
 
-        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) )
+        //we want to verify that the pin is in INPUT mode, but OUTPUT will technically work as well (mimic Arduino behavior here)
+        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
         {
             //incorrect pin mode
             return PinState::LOW;
