@@ -130,7 +130,7 @@ public:
         int number_of_analog_pins_
         );
 
-    ~HardwareProfile();
+    virtual ~HardwareProfile();
 
     ///<summary>
     ///returns the raw capabilities bitmask for the given pin, which represents all of the functionality of the pin

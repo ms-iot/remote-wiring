@@ -172,7 +172,7 @@ RemoteDevice::digitalRead(
         //verify we were given a valid digital pin number
         if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
         {
-            return;
+            return PinState::LOW;
         }
 
         //input and analog modes can be ambiguous, so we perform a courtesy check for the incorrect mode
