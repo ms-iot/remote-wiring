@@ -89,6 +89,18 @@ public:
         }
     };
 
+    property HardwareProfile ^ DeviceHardwareProfile
+    {
+        Microsoft::Maker::RemoteWiring::HardwareProfile ^ get()
+        {
+            if( _initialized && _hardwareProfile->IsValid )
+            {
+                return _hardwareProfile;
+            }
+            return nullptr;
+        }
+    }
+
     [Windows::Foundation::Metadata::DefaultOverload]
     RemoteDevice(
         Serial::IStream ^serial_connection_
