@@ -235,6 +235,12 @@ private:
         uint8_t *
     );
 
+    bool
+    isModeSupported(
+        uint8_t pin_,
+        PinMode mode_
+        );
+
     //returns a uint8_t type parsed from a Platform::String ^
     uint8_t
     parsePinFromAnalogString(

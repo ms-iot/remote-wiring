@@ -268,13 +268,18 @@ RemoteDevice::pinMode(
     PinMode mode_
     )
 {
-    //TODO use a valid hardware profile to verify this mode is supported, or allow if using unsafe mode
     int port;
     uint8_t port_mask;
     getPinMap( pin_, &port, &port_mask );
 
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
+        //verify we're initialized properly and the requested pin mode is supported by this pin
+        if( !( _initialized && isModeSupported( pin_, mode_ ) ) )
+        {
+            return;
+        }
 
         _firmata->lock();
         try
@@ -299,12 +304,12 @@ RemoteDevice::pinMode(
                 _firmata->write( _subscribed_ports[port] );
             }
             _firmata->flush();
-            _firmata->unlock();
         }
         catch( ... )
         {
-            _firmata->unlock();
+            //do nothing
         }
+        _firmata->unlock();
 
         //if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
         if( mode_ == PinMode::OUTPUT && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
@@ -432,6 +437,61 @@ RemoteDevice::initialize(
         std::fill( _pin_mode.begin(), _pin_mode.end(), static_cast<uint8_t>( PinMode::OUTPUT ) );
 
         _initialized = true;
+    }
+}
+
+bool
+RemoteDevice::isModeSupported(
+    uint8_t pin_,
+    PinMode mode_
+    )
+{
+    //critical section equivalent to function scope
+    std::lock_guard<std::recursive_mutex> lock( _device_mutex );
+
+    if( !_initialized )
+    {
+        return false;
+    }
+
+    //an initialized state with an invalid profile means we are using unsafe mode
+    if( !_hardwareProfile->IsValid )
+    {
+        return true;
+    }
+
+    switch( mode_ )
+    {
+    case PinMode::ANALOG:
+        return _hardwareProfile->isAnalogSupported( pin_ );
+
+    case PinMode::I2C:
+        return _hardwareProfile->isI2cSupported( pin_ );
+
+    case PinMode::INPUT:
+        return _hardwareProfile->isDigitalInputSupported( pin_ );
+
+    case PinMode::OUTPUT:
+        return _hardwareProfile->isDigitalOutputSupported( pin_ );
+
+    case PinMode::PULLUP:
+        return _hardwareProfile->isDigitalInputPullupSupported( pin_ );
+
+    case PinMode::PWM:
+        return _hardwareProfile->isPwmSupported( pin_ );
+
+    case PinMode::SERVO:
+        return _hardwareProfile->isServoSupported( pin_ );
+
+    //these modes have no real purpose in firmata
+    case PinMode::IGNORED:
+    case PinMode::ENCODER:
+    case PinMode::ONEWIRE:
+    case PinMode::SERIAL:
+    case PinMode::STEPPER:
+    case PinMode::SHIFT:
+    default:
+        return false;
     }
 }
 
