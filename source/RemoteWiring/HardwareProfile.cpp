@@ -336,8 +336,7 @@ HardwareProfile::initializeWithFirmata(
 
     //last minute error-checking
     if( total_pins != pinCapabilities->size() ||
-        num_analog_pins != analogResolutions->size() ||
-        ( num_analog_pins + analog_offset ) != total_pins )
+        num_analog_pins != analogResolutions->size() )
     {
         return;
     }
