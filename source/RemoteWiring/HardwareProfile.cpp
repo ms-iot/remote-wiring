@@ -118,7 +118,7 @@ HardwareProfile::isAnalogSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::ANALOG );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::ANALOG ) > 0;
 }
 
 bool
@@ -126,7 +126,7 @@ HardwareProfile::isDigitalInputSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT ) > 0;
 }
 
 bool
@@ -134,7 +134,7 @@ HardwareProfile::isDigitalInputPullupSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT_PULLUP );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT_PULLUP ) > 0;
 }
 
 bool
@@ -142,7 +142,7 @@ HardwareProfile::isDigitalOutputSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::OUTPUT );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::OUTPUT ) > 0;
 }
 
 bool
@@ -150,7 +150,7 @@ HardwareProfile::isI2cSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::I2C );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::I2C ) > 0;
 }
 
 bool
@@ -158,7 +158,7 @@ HardwareProfile::isPwmSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::PWM );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::PWM ) > 0;
 }
 
 bool
@@ -166,7 +166,7 @@ HardwareProfile::isServoSupported(
     uint8_t pin_
     )
 {
-    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::SERVO );
+    return getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::SERVO ) > 0;
 }
 
 //******************************************************************************
