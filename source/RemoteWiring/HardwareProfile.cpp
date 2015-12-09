@@ -56,12 +56,12 @@ HardwareProfile::HardwareProfile(
 }
 
 HardwareProfile::HardwareProfile(
-    int number_of_digital_pins_,
+    int total_number_of_pins_,
     int number_of_analog_pins_
     ) :
     _is_valid( ATOMIC_VAR_INIT( false ) ),
-    _total_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ + number_of_digital_pins_ ) ),
-    _analog_offset( ATOMIC_VAR_INIT( number_of_digital_pins_ ) ),
+    _total_pins( ATOMIC_VAR_INIT( total_number_of_pins_ ) ),
+    _analog_offset( ATOMIC_VAR_INIT( total_number_of_pins_ - number_of_analog_pins_ ) ),
     _num_analog_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ ) ),
     _pinCapabilities( nullptr ),
     _analogResolutions( nullptr ),

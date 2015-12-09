@@ -107,7 +107,7 @@ RemoteDevice::analogRead(
         }
 
         //get the raw hardware pin number from the analog pin number by adding the digital pin count
-        uint8_t analog_pin_num = parsed_pin + _hardwareProfile->DigitalPinCount;
+        uint8_t analog_pin_num = parsed_pin + _hardwareProfile->AnalogOffset;
 
         //input and analog modes can be ambiguous, so we perform a courtesy check for the incorrect mode
         if( _pin_mode[analog_pin_num] == static_cast<uint8_t>( PinMode::INPUT ) )
@@ -137,8 +137,7 @@ RemoteDevice::analogWrite(
     //critical section equivalent to function scope
     std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
-    //digital pins perform PWM and servo functionality, so verify that the pin number is a valid digital pin
-    if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
+    if( !_initialized )
     {
         return;
     }
@@ -169,8 +168,7 @@ RemoteDevice::digitalRead(
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
-        //verify we were given a valid digital pin number
-        if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
+        if( !_initialized )
         {
             return PinState::LOW;
         }
@@ -207,8 +205,7 @@ RemoteDevice::digitalWrite(
     {   //critical section
         std::lock_guard<std::recursive_mutex> lock( _device_mutex );
 
-        //verify we were given a valid digital pin number
-        if( !_initialized || pin_ >= _hardwareProfile->DigitalPinCount )
+        if( !_initialized )
         {
             return;
         }
@@ -260,7 +257,7 @@ RemoteDevice::getPinMode(
         return PinMode::IGNORED;
     }
 
-    return getPinMode( parsed_pin + _hardwareProfile->DigitalPinCount );
+    return getPinMode( parsed_pin + _hardwareProfile->AnalogOffset );
 }
 
 void
@@ -335,7 +332,7 @@ RemoteDevice::pinMode(
         return;
     }
 
-    pinMode( parsed_pin + _hardwareProfile->DigitalPinCount, mode_ );
+    pinMode( parsed_pin + _hardwareProfile->AnalogOffset, mode_ );
 }
 
 

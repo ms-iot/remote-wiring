@@ -60,7 +60,7 @@ public ref class HardwareProfile sealed
 
 public:
 
-    //this is a required property which must always be available
+    //this is a required property which must always be accurate
     property int AnalogPinCount
     {
         int get()
@@ -69,8 +69,8 @@ public:
         }
     }
 
-    //this is a required property which must always be available
-    property int DigitalPinCount
+    //this is a required property which must always be accurate
+    property int AnalogOffset
     {
         int get()
         {
@@ -78,7 +78,7 @@ public:
         }
     }
 
-    //this is a required property which must always be available
+    //this is a required property which must always be accurate
     property bool IsValid
     {
         bool get()
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    //this is a required property which must always be available
+    //this is a required property which must always be accurate
     property int TotalPinCount
     {
         int get()
@@ -126,7 +126,7 @@ public:
     ///<param name="number_of_analog_pins_">The number of analog pins on the physical hardware device</param>
     ///</summary>
     HardwareProfile(
-        int number_of_digital_pins_,
+        int total_number_of_pins,
         int number_of_analog_pins_
         );
 
