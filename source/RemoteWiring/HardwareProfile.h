@@ -96,140 +96,117 @@ public:
         }
     }
 
-    property Platform::Array<uint8_t> ^AnalogPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^AnalogPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            auto arr = ref new Platform::Array<uint8_t>( _num_analog_pins );
-            for( uint8_t count = 0, pin = _analog_offset; pin < _total_pins; ++pin )
-            {
-                if( isAnalogSupported( pin ) )
+                for( uint8_t pin = _analog_offset; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( isAnalogSupported( pin ) )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return arr;
+            return vector;
         }
     }
 
-    property Platform::Array<uint8_t> ^DigitalPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^DigitalPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            byte *arr = new byte[_total_pins];
-            uint8_t count = 0;
-            for( uint8_t pin = 0; pin < _total_pins; ++pin )
-            {
-                if( isDigitalOutputSupported( pin ) )
+                for( uint8_t pin = 0; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( isDigitalOutputSupported( pin ) )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return ref new Platform::Array<uint8_t>( arr, count );
+            return vector;
         }
     }
 
-    property Platform::Array<uint8_t> ^DisabledPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^DisabledPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            byte *arr = new byte[_total_pins];
-            uint8_t count = 0;
-            for( uint8_t pin = 0; pin < _total_pins; ++pin )
-            {
-                if( getPinCapabilitiesBitmask( pin ) == 0 )
+                for( uint8_t pin = 0; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( getPinCapabilitiesBitmask( pin ) == 0 )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return ref new Platform::Array<uint8_t>( arr, count );
+            return vector;
         }
     }
 
-    property Platform::Array<uint8_t> ^I2cPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^I2cPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            byte *arr = new byte[_total_pins];
-            uint8_t count = 0;
-            for( uint8_t pin = 0; pin < _total_pins; ++pin )
-            {
-                if( isI2cSupported( pin ) )
+                for( uint8_t pin = 0; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( isI2cSupported( pin ) )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return ref new Platform::Array<uint8_t>( arr, count );
+            return vector;
         }
     }
 
-    property Platform::Array<uint8_t> ^PwmPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^PwmPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            byte *arr = new byte[_total_pins];
-            uint8_t count = 0;
-            for( uint8_t pin = 0; pin < _total_pins; ++pin )
-            {
-                if( isPwmSupported( pin ) )
+                for( uint8_t pin = 0; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( isPwmSupported( pin ) )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return ref new Platform::Array<uint8_t>( arr, count );
+            return vector;
         }
     }
 
-    property Platform::Array<uint8_t> ^ServoPins
+    property Windows::Foundation::Collections::IVector<uint8_t> ^ServoPins
     {
-        Platform::Array<uint8_t> ^ get()
+        Windows::Foundation::Collections::IVector<uint8_t> ^ get()
         {
-            if( !_is_valid )
+            auto vector = ref new Platform::Collections::Vector<uint8_t>();
+            if( _is_valid )
             {
-                return nullptr;
-            }
-
-            byte *arr = new byte[_total_pins];
-            uint8_t count = 0;
-            for( uint8_t pin = 0; pin < _total_pins; ++pin )
-            {
-                if( isServoSupported( pin ) )
+                for( uint8_t pin = 0; pin < _total_pins; ++pin )
                 {
-                    arr[count] = pin;
-                    ++count;
+                    if( isServoSupported( pin ) )
+                    {
+                        vector->Append( pin );
+                    }
                 }
             }
-            return ref new Platform::Array<uint8_t>( arr, count );
+            return vector;
         }
     }
     
