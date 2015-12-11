@@ -95,6 +95,143 @@ public:
             return _total_pins;
         }
     }
+
+    property Platform::Array<uint8_t> ^AnalogPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            auto arr = ref new Platform::Array<uint8_t>( _num_analog_pins );
+            for( uint8_t count = 0, pin = _analog_offset; pin < _total_pins; ++pin )
+            {
+                if( isAnalogSupported( pin ) )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return arr;
+        }
+    }
+
+    property Platform::Array<uint8_t> ^DigitalPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            byte *arr = new byte[_total_pins];
+            uint8_t count = 0;
+            for( uint8_t pin = 0; pin < _total_pins; ++pin )
+            {
+                if( isDigitalOutputSupported( pin ) )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return ref new Platform::Array<uint8_t>( arr, count );
+        }
+    }
+
+    property Platform::Array<uint8_t> ^DisabledPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            byte *arr = new byte[_total_pins];
+            uint8_t count = 0;
+            for( uint8_t pin = 0; pin < _total_pins; ++pin )
+            {
+                if( getPinCapabilitiesBitmask( pin ) == 0 )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return ref new Platform::Array<uint8_t>( arr, count );
+        }
+    }
+
+    property Platform::Array<uint8_t> ^I2cPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            byte *arr = new byte[_total_pins];
+            uint8_t count = 0;
+            for( uint8_t pin = 0; pin < _total_pins; ++pin )
+            {
+                if( isI2cSupported( pin ) )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return ref new Platform::Array<uint8_t>( arr, count );
+        }
+    }
+
+    property Platform::Array<uint8_t> ^PwmPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            byte *arr = new byte[_total_pins];
+            uint8_t count = 0;
+            for( uint8_t pin = 0; pin < _total_pins; ++pin )
+            {
+                if( isPwmSupported( pin ) )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return ref new Platform::Array<uint8_t>( arr, count );
+        }
+    }
+
+    property Platform::Array<uint8_t> ^ServoPins
+    {
+        Platform::Array<uint8_t> ^ get()
+        {
+            if( !_is_valid )
+            {
+                return nullptr;
+            }
+
+            byte *arr = new byte[_total_pins];
+            uint8_t count = 0;
+            for( uint8_t pin = 0; pin < _total_pins; ++pin )
+            {
+                if( isServoSupported( pin ) )
+                {
+                    arr[count] = pin;
+                    ++count;
+                }
+            }
+            return ref new Platform::Array<uint8_t>( arr, count );
+        }
+    }
     
     ///<summary>
     ///This default constructor accepts an IBuffer containing pin information which is assumed to be in the default Firmata protocol.
