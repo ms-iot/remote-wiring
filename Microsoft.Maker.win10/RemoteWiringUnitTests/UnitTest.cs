@@ -17,7 +17,7 @@ namespace RemoteWiringUnitTests
         private RemoteDevice arduinoDevice;
         private static IStream connection;
         private Dictionary<byte, PinState> pinStates = new Dictionary<byte, PinState>();
-        private Dictionary<byte, ushort> analogPinValues = new Dictionary<byte, ushort>();
+        private Dictionary<string, ushort> analogPinValues = new Dictionary<string, ushort>();
 
         [TestInitialize]
         public void InitTest()
@@ -142,7 +142,7 @@ namespace RemoteWiringUnitTests
             arduinoDevice.digitalWrite(pinOut, PinState.HIGH);
             arduinoDevice.AnalogPinUpdated += ArduinoDevice_AnalogPinUpdated;
 
-            SpinWait.SpinUntil(() => (analogPinValues.ContainsKey(14)), TIMEOUT);
+            SpinWait.SpinUntil(() => (analogPinValues.ContainsKey(pinInAnalog)), TIMEOUT);
 
             ushort state = arduinoDevice.analogRead(pinInAnalog);
             Assert.IsTrue( expectedValue - state <= 100, "Analog Value {0} is not within 100 of expected value {1}", state, expectedValue);
@@ -206,7 +206,7 @@ namespace RemoteWiringUnitTests
             this.pinStates.Add(pin, state);
         }
 
-        private void ArduinoDevice_AnalogPinUpdated(byte pin, ushort value)
+        private void ArduinoDevice_AnalogPinUpdated(string pin, ushort value)
         {
             this.analogPinValues.Remove(pin);
             this.analogPinValues.Add(pin, value);
