@@ -390,7 +390,7 @@ RemoteDevice::onAnalogReport(
     }
 
     //throw an event for the pin value update
-    AnalogPinUpdated( pin, val );
+    AnalogPinUpdated( L"A" + pin.ToString(), val );
 }
 
 void
