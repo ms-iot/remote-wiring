@@ -1,4 +1,5 @@
-﻿using Microsoft.Maker.Serial;
+﻿using Microsoft.Maker.RemoteWiring;
+using Microsoft.Maker.Serial;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,44 +10,64 @@ using Windows.Devices.Enumeration;
 
 namespace RemoteWiringUnitTests
 {
+    public enum DeviceState
+    {
+        Empty,
+        Ready,
+        Error
+    }
+
     /// <summary>
     /// Helper class for gathering device information or connecting to devices
     /// </summary>
-    public static class RemoteDeviceHelper
+    public class RemoteDeviceHelper
     {
-        /// <summary>
-        /// Get arduino devices connected.
-        /// </summary>
-        /// <remarks>Requires arduino drivers installed for name resolution</remarks>
-        /// <returns>last arduino device found</returns>
-        public static DeviceInformation GetDevice()
+
+        public DeviceState DeviceState;
+
+        private MockStream mockFirmataStream;
+
+        public RemoteDevice CreateDeviceUnderTestAndConnect(MockBoard board)
         {
-            DeviceInformation returnDevice = null;
-            Task<DeviceInformationCollection> task = GetDeviceListAsync();
-            var result = task.Result;
-            foreach (DeviceInformation device in result)
+            // setup and start connection events
+            RemoteDevice device = null;
+
+            mockFirmataStream = new MockStream(board);
+            device = new RemoteDevice(mockFirmataStream);
+            device.DeviceReady += OnDeviceReady;
+            device.DeviceConnectionFailed += OnConnectionFailed;
+            mockFirmataStream.begin(0, SerialConfig.SERIAL_8N1);
+
+            // Wait for connection
+            DateTime timeout = DateTime.UtcNow.AddMilliseconds(10000);
+            System.Threading.SpinWait.SpinUntil(() => (
+                timeout <= DateTime.UtcNow ||
+                mockFirmataStream.connectionReady() ||
+                 this.DeviceState == DeviceState.Ready
+                ));
+
+            foreach(var pin in board.Pins)
             {
-                if (device.Name.Contains("Arduino"))
-                    returnDevice = device;
+                pin.CurrentValueChanged += Pin_CurrentValueChanged;
             }
 
-            return returnDevice;
+            return device;
         }
 
-        /// <summary>
-        /// Gather list of all devices (including non-arduino) attached via USB
-        /// </summary>
-        /// <returns>DeviceInformationCollection of devices</returns>
-        public static Task<DeviceInformationCollection> GetDeviceListAsync()
+        private void Pin_CurrentValueChanged(object sender, EventArgs e)
         {
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource(30000);
-            Task<DeviceInformationCollection> task = UsbSerial.listAvailableDevicesAsync().AsTask<DeviceInformationCollection>(cancelTokenSource.Token);
-            return task;
+            var pin = sender as MockPin;
+            this.mockFirmataStream.SendDigitalUpdateMessage((byte)pin.Number, (PinState)pin.CurrentValue);
         }
-    }
 
-    internal static class ExpectedDeviceHardware
-    {
+        private void OnConnectionFailed(string message)
+        {
+            this.DeviceState = DeviceState.Error;
+        }
 
+        private void OnDeviceReady()
+        {
+            this.DeviceState = DeviceState.Ready;
+        }
     }
 }
