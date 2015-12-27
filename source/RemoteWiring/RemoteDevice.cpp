@@ -305,8 +305,11 @@ RemoteDevice::pinMode(
         }
         catch( ... )
         {
-            //do nothing
+            //something has gone wrong, any fatal errors should be evented, so we need to exit this function
+            _firmata->unlock();
+            return;
         }
+
         _firmata->unlock();
 
         //if the pin mode is being set to output, and it isn't already in output mode, the pin value is set to 0
@@ -568,7 +571,7 @@ RemoteDevice::onConnectionReady(
             }
             catch( ... )
             {
-                //do nothing
+                //if an error occurs here we count it as an attempt and continue.
             }
 
             _firmata->unlock();
