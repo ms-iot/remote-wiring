@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <mutex>
 #include "TwoWire.h"
+#include "HardwareProfile.h"
 
 namespace Microsoft {
 namespace Maker {
@@ -44,8 +45,9 @@ public enum class PinMode
     ONEWIRE = 0x07,
     STEPPER = 0x08,
     ENCODER = 0x09,
-    IGNORED = 0x7F,
-    TOTAL_PIN_MODES = 0x0B,
+    SERIAL = 0x0A,
+    PULLUP = 0x0B,
+    IGNORED = 0x7F
 };
 
 public enum class PinState
@@ -55,11 +57,11 @@ public enum class PinState
 };
 
 public delegate void DigitalPinUpdatedCallback( uint8_t pin, PinState state );
-public delegate void AnalogPinUpdatedCallback( uint8_t pin, uint16_t value );
+public delegate void AnalogPinUpdatedCallback( Platform::String ^pin, uint16_t value );
 public delegate void SysexMessageReceivedCallback( uint8_t command, Windows::Storage::Streams::DataReader ^message );
 public delegate void StringMessageReceivedCallback( Platform::String ^message );
 public delegate void RemoteDeviceConnectionCallback();
-public delegate void RemoteDeviceConnectionCallbackWithMessage( Platform::String^ message );
+public delegate void RemoteDeviceConnectionCallbackWithMessage( Platform::String ^message );
 
 public ref class RemoteDevice sealed {
 
@@ -86,6 +88,18 @@ public:
             return _twoWire;
         }
     };
+
+    property HardwareProfile ^ DeviceHardwareProfile
+    {
+        Microsoft::Maker::RemoteWiring::HardwareProfile ^ get()
+        {
+            if( _initialized && _hardwareProfile->IsValid )
+            {
+                return _hardwareProfile;
+            }
+            return nullptr;
+        }
+    }
 
     [Windows::Foundation::Metadata::DefaultOverload]
     RemoteDevice(
@@ -205,14 +219,14 @@ private:
     static const size_t MAX_PINS = 128;
     static const size_t MAX_ANALOG_PINS = 16;
 
-    //stateful members received from the device
-    std::atomic_int _analog_offset;
-    std::atomic_int _num_analog_pins;
-    std::atomic_int _total_pins;
+    //initialized state member
     std::atomic_bool _initialized;
 
+    //hardware profile
+    HardwareProfile ^_hardwareProfile;
+
     //initialization for constructor
-    void const initialize();
+    void const initialize( HardwareProfile ^hardwareProfile_ );
 
     //a reference to the UAP firmata interface
     Firmata::UwpFirmata ^_firmata;
@@ -232,6 +246,12 @@ private:
         uint8_t, int *,
         uint8_t *
     );
+
+    bool
+    isModeSupported(
+        uint8_t pin_,
+        PinMode mode_
+        );
 
     //returns a uint8_t type parsed from a Platform::String ^
     uint8_t
