@@ -38,9 +38,9 @@ HardwareProfile::HardwareProfile(
     Protocol protocol_
     ) :
     _is_valid( ATOMIC_VAR_INIT( false ) ),
-    _total_pins( ATOMIC_VAR_INIT( 0 ) ),
+    _total_pin_count( ATOMIC_VAR_INIT( 0 ) ),
     _analog_offset( ATOMIC_VAR_INIT( 0 ) ),
-    _num_analog_pins( ATOMIC_VAR_INIT( 0 ) ),
+    _analog_pin_count( ATOMIC_VAR_INIT( 0 ) ),
     _pinCapabilities( nullptr ),
     _analogResolutions( nullptr ),
     _pwmResolutions( nullptr ),
@@ -48,10 +48,12 @@ HardwareProfile::HardwareProfile(
 {
     switch( protocol_ )
     {
-    default:
     case Protocol::FIRMATA:
         initializeWithFirmata( buffer_ );
         break;
+
+    default:
+        throw ref new Platform::Exception( E_INVALIDARG, "An invalid or unsupported Protocol was specified in HardwareProfile constructor." );
     }
 }
 
@@ -60,9 +62,9 @@ HardwareProfile::HardwareProfile(
     int number_of_analog_pins_
     ) :
     _is_valid( ATOMIC_VAR_INIT( false ) ),
-    _total_pins( ATOMIC_VAR_INIT( total_number_of_pins_ ) ),
+    _total_pin_count( ATOMIC_VAR_INIT( total_number_of_pins_ ) ),
     _analog_offset( ATOMIC_VAR_INIT( total_number_of_pins_ - number_of_analog_pins_ ) ),
-    _num_analog_pins( ATOMIC_VAR_INIT( number_of_analog_pins_ ) ),
+    _analog_pin_count( ATOMIC_VAR_INIT( number_of_analog_pins_ ) ),
     _pinCapabilities( nullptr ),
     _analogResolutions( nullptr ),
     _pwmResolutions( nullptr ),
@@ -103,10 +105,10 @@ HardwareProfile::~HardwareProfile()
 
 uint8_t
 HardwareProfile::getPinCapabilitiesBitmask(
-    uint8_t pin_
+    size_t pin_
     )
 {
-    if( !_is_valid || _pinCapabilities == nullptr || pin_ < 0 || pin_ >= _total_pins )
+    if( !_is_valid || _pinCapabilities == nullptr || pin_ >= _total_pin_count )
     {
         return 0;
     }
@@ -115,7 +117,7 @@ HardwareProfile::getPinCapabilitiesBitmask(
 
 bool
 HardwareProfile::isAnalogSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::ANALOG ) ) > 0;
@@ -123,7 +125,7 @@ HardwareProfile::isAnalogSupported(
 
 bool
 HardwareProfile::isDigitalInputSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT ) ) > 0;
@@ -131,7 +133,7 @@ HardwareProfile::isDigitalInputSupported(
 
 bool
 HardwareProfile::isDigitalInputPullupSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::INPUT_PULLUP ) ) > 0;
@@ -139,7 +141,7 @@ HardwareProfile::isDigitalInputPullupSupported(
 
 bool
 HardwareProfile::isDigitalOutputSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::OUTPUT ) ) > 0;
@@ -147,7 +149,7 @@ HardwareProfile::isDigitalOutputSupported(
 
 bool
 HardwareProfile::isI2cSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::I2C ) ) > 0;
@@ -155,7 +157,7 @@ HardwareProfile::isI2cSupported(
 
 bool
 HardwareProfile::isPwmSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::PWM ) ) > 0;
@@ -163,7 +165,7 @@ HardwareProfile::isPwmSupported(
 
 bool
 HardwareProfile::isServoSupported(
-    uint8_t pin_
+    size_t pin_
     )
 {
     return ( getPinCapabilitiesBitmask( pin_ ) & static_cast<uint8_t>( PinCapability::SERVO ) ) > 0;
@@ -186,6 +188,7 @@ HardwareProfile::initializeWithFirmata(
     auto reader = Windows::Storage::Streams::DataReader::FromBuffer( buffer_ );
     auto size = buffer_->Length;
 
+    bool found_errors = false;
     uint8_t *data = (uint8_t *)malloc( sizeof( uint8_t ) * size );
     for( unsigned int i = 0; i < size; ++i )
     {
@@ -200,11 +203,11 @@ HardwareProfile::initializeWithFirmata(
     std::map<uint8_t, uint8_t> *pwmResolutions = new std::map<uint8_t, uint8_t>; //K = pin number, V = resolution value in bits
     std::map<uint8_t, uint8_t> *servoResolutions = new std::map<uint8_t, uint8_t>; //K = pin number, V = resolution value in bits
 
-    for( unsigned int i = 0; i < size; ++i )
+    for( unsigned int i = 0; !found_errors && i < size; ++i )
     {
         uint8_t currentPinCapabilities = 0;
 
-        while( i < size && data[i] != FIRMATA_END_OF_PIN_VALUE )
+        while( !found_errors && i < size && data[i] != FIRMATA_END_OF_PIN_VALUE )
         {
             PinMode mode = static_cast<PinMode>( data[i] );
             switch( mode )
@@ -220,7 +223,10 @@ HardwareProfile::initializeWithFirmata(
                         currentPinCapabilities |= static_cast<uint8_t>( PinCapability::INPUT );
                     }
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -236,7 +242,10 @@ HardwareProfile::initializeWithFirmata(
                         currentPinCapabilities |= static_cast<uint8_t>( PinCapability::OUTPUT );
                     }
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -252,7 +261,10 @@ HardwareProfile::initializeWithFirmata(
                         currentPinCapabilities |= static_cast<uint8_t>( PinCapability::INPUT_PULLUP );
                     }
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -266,7 +278,10 @@ HardwareProfile::initializeWithFirmata(
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::ANALOG );
                     analogResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 //analog offset keeps track of the first pin found that supports analog read, tells us how many digital pins we have,
@@ -288,7 +303,10 @@ HardwareProfile::initializeWithFirmata(
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::PWM );
                     pwmResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -302,7 +320,10 @@ HardwareProfile::initializeWithFirmata(
                     currentPinCapabilities |= static_cast<uint8_t>( PinCapability::SERVO );
                     servoResolutions->insert( std::make_pair( total_pins, data[i] ) );
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -318,7 +339,10 @@ HardwareProfile::initializeWithFirmata(
                         currentPinCapabilities |= static_cast<uint8_t>( PinCapability::I2C );
                     }
                 }
-                else return;    //we've failed to get all of the data
+                else
+                {
+                    found_errors = true;    //we've failed to get all of the data
+                }
                 ++i;
 
                 break;
@@ -338,13 +362,19 @@ HardwareProfile::initializeWithFirmata(
     if( total_pins != pinCapabilities->size() ||
         num_analog_pins != analogResolutions->size() )
     {
+        found_errors = true;
+    }
+
+    free( data );
+    if( found_errors )
+    {
         return;
     }
 
     //we've successfully parsed a valid capability response. Set all members of this class and mark it as valid.
-    _total_pins = total_pins;
+    _total_pin_count = total_pins;
     _analog_offset = analog_offset;
-    _num_analog_pins = num_analog_pins;
+    _analog_pin_count = num_analog_pins;
     _pinCapabilities = pinCapabilities;
     _analogResolutions = analogResolutions;
     _pwmResolutions = pwmResolutions;

@@ -65,7 +65,7 @@ public:
     {
         int get()
         {
-            return _num_analog_pins;
+            return _analog_pin_count;
         }
     }
 
@@ -92,7 +92,7 @@ public:
     {
         int get()
         {
-            return _total_pins;
+            return _total_pin_count;
         }
     }
 
@@ -103,7 +103,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = _analog_offset; pin < _total_pins; ++pin )
+                for( size_t pin = _analog_offset; pin < _total_pin_count; ++pin )
                 {
                     if( isAnalogSupported( pin ) )
                     {
@@ -122,7 +122,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = 0; pin < _total_pins; ++pin )
+                for( size_t pin = 0; pin < _total_pin_count; ++pin )
                 {
                     if( isDigitalOutputSupported( pin ) )
                     {
@@ -141,7 +141,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = 0; pin < _total_pins; ++pin )
+                for( size_t pin = 0; pin < _total_pin_count; ++pin )
                 {
                     if( getPinCapabilitiesBitmask( pin ) == 0 )
                     {
@@ -160,7 +160,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = 0; pin < _total_pins; ++pin )
+                for( size_t pin = 0; pin < _total_pin_count; ++pin )
                 {
                     if( isI2cSupported( pin ) )
                     {
@@ -179,7 +179,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = 0; pin < _total_pins; ++pin )
+                for( size_t pin = 0; pin < _total_pin_count; ++pin )
                 {
                     if( isPwmSupported( pin ) )
                     {
@@ -198,7 +198,7 @@ public:
             auto vector = ref new Platform::Collections::Vector<uint8_t>();
             if( _is_valid )
             {
-                for( uint8_t pin = 0; pin < _total_pins; ++pin )
+                for( size_t pin = 0; pin < _total_pin_count; ++pin )
                 {
                     if( isServoSupported( pin ) )
                     {
@@ -254,7 +254,7 @@ public:
     ///</summary>
     uint8_t
     getPinCapabilitiesBitmask(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -264,7 +264,7 @@ public:
     ///</summary>
     bool
     isAnalogSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -274,7 +274,7 @@ public:
     ///</summary>
     bool
     isDigitalInputSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -284,7 +284,7 @@ public:
     ///</summary>
     bool
     isDigitalInputPullupSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -294,7 +294,7 @@ public:
     ///</summary>
     bool
     isDigitalOutputSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -304,7 +304,7 @@ public:
     ///</summary>
     bool
     isI2cSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -314,7 +314,7 @@ public:
     ///</summary>
     bool
     isPwmSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
     ///<summary>
@@ -324,7 +324,7 @@ public:
     ///</summary>
     bool
     isServoSupported(
-        uint8_t pin_
+        size_t pin_
         );
 
 private:
@@ -332,8 +332,8 @@ private:
 
     //stateful members received from the device
     std::atomic_int _analog_offset;
-    std::atomic_int _num_analog_pins;
-    std::atomic_int _total_pins;
+    std::atomic_int _analog_pin_count;
+    std::atomic_int _total_pin_count;
     std::vector<uint8_t> *_pinCapabilities;
     //for each of the following maps: K = pin number, V = resolution value in bits
     std::map<uint8_t, uint8_t> *_analogResolutions;
