@@ -140,7 +140,7 @@ namespace RemoteWiringUnitTests
             Debug.WriteLine("Unlock requested");
         }
 
-        public uint write(byte c_)
+        public ushort write(byte c_)
         {
             this.ActiveReadBuffer.Add(c_);
             return 1;
@@ -211,6 +211,51 @@ namespace RemoteWiringUnitTests
             {
                 portValue &= (UInt16)~port_mask;
             }
+        }
+
+        public ushort print(byte[] buffer_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(double value_, short decimal_place_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(double value_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(uint value_, Radix base_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(uint value_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(int value_, Radix base_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(int value_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort print(byte c_)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ushort write(byte[] buffer_)
+        {
+            throw new NotImplementedException();
         }
     }
 }
