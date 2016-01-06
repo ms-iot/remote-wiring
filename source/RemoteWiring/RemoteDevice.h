@@ -101,7 +101,7 @@ public:
         }
     }
 
-    [Windows::Foundation::Metadata::DefaultOverload]
+    [Windows::Foundation::Metadata::DefaultOverloadAttribute]
     RemoteDevice(
         Serial::IStream ^serial_connection_
     );
@@ -169,7 +169,7 @@ public:
     ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///<param name="mode_">The desired mode for the given pin.</param>
     ///</summary>
-    [Windows::Foundation::Metadata::DefaultOverload]
+    [Windows::Foundation::Metadata::DefaultOverloadAttribute]
     void
     pinMode(
         uint8_t pin_,
@@ -195,7 +195,7 @@ public:
     ///that allows the RemoteDevice class to maintain consistency with your apps.</para>
     ///<param name="pin_">A raw pin number which will be treated "as is" and used exactly as given.</param>
     ///</summary>
-    [Windows::Foundation::Metadata::DefaultOverload]
+    [Windows::Foundation::Metadata::DefaultOverloadAttribute]
     PinMode
     getPinMode(
         uint8_t pin_

@@ -214,7 +214,6 @@ public:
     ///This default constructor accepts an IBuffer containing pin information which is assumed to be in the default Firmata protocol.
     ///<param name="buffer_">The input IBuffer object reference</param>
     ///</summary>
-    [Windows::Foundation::Metadata::DefaultOverload]
     inline
     HardwareProfile(
         Windows::Storage::Streams::IBuffer ^buffer_
@@ -228,6 +227,7 @@ public:
     ///<param name="buffer_">The input IBuffer object reference</param>
     ///<param name="protocol_">The protocol used to describe the device configuration</param>
     ///</summary>
+    [Windows::Foundation::Metadata::DefaultOverloadAttribute]
     HardwareProfile(
         Windows::Storage::Streams::IBuffer ^buffer_,
         Protocol protocol_
