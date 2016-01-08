@@ -27,11 +27,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj">
+      <Project>{02438027-2444-49cb-87bf-ac4d4df8ef0f}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.Windows\Microsoft.Maker.Firmata.Windows.vcxproj">
       <Project>{8c570513-5fb3-4586-a757-b910e56b66a9}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj">
-      <Project>{02438027-2444-49cb-87bf-ac4d4df8ef0f}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">

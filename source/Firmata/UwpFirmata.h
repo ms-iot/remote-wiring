@@ -309,7 +309,7 @@ public:
     ///<summary>
     ///This function will send a sysex message with one of the pre-defined command types reserved by the Firmata protocol
     ///</summary>
-    [Windows::Foundation::Metadata::DefaultOverload]
+    [Windows::Foundation::Metadata::DefaultOverloadAttribute]
     void
     sendSysex(
         SysexCommand command_,

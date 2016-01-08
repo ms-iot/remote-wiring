@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Microsoft.Maker.Serial\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj">
+    <ProjectReference Include="..\..\..\source\Serial\Microsoft.Maker.Serial.win8_1\Microsoft.Maker.Serial.Windows\Microsoft.Maker.Serial.Windows.vcxproj">
       <Project>{02438027-2444-49cb-87bf-ac4d4df8ef0f}</Project>
     </ProjectReference>
   </ItemGroup>
