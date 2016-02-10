@@ -594,11 +594,11 @@ UwpFirmata::reassembleByteString(
     )
 {
     //each char must be reassembled from the two 7-bit bytes received, therefore length should always be an even number.
-	size_t i;
-	for( i = 0; i < length_ / 2; ++i )
-	{
-		byte_string_[i] = byte_string_[i * 2 + 0] | ( byte_string_[i * 2 + 1] << 7 );
-	}
+    size_t i;
+    for( i = 0; i < length_ / 2; ++i )
+    {
+        byte_string_[i] = byte_string_[i * 2 + 0] | ( byte_string_[i * 2 + 1] << 7 );
+    }
     byte_string_[i] = 0;
 }
 
