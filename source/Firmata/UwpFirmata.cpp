@@ -423,6 +423,7 @@ UwpFirmata::sendString(
         }
 
         _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+        _firmata_stream->flush();
     }
 }
 
@@ -454,6 +455,7 @@ UwpFirmata::sendSysex(
     }
 
     _firmata_stream->write( static_cast<uint8_t>( Command::END_SYSEX ) );
+    _firmata_stream->flush();
 }
 
 void
