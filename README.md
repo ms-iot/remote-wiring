@@ -167,8 +167,8 @@ This sample shows how to construct the two necessary objects, an `IStream` imple
 
 
 ```c#
-        using namespace Microsoft.Maker.RemoteWiring;
-        using namespace Microsoft.Maker.Serial;
+        using Microsoft.Maker.RemoteWiring;
+        using Microsoft.Maker.Serial;
 		
 		IStream connection;
 		RemoteDevice arduino;
@@ -184,7 +184,7 @@ This sample shows how to construct the two necessary objects, an `IStream` imple
 			arduino.DeviceReady += Setup;
 			
 			//always begin your IStream
-			bt.begin( 115200, SerialConfig.SERIAL_8N1 );
+			connection.begin( 115200, SerialConfig.SERIAL_8N1 );
 		}
 		
 		//treat this function like "setup()" in an Arduino sketch.
