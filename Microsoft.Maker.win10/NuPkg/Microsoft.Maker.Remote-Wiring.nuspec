@@ -2,14 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Windows-Remote-Arduino</id>
-        <version>1.3.0</version>
+        <version>1.4.0</version>
         <title>Windows Remote Arduino for Windows 10 and Windows 10 IoT core</title>
         <authors>Microsoft</authors>
         <licenseUrl>https://github.com/ms-iot/remote-wiring/blob/develop/license.txt</licenseUrl>
         <projectUrl>https://github.com/ms-iot/remote-wiring</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Windows Remote Arduino is an open-source Windows Runtime Component library which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for Windows Runtime (WinRT) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the Firmata protocol, which is implemented in a pre-packaged Firmata library included in the Arduino software obtained from http://arduino.cc.</description>
-    </metadata>
+        <description>Windows Remote Arduino is an open-source Windows Runtime Component library which allows Makers to control an Arduino</description>
+		<summary>Windows Remote Arduino is an open-source Windows Runtime Component library which allows Makers to control an Arduino through a Bluetooth, USB, WiFi, or Ethernet connection! It is intended for Windows Runtime (WinRT) Developers who want to harness the power of Arduino hardware using the Windows Runtime Languages. Developers who include this component in their projects will automatically have access to its features in any of the WinRT languages (C++/CX, C# and JavaScript). The library is built on top of the Firmata protocol, which is implemented in a pre-packaged Firmata library included in the Arduino software obtained from http://arduino.cc.</summary>
+	</metadata>
     <files>
         <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.dll" target="runtimes\win10-arm\native\Microsoft.Maker.Firmata.dll" />
         <file src="..\ARM\Release\Microsoft.Maker.Firmata\Microsoft.Maker.Firmata.winmd" target="lib\uap10.0\Microsoft.Maker.Firmata.winmd" />
