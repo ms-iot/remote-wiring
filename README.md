@@ -87,7 +87,7 @@ The wrapper does not change or add functionality, it only provides parameter smo
 One advantage UwpFirmata provides through the Windows operating system is the ability to read inputs on a background thread, rather than being constricted to a single thread of execution. In most cases, this thread is created and managed completely by the library. However, if you choose to construct the Firmata layer (UwpFirmata object) yourself, you can choose to enable this feature or not. If your project does not require reading inputs from the Arduino (or if you want to handle them yourself), you may be interested in heading to the [advanced usage](advanced.md) section for more information!
 
 ###Serial
-Serial is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `USBSerial` for wired connections on Windows 10 (USB is not supported on Windows 8.1). There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
+Serial is the transport layer, which provides the physical communication between applications and the Arduino device. IStream is the interface which defines the requirements of a communication stream between the Arduino and the application itself. Currently, this is implemented in the default library with the `BluetoothSerial` class as well as `UsbSerial` for wired connections on Windows 10 (USB is not supported on Windows 8.1). There are five functions which need to be implemented should you choose to extend the capabilities of the library with other communication methods. These functions MUST be guaranteed to be synchronous operations in order to be consumed by the Firmata layer.
 
 - `begin(int, SerialConfig)` -> `void` -- initializes the stream, the SerialConfig is important when using USB. Default for Arduino is SERIAL_8N1
 - `end(void)` -> `void` -- finalizes the stream
@@ -167,8 +167,8 @@ This sample shows how to construct the two necessary objects, an `IStream` imple
 
 
 ```c#
-        using namespace Microsoft.Maker.RemoteWiring;
-        using namespace Microsoft.Maker.Serial;
+        using Microsoft.Maker.RemoteWiring;
+        using Microsoft.Maker.Serial;
 		
 		IStream connection;
 		RemoteDevice arduino;
@@ -184,7 +184,7 @@ This sample shows how to construct the two necessary objects, an `IStream` imple
 			arduino.DeviceReady += Setup;
 			
 			//always begin your IStream
-			bt.begin( 115200, SerialConfig.SERIAL_8N1 );
+			connection.begin( 115200, SerialConfig.SERIAL_8N1 );
 		}
 		
 		//treat this function like "setup()" in an Arduino sketch.
