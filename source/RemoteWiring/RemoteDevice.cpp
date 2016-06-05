@@ -181,7 +181,7 @@ RemoteDevice::digitalRead(
         }
 
         //we want to verify that the pin is in INPUT mode, but OUTPUT will technically work as well (mimic Arduino behavior here)
-        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) )
+        if( _pin_mode[pin_] != static_cast<uint8_t>( PinMode::INPUT ) && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::OUTPUT ) && _pin_mode[pin_] != static_cast<uint8_t>( PinMode::PULLUP ))
         {
             //incorrect pin mode
             return PinState::LOW;
@@ -287,7 +287,7 @@ RemoteDevice::pinMode(
             _firmata->write( static_cast<uint8_t>( mode_ ) );
 
             //lets subscribe to this port if we're setting it to input
-            if( mode_ == PinMode::INPUT )
+            if( mode_ == PinMode::INPUT || mode_ == PinMode::PULLUP )
             {
                 _subscribed_ports[port] |= port_mask;
                 _firmata->write( static_cast<uint8_t>( Firmata::Command::REPORT_DIGITAL_PIN ) | ( port & 0x0F ) );
