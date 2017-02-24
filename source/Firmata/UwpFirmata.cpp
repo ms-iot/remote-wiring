@@ -48,11 +48,25 @@ UwpFirmata::UwpFirmata(
     _firmata_stream(nullptr),
     _connection_ready(ATOMIC_VAR_INIT(false)),
     _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
+    _polling_interval(0),
     firmwareVersionMajor(0),
     firmwareVersionMinor(0)
 {
 }
 
+UwpFirmata::UwpFirmata(
+    uint64_t polling_interval_
+) :
+    _data_buffer(new uint16_t[DATA_BUFFER_SIZE]),
+    _firmata_lock(_firmutex, std::defer_lock),
+    _firmata_stream(nullptr),
+    _connection_ready(ATOMIC_VAR_INIT(false)),
+    _input_thread_should_exit(ATOMIC_VAR_INIT(false)),
+    _polling_interval(polling_interval_),
+    firmwareVersionMajor(0),
+    firmwareVersionMinor(0)
+{
+}
 
 //******************************************************************************
 //* Destructors
@@ -555,6 +569,11 @@ UwpFirmata::inputThread(
         catch( Platform::Exception ^e )
         {
             OutputDebugString( e->Message->Begin() );
+        }
+
+        if (_polling_interval)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(_polling_interval));
         }
     }
 }
