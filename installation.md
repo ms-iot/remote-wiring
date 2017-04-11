@@ -1,4 +1,4 @@
-#Installation
+# Installation
 
 There are three ways to add the Windows Remote Arduino library to your solution, in order from easiest to most difficult.
 
@@ -7,7 +7,7 @@ There are three ways to add the Windows Remote Arduino library to your solution,
 
 Of these options, installing the NuGet package is by far the easiest.
 
-##Option 1: Install the NuGet package
+## Option 1: Install the NuGet package
 
 NuGet is a quick and easy way to automatically install the packages and setup dependencies. Within Visual Studio simply open the Package Management Console and select the target project, then issue the following command:
 
@@ -15,9 +15,9 @@ NuGet is a quick and easy way to automatically install the packages and setup de
 Install-Package Windows-Remote-Arduino
 ```
 
-##Option 2: Add the Windows Remote Arduino projects to your solution
+## Option 2: Add the Windows Remote Arduino projects to your solution
 
-###Step 1: Create a new project!
+### Step 1: Create a new project!
 
 1. *File -> New Project*
 
@@ -30,7 +30,7 @@ Install-Package Windows-Remote-Arduino
  ![Windows Universal](https://ms-iot.github.io/content/images/remote-wiring/create_01.png)
 
 
-###Step 2: Add Windows Remote Arduino projects to your solution
+### Step 2: Add Windows Remote Arduino projects to your solution
 
 1. Clone the [Windows Remote Arduino GitHub repository](https://github.com/ms-iot/remote-wiring/).
 
@@ -64,28 +64,28 @@ Install-Package Windows-Remote-Arduino
  
 9. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
-###Step 3: Have fun!!
+### Step 3: Have fun!!
 
 You can now use the three projects directly in your source code! You will notice I have constructed a BluetoothSerial object and attached it to my RemoteDevice object, so I have included the two appropriate namespaces at the top of my .cs file.
 
  ![Have Fun!](https://ms-iot.github.io/content/images/remote-wiring/utilize_00.png)
 
  
-#Device Capabilities
+# Device Capabilities
 
 Each Windows project will contain a manifest file that must be configured to allow certain permissions, such as Bluetooth and USB connectivity. Fortunately, it is fairly easy to configure these.
 
 You will need to open the package.appxmanifest file of your project by right-clicking and selecting the "View Code" option. Then find the <Capabilities> tag and paste one or both of the following tag blocks as a child node.
 
-####Note:
+#### Note:
 For **Windows 8.1**, you will need to add the following namespace to the top of the XML file, inside the `<Package>` tag.
 
 `xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest"`
 
-##Enabling Bluetooth Capabilities
+## Enabling Bluetooth Capabilities
 You will need to add one of the following XML blocks to your manifest file, inside the <Capabilities> tag, in order to invoke the Bluetooth/USB capabilities of a WinRT application, depending on which OS version you are targetting.
 
-###Windows 10
+### Windows 10
 ```xml
 <DeviceCapability Name="bluetooth.rfcomm">
   <Device Id="any">
@@ -94,7 +94,7 @@ You will need to add one of the following XML blocks to your manifest file, insi
 </DeviceCapability>
 ```
 
-###Windows 8.1
+### Windows 8.1
 ```xml
 <m2:DeviceCapability Name="bluetooth.rfcomm">
   <m2:Device Id="any">
@@ -103,19 +103,19 @@ You will need to add one of the following XML blocks to your manifest file, insi
 </m2:DeviceCapability>
 ```
 
-##Enabling Network Capabilities
+## Enabling Network Capabilities
 You will need to add one of the following XML blocks to your manifest file, inside the <Capabilities> tag, in order to invoke the network socket capabilities of a WinRT application.
 
-###Windows 10 and Windows 8.1
+### Windows 10 and Windows 8.1
 ```xml
 <Capability Name="privateNetworkClientServer"/>
 <Capability Name="internetClientServer"/>
 ```
 
-##Enabling USB Capabilities
+## Enabling USB Capabilities
 You will need to add one of the following XML blocks to your manifest file in order to invoke the USB capabilities of a WinRT application, depending on which OS version you are targetting.
 
-###Windows 10
+### Windows 10
 ```xml
 <DeviceCapability Name="serialcommunication">
   <Device Id="any">
@@ -124,6 +124,6 @@ You will need to add one of the following XML blocks to your manifest file in or
 </DeviceCapability>
 ```
 
-###Windows 8.1
+### Windows 8.1
 
 Unfortunately, this library does not support USB on Windows 8.1.

@@ -1,8 +1,8 @@
-#Hooking up your Bluetooth device
+# Hooking up your Bluetooth device
 
 This guide walks you through the steps to hook up a Bluetooth device to your Arduino!  We recommend the [SparkFun Bluetooth Mate Silver](https://www.sparkfun.com/products/12576) for this tutorial.
 
-####Important Note:
+#### Important Note:
 
 Some Arduino devices, such as the Uno, only have a single `Serial` line to communicate over pins 0 and 1 as well as via USB to your computer. If you are using one of these devices, you will either need to program your Arduino *before* you hook up pins 0 and 1 to the Bluetooth device, or you will have to disconnect these wires *each time* you upload a sketch to your Arduino.
 
