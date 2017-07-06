@@ -21,13 +21,13 @@ Install-Package Windows-Remote-Arduino
 
 1. *File -> New Project*
 
- ![New Project](https://ms-iot.github.io/content/images/remote-wiring/create_00.png)
+ ![New Project](./images/create_00.png)
 
 2. Select your language of choice. Windows Remote Arduino is a WinRT component, meaning it is compatable with C++, C#, or JavaScript.
 
 3. You'll see I have chosen C# by expanding the "Visual C#" menu. Select the "Windows" option and choose "Blank App (Windows Universal)" or "Blank App (Windows 8.1 Universal)" if you are building for Windows 8.1.
 
- ![Windows Universal](https://ms-iot.github.io/content/images/remote-wiring/create_01.png)
+ ![Windows Universal](./images/create_01.png)
 
 
 ### Step 2: Add Windows Remote Arduino projects to your solution
@@ -36,31 +36,31 @@ Install-Package Windows-Remote-Arduino
 
 2. Right-click on your solution in the Solution Explorer and select *Add -> Existing Project*
 
- ![Add existing project](https://ms-iot.github.io/content/images/remote-wiring/project_00.png)
+ ![Add existing project](./images/project_00.png)
 
 3. Navigate to your local copy of the repository. You'll see here that I've cloned it to **C:\git\remote-wiring**, but you can choose a different directory. Then, open the appropriate solution folder for your build environment (either Windows 10 or Windows 8.1).
 
- ![Open the solution directory](https://ms-iot.github.io/content/images/remote-wiring/compile_00.png)
+ ![Open the solution directory](./images/compile_00.png)
 
 4. Let's start with the Serial project (Microsoft.Maker.Serial). Open this directory.
 
- ![Serial directory](https://ms-iot.github.io/content/images/remote-wiring/project_01.png)
+ ![Serial directory](./images/project_01.png)
 
 5. Select the *.vcxproj* file. (If you are targeting Windows 8.1, you will first have to choose between Windows and Windows Phone platform directories. You do not have to do this for Windows 10, as it is Universal to all platforms!)
 
- ![Select vcxproj](https://ms-iot.github.io/content/images/remote-wiring/project_02.png)
+ ![Select vcxproj](./images/project_02.png)
 
 6. Right-click on "References" in your project. Select *Add Reference*
 
- ![Add Reference](https://ms-iot.github.io/content/images/remote-wiring/project_05.png)
+ ![Add Reference](./images/project_05.png)
 
 7. Under the "Projects" tab, select all three of the Microsoft.Maker projects
 
- ![Project References](https://ms-iot.github.io/content/images/remote-wiring/project_06.png)
+ ![Project References](./images/project_06.png)
 
 8. Rebuild your solution by selecting *Build -> Rebuild All*
 
- ![Rebuild All](https://ms-iot.github.io/content/images/remote-wiring/compile_03.png)
+ ![Rebuild All](./images/compile_03.png)
  
 9. Verify you have added the necessary [Device Capabilities](#device-capabilities) to your project manifest!
 
@@ -68,7 +68,7 @@ Install-Package Windows-Remote-Arduino
 
 You can now use the three projects directly in your source code! You will notice I have constructed a BluetoothSerial object and attached it to my RemoteDevice object, so I have included the two appropriate namespaces at the top of my .cs file.
 
- ![Have Fun!](https://ms-iot.github.io/content/images/remote-wiring/utilize_00.png)
+ ![Have Fun!](./images/utilize_00.png)
 
  
 # Device Capabilities
