@@ -191,6 +191,10 @@ public:
         void
     );
 
+    UwpFirmata(
+        uint64_t polling_interval_
+    );
+
     virtual
     ~UwpFirmata(
         void
@@ -400,6 +404,7 @@ public:
     //input thread & behavior mechanisms
     std::thread _input_thread;
     std::atomic_bool _input_thread_should_exit;
+    uint64_t _polling_interval;
 
     String ^
     createStringFromMbs(
