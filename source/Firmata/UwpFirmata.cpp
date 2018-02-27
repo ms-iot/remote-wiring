@@ -201,7 +201,7 @@ UwpFirmata::processInput(
     void
     )
 {
-    uint16_t data = _firmata_stream->read();
+    uint16_t data = _firmata_stream->readBlocking();
     if( data == static_cast<uint16_t>( -1 ) ) return;
     
     uint8_t byte = data & 0x00FF;
